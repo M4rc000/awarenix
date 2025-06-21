@@ -66,7 +66,7 @@ export default function CardHeader({reloadTrigger}: CardHeaderUserManagementProp
       });
   }, []);
 
-  const renderBadge = (growth) => {
+  const renderBadge = (growth: { growth_type: string; growth_percentage: number } | null) => {
     if (!growth) return null;
 
     const icon =

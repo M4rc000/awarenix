@@ -4,68 +4,59 @@ import { MdGroups } from "react-icons/md";
 import { CgArrowsExchange } from "react-icons/cg";
 import { TbArrowBigUpLine, TbArrowBigDownLine } from "react-icons/tb";
 
-export type CardHeaderUsersGroupsProps = {
-  reloadTrigger: number
-}
+// Define a type for the growth data for better type safety
+type GrowthData = {
+  growth_type: "increase" | "decrease" | "stagnant";
+  growth_percentage: number;
+};
 
-export default function CardHeader({reloadTrigger}: CardHeaderUsersGroupsProps) {
+export default function CardHeader({ reloadTrigger }) {
   const [totalGroups, setTotalGroups] = useState(0);
-  const [growthDataGroup, setGrowthDataGroup] = useState(null);
+  const [growthDataGroup, setGrowthDataGroup] = useState<GrowthData | null>(null);
 
   useEffect(() => {
     const API_URL = import.meta.env.VITE_API_URL;
-    const fetchTotalGroups = async () => {
+    const token = localStorage.getItem("token");
+
+    // Function to fetch all data for the card
+    const fetchCardData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(`${API_URL}/groups/all`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await res.json();
-        if (data.Success && typeof data.Total === "number") {
-          setTotalGroups(data.Total);
+        // Use Promise.all to fetch both data points concurrently for better performance
+        const [groupsRes, growthRes] = await Promise.all([
+          fetch(`${API_URL}/groups/all`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_URL}/analytics/growth-percentage?type=groups`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        if (!groupsRes.ok) throw new Error(`Failed to fetch groups: ${groupsRes.status}`);
+        if (!growthRes.ok) throw new Error(`Failed to fetch growth data: ${growthRes.status}`);
+
+        const groupsData = await groupsRes.json();
+        const growthData = await growthRes.json();
+
+        // Update states after both fetches are successful
+        if (groupsData.Success && typeof groupsData.Total === "number") {
+          setTotalGroups(groupsData.Total);
         }
+
+        if (growthData.success && growthData.data) {
+          setGrowthDataGroup(growthData.data);
+        }
+
       } catch (err) {
-        console.error("Failed to fetch total groups:", err);
+        console.error("Failed to fetch card data:", err);
       }
     };
-    
-    fetchTotalGroups();
+
+    fetchCardData();
+
+    // The entire effect now depends on reloadTrigger
   }, [reloadTrigger]);
-  
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const API_URL = import.meta.env.VITE_API_URL;
-    fetch(`${API_URL}/analytics/growth-percentage?type=groups`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-    })
-      .then(res => {
-        // Check if response is ok
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        
-        return res.json();
-      })
-      .then(data => {
-        if (data.success && data.data) {
-          setGrowthDataGroup(data.data);
-        } else {
-          console.warn("⚠️ No data received or success = false");
-        }
-      })
-      .catch(error => {
-        console.error("❌ Fetch error:", error);
-        console.error("🔍 Error details:", error.message);
-      });
-  }, []);
-  
-  const renderBadge = (growth) => {
+
+  const renderBadge = (growth: GrowthData | null) => {
     if (!growth) return null;
 
     const icon =
@@ -77,11 +68,11 @@ export default function CardHeader({reloadTrigger}: CardHeaderUsersGroupsProps) 
         <CgArrowsExchange className="mr-1 rotate-180" />
       );
 
-    const color =
+    const color: "success" | "error" | "warning" =
       growth.growth_type === "increase"
         ? "success"
         : growth.growth_type === "decrease"
-        ? "danger"
+        ? "error"
         : "warning";
 
     return (
@@ -93,7 +84,6 @@ export default function CardHeader({reloadTrigger}: CardHeaderUsersGroupsProps) 
   };
 
   return (
-    // Option 1: Full width grid with equal columns
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 w-full">
       {/* Total Groups */}
       <div className="flex flex-col justify-between rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] hover:shadow-sm hover:shadow-gray-600 hover:-translate-y-2 transition duration-300 ease-in-out cursor-pointer">

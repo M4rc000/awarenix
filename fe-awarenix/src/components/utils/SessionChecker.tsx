@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function SessionChecker() {
   return (
     <div className="w-screen h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden">

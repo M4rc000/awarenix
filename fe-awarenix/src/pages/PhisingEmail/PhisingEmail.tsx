@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Search, ChevronDown, Lock, QrCode, FileText } from 'lucide-react';
+import { Search, ChevronDown, Lock, FileText } from 'lucide-react';
 import { MailIcon } from '../../icons';
 import Breadcrump from '../../components/utils/Breacrump';
 
 const PhishingEmail = () => {
-  const [selectedCards, setSelectedCards] = useState({});
+  const [selectedCards, setSelectedCards] = useState<{ [key: string]: string }>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [difficulty, setDifficulty] = useState('Easy OR Moderate');
   const [sortBy, setSortBy] = useState('Popularity (Most to Least)');
@@ -55,14 +55,16 @@ const PhishingEmail = () => {
     }
   ];
 
-  const handleCardSelection = (cardId, action) => {
+  const handleCardSelection = (cardId: string, action: string) => {
     setSelectedCards(prev => ({
       ...prev,
       [cardId]: action
     }));
   };
 
-  const renderCard = (card) => {
+  type PhishingCard = typeof phishingCards[number];
+
+  const renderCard = (card: PhishingCard) => {
     const isSelected = selectedCards[card.id];
     
     return (

@@ -178,13 +178,13 @@ export default function ShowSendingProfilesModalForm() {
           <Input
             placeholder="X-Custom-Header"
             value={newHeader}
-            onChange={(e) => setNewHeader(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewHeader(e.target.value)}
             className="flex-1 text-sm h-10 px-3"
           />
           <Input
             placeholder="{{.URL}}-gophish"
             value={newValue}
-            onChange={(e) => setNewValue(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewValue(e.target.value)}
             className="flex-1 text-sm h-10 px-3"
           />
           <Button

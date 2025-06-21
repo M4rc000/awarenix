@@ -8,19 +8,11 @@ export default function UserManagement() { // Sekarang UserManagement tidak mene
   const [modalOpen, setModalOpen] = useState(false);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
-  const [isLoading, setIsLoading] = useState(false); 
-  const [error, setError] = useState<string | null>(null); 
-
   const fetchData = () => {
-    console.log("UserManagement: fetchData triggered. Reloading TableUsers...");
-    setIsLoading(true); 
-    setError(null);    
     setReloadTrigger(prev => prev + 1); 
   };
 
   useEffect(() => {
-    console.log("UserManagement: reloadTrigger changed to", reloadTrigger);
-    setIsLoading(false); 
   }, [reloadTrigger]);
 
 
@@ -47,11 +39,9 @@ export default function UserManagement() { // Sekarang UserManagement tidak mene
       <NewUserModal
         isOpen={modalOpen}
         onClose={() => {
-          console.log("UserManagement: NewUserModal closed.");
           setModalOpen(false);
         }}
         onUserAdded={() => {
-          console.log("UserManagement: User added, fetching new data.");
           setModalOpen(false); // Pastikan modal tertutup setelah user ditambahkan
           fetchData(); // Panggil fetchData untuk memuat ulang daftar pengguna
         }}

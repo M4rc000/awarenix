@@ -418,7 +418,14 @@ const EMAIL_TEMPLATES = [
     { name: "Newsletter Update", content: TEMPLATE_NEWSLETTER },
 ];
 
-const EmailBodyEditorCustom = ({ templateName, envelopeSender, subject, onBodyChange, initialContent = "" }) => {
+interface EmailBodyEditorCustomProps {
+    envelopeSender?: string;
+    subject?: string;
+    onBodyChange?: (body: string) => void;
+    initialContent?: string;
+}
+
+const EmailBodyEditorCustom = ({ envelopeSender, subject, onBodyChange, initialContent = "" }: EmailBodyEditorCustomProps) => {
     const [activeTab, setActiveTab] = useState(0);
     const [htmlContent, setHtmlContent] = useState(() => {
         // Find if initialContent matches any predefined template
@@ -439,7 +446,7 @@ const EmailBodyEditorCustom = ({ templateName, envelopeSender, subject, onBodyCh
         }
     }, [htmlContent, onBodyChange]);
 
-    const handleTemplateChange = (event) => {
+    const handleTemplateChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const newTemplateName = event.target.value;
         setSelectedTemplate(newTemplateName);
         if (newTemplateName === "Custom") {
@@ -477,7 +484,11 @@ const EmailBodyEditorCustom = ({ templateName, envelopeSender, subject, onBodyCh
             }
         } catch (error) {
             console.error("Error importing HTML from URL:", error);
-            setImportError(`Error importing content: ${error.message}. Ensure it's a valid, publicly accessible URL.`);
+            let errorMessage = "Unknown error";
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+            setImportError(`Error importing content: ${errorMessage}. Ensure it's a valid, publicly accessible URL.`);
         } finally {
             setIsImporting(false);
         }

@@ -29,7 +29,7 @@ type UserData = {
   password: string;
   role: string;
   company: string;
-  isActive: number;
+  isActive: boolean;
 };
 
 type EditUserModalFormProps = {
@@ -41,7 +41,7 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
 
   const [formData, setFormData] = useState({
     ...user,
-    isActive: user.isActive === 1 ? "1" : "0" || user.isActive === true ? "1" : "0",
+    isActive: user.isActive === true ? "1" : "0",
     role: user.role == "Admin" ? "Admin" : "Member",
   });
 

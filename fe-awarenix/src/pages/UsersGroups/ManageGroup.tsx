@@ -3,7 +3,12 @@ import Button from "../../components/ui/button/Button";
 import NewGroupModal from "../../components/usersgroups/NewGroupModal";
 import TableUsersGroups from "../../components/usersgroups/TableGroups";
 
-export default function ManageGroup({reloadTrigger, onReload}) {
+type ManageGroupProps = {
+  reloadTrigger: number;
+  onReload: () => void;
+};
+
+export default function ManageGroup({reloadTrigger, onReload}: ManageGroupProps) {
     const [modalOpen, setModalOpen] = useState(false);
     return (
         <div>

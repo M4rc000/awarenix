@@ -4,9 +4,14 @@ import { TbArrowBigUpLine, TbArrowBigDownLine } from "react-icons/tb";
 import { CgArrowsExchange } from "react-icons/cg";
 import Badge from "../ui/badge/Badge";
 
+type GrowthData = {
+  growth_type: 'increase' | 'decrease' | 'no_change';
+  growth_percentage: number;
+};
+
 export default function CardHeader() {
   const [totalLandingPages, setTotalLandingPages] = useState(0);
-  const [growthDataLandingPages, setGrowthDataLandingPages] = useState(null);
+  const [growthDataLandingPages, setGrowthDataLandingPages] = useState<GrowthData | null>(null);
 
   useEffect(() => {
     const API_URL = import.meta.env.VITE_API_URL;
@@ -78,7 +83,7 @@ export default function CardHeader() {
                 growthDataLandingPages?.growth_type === 'increase'
                   ? 'success'
                   : growthDataLandingPages?.growth_type === 'decrease'
-                  ? 'danger'
+                  ? 'error'
                   : 'warning'
               }
               className="dark:text-gray-400"

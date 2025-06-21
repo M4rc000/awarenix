@@ -1,4 +1,3 @@
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import Badge from "../../components/ui/badge/Badge";
 import { PlusIcon } from "../../icons";
 import PageMeta from "../../components/common/PageMeta";
@@ -11,7 +10,6 @@ export default function Badges() {
         title="React.js Badges Dashboard | TailAdmin - React.js Admin Dashboard Template"
         description="This is React.js Badges Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
       />
-      <PageBreadcrumb pageTitle="Badges" />
       <div className="space-y-5 sm:space-y-6">
         <ComponentCard title="With Light Background">
           <div className="flex flex-wrap gap-4 sm:items-center sm:justify-center">

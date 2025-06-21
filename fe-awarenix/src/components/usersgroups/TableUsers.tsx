@@ -27,7 +27,6 @@ import ShowUserDetailModal from './ShowUserDetailModal';
 import EditUserModal from './EditUserModal';
 import DeleteUserModal from './DeleteUserModal';
 import Swal from '../utils/AlertContainer';
-import CustomSwal from 'sweetalert2';
 import { IoIosCheckmarkCircle } from "react-icons/io";
 import { IoCloseCircle } from "react-icons/io5";
 
@@ -160,7 +159,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         header: 'Created At',
         cell: ({ getValue }) => {
           const raw = getValue();
-          if (!raw) return '-';
+          if (!raw || (typeof raw !== 'string' && typeof raw !== 'number' && !(raw instanceof Date))) return '-';
 
           const date = new Date(raw);
           if (isNaN(date.getTime())) return '-';

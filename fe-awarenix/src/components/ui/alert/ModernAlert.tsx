@@ -2,13 +2,21 @@
 import { useState, useEffect } from 'react';
 import { X, Info, AlertTriangle, CheckCircle } from 'lucide-react';
 
+type ModernAlertProps = {
+  type?: 'info' | 'danger' | 'success' | 'warning';
+  children: React.ReactNode;
+  onDismiss?: () => void;
+  duration?: number | null;
+  className?: string;
+};
+
 const ModernAlert = ({ 
   type = 'info', 
   children, 
   onDismiss,
   duration = null,
   className = '' 
-}) => {
+}: ModernAlertProps) => {
   const [isVisible, setIsVisible] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
 
