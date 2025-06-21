@@ -1,0 +1,21 @@
+{
+  "name": "awarenix",
+  "version": "1.0.0",
+  "description": "Monorepo for Awarenix frontend (React + Tailwind) and backend (Go).",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm install --prefix fe-awarenix && cd be-awarenix && go mod tidy && go mod download",
+    "start:fe": "npm start --prefix fe-awarenix",
+    "start:be": "cd be-awarenix && go run main.go",
+    "build:fe": "npm run build --prefix fe-awarenix",
+    "build:be": "cd be-awarenix && go build -o bin/server .",
+    "dev": "concurrently \"npm run start:fe\" \"npm run start:be\"",
+    "build:all": "npm run build:fe && npm run build:be"
+  },
+  "keywords": ["react", "go", "monorepo", "awarenix"],
+  "author": "M4rc000",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

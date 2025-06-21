@@ -1,0 +1,572 @@
+import { useState, useMemo, useDeferredValue, useRef, useEffect } from 'react';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getFilteredRowModel,
+  flexRender,
+  ColumnDef,
+  getSortedRowModel
+} from '@tanstack/react-table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import { HiOutlineMail } from "react-icons/hi";
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/20/solid'
+import { FaRegTrashAlt } from "react-icons/fa";
+import { BiSolidEditAlt } from "react-icons/bi";
+import { HiOutlineMailOpen } from "react-icons/hi";
+import { LuMousePointerClick } from "react-icons/lu";
+import { BiError } from "react-icons/bi";
+import { HiOutlineSpeakerphone } from "react-icons/hi";
+import { FaCircleInfo } from "react-icons/fa6";
+import Button from "../ui/button/Button";
+import type { SortingState } from '@tanstack/react-table';
+import { useSidebar } from "../../context/SidebarContext";
+import ShowCampaignModal from "../../components/campaigns/ShowCampaignModal";
+import UpdateCampaignModal from "../../components/campaigns/UpdateCampaignModal";
+import DeleteCampaignModal from "../../components/campaigns/DeleteCampaignModal";
+
+export default function TableCampaigns() {
+  const [search, setSearch] = useState('');
+  const { isExpanded } = useSidebar();
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const deferredSearch = useDeferredValue(search);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [showModalOpen, setShowModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        event.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  interface Campaign {
+    id: number;
+    name: string;
+    schedule: string;
+    type: string;
+    emailSent: number;
+    emailOpened: number;
+    clicks: number;
+    errors: number;
+    impressions: number;
+    status: string;
+  }
+
+  const tableData: Campaign[] = [
+  {
+      id: 1,
+      name: "Testing SMTP",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 20,
+      emailOpened: 5,
+      clicks: 5,
+      errors: 1,
+      impressions: 10,
+      status: "Completed",
+    },
+    {
+      id: 2,
+      name: "Testing SMTP 2",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 20,
+      emailOpened: 15,
+      clicks: 5,
+      errors: 1,
+      impressions: 10,
+      status: "Pending",
+    },
+    {
+      id: 3,
+      name: "Testing 1",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 10,
+      emailOpened: 6,
+      clicks: 5,
+      errors: 1,
+      impressions: 5,
+      status: "Completed",
+    },
+    {
+      id: 4,
+      name: "Testing SMTP Mailtrap",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 20,
+      emailOpened: 10,
+      clicks: 5,
+      errors: 1,
+      impressions: 10,
+      status: "Pending",
+    },
+    {
+      id: 5,
+      name: "Testing Mailgun",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 10,
+      emailOpened: 4,
+      clicks: 7,
+      errors: 1,
+      impressions: 10,
+      status: "Completed",
+    },
+    {
+      id: 6,
+      name: "Testing Mailgun",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 10,
+      emailOpened: 4,
+      clicks: 7,
+      errors: 1,
+      impressions: 10,
+      status: "Completed",
+    },
+    {
+      id: 7,
+      name: "Testing Mailgun",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 10,
+      emailOpened: 4,
+      clicks: 7,
+      errors: 1,
+      impressions: 10,
+      status: "Completed",
+    },
+    {
+      id: 8,
+      name: "Testing Mailgun",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 10,
+      emailOpened: 4,
+      clicks: 7,
+      errors: 1,
+      impressions: 10,
+      status: "Completed",
+    },
+    {
+      id: 9,
+      name: "Testing Mailgun",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 10,
+      emailOpened: 4,
+      clicks: 7,
+      errors: 1,
+      impressions: 10,
+      status: "Completed",
+    },
+    {
+      id: 10,
+      name: "Testing Mailgun",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 10,
+      emailOpened: 4,
+      clicks: 7,
+      errors: 1,
+      impressions: 10,
+      status: "Completed",
+    },
+    {
+      id: 11,
+      name: "Testing Mailgun",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 10,
+      emailOpened: 4,
+      clicks: 7,
+      errors: 1,
+      impressions: 10,
+      status: "Completed",
+    },
+    {
+      id: 12,
+      name: "Testing Mailgun",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 10,
+      emailOpened: 4,
+      clicks: 7,
+      errors: 1,
+      impressions: 10,
+      status: "Completed",
+    },
+    {
+      id: 13,
+      name: "Testing Mailgun",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 10,
+      emailOpened: 4,
+      clicks: 7,
+      errors: 1,
+      impressions: 10,
+      status: "Completed",
+    },
+    {
+      id: 14,
+      name: "Testing Mailgun",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 10,
+      emailOpened: 4,
+      clicks: 7,
+      errors: 1,
+      impressions: 10,
+      status: "Completed",
+    },
+    {
+      id: 15,
+      name: "Testing Aja",
+      schedule: "01 March 2025",
+      type: "Phising ",
+      emailSent: 10,
+      emailOpened: 4,
+      clicks: 7,
+      errors: 1,
+      impressions: 10,
+      status: "Completed",
+    },
+  ];
+
+  const data = useMemo(() => tableData, []);
+
+  const columns = useMemo<ColumnDef<Campaign>[]>(
+    () => [
+      {
+        accessorKey: 'id',
+        header: '#',
+        cell: info => info.row.index + 1,
+      },
+      {
+        accessorKey: 'name',
+        header: 'Campaign Name',
+      },
+      {
+        accessorKey: 'schedule',
+        header: 'Schedule',
+      },
+      {
+        accessorKey: 'type',
+        header: 'Type',
+      },
+      {
+        accessorKey: 'emailSent',
+        header: () => <HiOutlineMail className="text-xl text-green-600" />,
+      },
+      {
+        accessorKey: 'emailOpened',
+        header: () => <HiOutlineMailOpen className="text-xl text-yellow-600" />,
+      },
+      {
+        accessorKey: 'clicks',
+        header: () => <LuMousePointerClick className="text-xl text-blue-600" />,
+      },
+      {
+        accessorKey: 'errors',
+        header: () => <BiError className="text-xl text-red-600" />,
+      },
+      {
+        accessorKey: 'impressions',
+        header: () => <HiOutlineSpeakerphone className="text-xl text-cyan-600" />,
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+      },
+      {
+        id: 'actions',
+        accessorKey: 'actions',
+        header: 'Action',
+        cell: () => (
+          <div className="flex items-center space-x-2">
+            <Button size="xs" variant="info" onClick={()=>{setShowModalOpen(true)}}>
+              <FaCircleInfo />
+            </Button>
+            <Button size="xs" variant="warning" onClick={()=>{setUpdateModalOpen(true)}}>
+              <BiSolidEditAlt />
+            </Button>
+            <Button size="xs" variant="danger" onClick={()=>{setDeleteModalOpen(true)}}>
+              <FaRegTrashAlt />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: data,
+    columns,
+    state: {
+      globalFilter: deferredSearch,
+      pagination: pagination,
+      sorting: sorting,
+    },
+    onGlobalFilterChange: setSearch,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    onPaginationChange: setPagination, 
+  });
+
+  return (
+    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] border-1 border-gray-300 dark:border-gray-800">
+      <div className="p-4 rounded-lg bg-white dark:bg-white/[0.03]">
+        <form onSubmit={(e) => e.preventDefault()}>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="relative">
+              <div className="flex items-center space-x-2 mt-2">
+                <span className="text-sm text-gray-600">Show</span>
+                <select
+                  value={table.getState().pagination.pageSize}
+                  onChange={(e) => table.setPageSize(Number(e.target.value))}
+                  className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm dark:text-gray-600 text-gray-700"
+                >
+                  {[5, 10, 20, 50, 100].map((pageSize) => (
+                    <option key={pageSize} value={pageSize}>
+                      {pageSize}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-sm text-gray-600">entries</span>
+              </div>
+            </div>
+            {/* SEARCH BAR */}
+            <div className={`relative ${isExpanded ? 'xl:mx-40' : 'xl:mx-74'}`}>
+              <span className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
+                <svg
+                  className="fill-gray-500 dark:fill-gray-400"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M3.04175 9.37363C3.04175 5.87693 5.87711 3.04199 9.37508 3.04199C12.8731 3.04199 15.7084 5.87693 15.7084 9.37363C15.7084 12.8703 12.8731 15.7053 9.37508 15.7053C5.87711 15.7053 3.04175 12.8703 3.04175 9.37363ZM9.37508 1.54199C5.04902 1.54199 1.54175 5.04817 1.54175 9.37363C1.54175 13.6991 5.04902 17.2053 9.37508 17.2053C11.2674 17.2053 13.003 16.5344 14.357 15.4176L17.177 18.238C17.4699 18.5309 17.9448 18.5309 18.2377 18.238C18.5306 17.9451 18.5306 17.4703 18.2377 17.1774L15.418 14.3573C16.5365 13.0033 17.2084 11.2669 17.2084 9.37363C17.2084 5.04817 13.7011 1.54199 9.37508 1.54199Z"
+                    fill=""
+                    />
+                </svg>
+              </span>
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Search or type command..."
+                className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[430px]"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                />
+              <button className="absolute right-2.5 xl:px-3 xl:w-12 xl:left-92 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs -tracking-[0.2px] text-gray-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400">
+                <span className='text-center'> ⌘ </span>
+                <span> K </span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div className="max-w-full overflow-x-auto">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map(headerGroup => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map(header => {
+                  const isSorted = header.column.getIsSorted();  // 'asc' | 'desc' | false
+                  const canSort = header.column.getCanSort();
+
+                  return (
+                    <TableCell
+                      key={header.id}
+                      isHeader
+                      className="
+                        relative 
+                        px-5 py-3 pr-6
+                        text-start text-gray-500 text-sm 
+                        cursor-pointer select-none
+                      "
+                      >
+                      <div
+                        onClick={header.column.getToggleSortingHandler()}>
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+
+                        {canSort && (
+                          <div className="mt-1 w-1 text-xs">
+                            <span
+                              className={
+                                isSorted === "asc"
+                                  ? "text-gray-800"
+                                  : "text-gray-300"
+                              }
+                            >
+                              ▲
+                            </span>
+                            <span
+                              className={
+                                isSorted === "desc"
+                                  ? "text-gray-800"
+                                  : "text-gray-300"
+                              }
+                            >
+                              ▼
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                  )
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.map(row => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map(cell => (
+                  <TableCell key={cell.id} className="px-5 py-3 text-sm text-gray-600">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* PAGINATION */}
+      <div className="flex items-center justify-between p-4 text-gray-600 dark:text-gray-500 text-sm">
+        <div>
+          Showing {table.getState().pagination.pageIndex + 1} to {table.getState().pagination.pageSize}  of{' '}
+          {table.getPageCount()}
+        </div>
+        <div className="space-x-2">
+          {/* <Button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+            Previous
+          </Button>
+          <Button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+            Next
+          </Button> */}
+          <div>
+            <nav aria-label="Pagination" className="isolate inline-flex -space-x-px rounded-md shadow-xs">
+              <a
+                href="#"
+                className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-gray-300 dark:ring-gray-700 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0${!table.getCanPreviousPage() ? ' opacity-50 pointer-events-none cursor-not-allowed' : ''}`}
+                onClick={e => {
+                  e.preventDefault();
+                  if (table.getCanPreviousPage()) table.previousPage();
+                }}
+                aria-disabled={!table.getCanPreviousPage()}
+                tabIndex={!table.getCanPreviousPage() ? -1 : 0}>
+                <span className="sr-only">Previous</span>
+                <ChevronLeftIcon aria-hidden="true" className="size-5" color='grey'/>
+              </a>
+
+              {/* Page Numbers */}
+              {Array.from({ length: table.getPageCount() }, (_, i) => i).map((page) => {
+                const currentPage = table.getState().pagination.pageIndex;
+                const totalPage = table.getPageCount();
+
+                // Only show first, last, current, current±1
+                if (
+                  page === 0 ||
+                  page === totalPage - 1 ||
+                  Math.abs(currentPage - page) <= 1
+                ) {
+                return (
+                  <a
+                    key={page}
+                    onClick={() => table.setPageIndex(page)}
+                    href="#"
+                    aria-current="page"
+                    className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-regular focus:z-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:text-grey-400 ${
+                      currentPage === page
+                        ? 'z-10 bg-indigo-600 text-white focus:outline-indigo-600 ring-gray-300 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
+                        : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
+                    }`}>
+                    {page + 1}
+                  </a>
+              );}
+
+              if (
+                page === currentPage - 2 ||
+                page === currentPage + 2
+              ) {
+                return (
+                <a
+                  href="#"
+                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-gray-300 dark:ring-gray-700 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                    ...
+                </a>
+                );
+                }
+                return null;
+              })}
+
+              <a
+                onClick={e => {
+                  e.preventDefault();
+                  if (table.getCanNextPage()) table.nextPage();
+                }}
+                aria-disabled={!table.getCanNextPage()}
+                href="#"
+                className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-gray-300 dark:ring-gray-700 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                >
+                <span className="sr-only">Previous</span>
+                <ChevronRightIcon aria-hidden="true" className="size-5" color='grey'/>
+              </a>
+            </nav>
+          </div>
+        </div>
+      </div>
+
+
+      {/* MODAL */}
+      <ShowCampaignModal
+        isOpen={showModalOpen}
+        onClose={() => setShowModalOpen(false)}
+      />
+
+      <UpdateCampaignModal
+        isOpen={updateModalOpen}
+        onClose={() => setUpdateModalOpen(false)}
+      />
+
+      <DeleteCampaignModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+      />
+    </div>
+  );
+}
