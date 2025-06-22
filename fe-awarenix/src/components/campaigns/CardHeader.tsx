@@ -74,7 +74,7 @@ export default function CardHeader({ reloadTrigger }: CardHeaderEmailTemplatesPr
     fetchData();
   }, [reloadTrigger]);
 
-  const renderBadge = (growth) => {
+  const renderBadge = (growth: { growth_type: string; growth_percentage: number } | null) => {
     if (!growth) return (
       <Badge color="success" className="text-sm dark:text-gray-300">
         <ArrowUpIcon className="size-4 mr-1" />
@@ -95,7 +95,7 @@ export default function CardHeader({ reloadTrigger }: CardHeaderEmailTemplatesPr
       growth.growth_type === "increase"
         ? "success"
         : growth.growth_type === "decrease"
-        ? "danger"
+        ? "error"
         : "warning";
 
     return (

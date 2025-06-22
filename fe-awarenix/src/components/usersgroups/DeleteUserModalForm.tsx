@@ -21,7 +21,7 @@ type DeleteUserModalFormProps = {
 };
 
 const DeleteUserModalForm = forwardRef<DeleteUserModalFormRef, DeleteUserModalFormProps>(
-  ({ user, error, isDeleting, onDelete }, ref) => {
+  ({ user, error, onDelete }, ref) => {
     useImperativeHandle(ref, () => ({
       submitDelete: async () => {
         await onDelete();

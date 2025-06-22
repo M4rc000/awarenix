@@ -6,7 +6,12 @@ import { TbArrowBigUpLine, TbArrowBigDownLine } from "react-icons/tb";
 
 export default function CardHeader({ reloadTrigger }: { reloadTrigger: number }) {
   const [totalEmailTemplates, setTotalEmailTemplates] = useState(0);
-  const [growthDataEmailTemplates, setGrowthDataEmailTemplates] = useState(null);
+  type GrowthData = {
+    growth_type: 'increase' | 'decrease' | 'no_change';
+    growth_percentage: number;
+  } | null;
+
+  const [growthDataEmailTemplates, setGrowthDataEmailTemplates] = useState<GrowthData>(null);
   
   useEffect(() => {
     const API_URL = import.meta.env.VITE_API_URL;
@@ -91,7 +96,7 @@ export default function CardHeader({ reloadTrigger }: { reloadTrigger: number })
                 growthDataEmailTemplates?.growth_type === 'increase'
                   ? 'success'
                   : growthDataEmailTemplates?.growth_type === 'decrease'
-                  ? 'danger'
+                  ? 'error'
                   : 'warning'
               }
               className="dark:text-gray-400 text-sm"

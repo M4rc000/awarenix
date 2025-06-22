@@ -21,7 +21,7 @@ type DeleteEmailTemplateModalFormProps = {
 };
 
 const DeleteEmailTemplateModalForm = forwardRef<DeleteEmailTemplateFormRef, DeleteEmailTemplateModalFormProps>(
-  ({ emailTemplate, error, isDeleting, onDelete }, ref) => {
+  ({ emailTemplate, onDelete }, ref) => {
     useImperativeHandle(ref, () => ({
       submitDelete: async () => {
         await onDelete();

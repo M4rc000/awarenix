@@ -4,7 +4,7 @@ import { twMerge } from 'tailwind-merge';
 import clsx from 'clsx';
 
 interface TabItem {
-  label: string;
+  label: React.ReactNode;
   content: React.ReactNode;
 }
 

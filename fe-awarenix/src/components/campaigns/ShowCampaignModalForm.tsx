@@ -132,12 +132,12 @@ export default function ShowCampaignModalForm() {
     }));
   };
 
-  const handleGroupCheck = (id: number, checked: boolean) => {
-    setCheckedGroups((prev) => ({
-      ...prev,
-      [id]: checked,
-    }));
-  };
+  // const handleGroupCheck = (id: number, checked: boolean) => {
+  //   setCheckedGroups((prev) => ({
+  //     ...prev,
+  //     [id]: checked,
+  //   }));
+  // };
 
   // PHISING MATERIAL
   const [selectedIndexesPhisingMaterial, setSelectedIndexesPhisingMaterial] = useState<number[]>([]);
@@ -463,7 +463,7 @@ export default function ShowCampaignModalForm() {
       {isMobile ? (
         // MOBILE: Collapse style
         <div className="space-y-4">
-          {filteredGroups.map((group, index) => {
+          {filteredGroups.map((group) => {
             const originalIndex = groups.indexOf(group);
             return (
               <div
@@ -543,7 +543,7 @@ export default function ShowCampaignModalForm() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredGroups.map((group, index) => {
+            {filteredGroups.map((group) => {
               const originalIndex = groups.indexOf(group);
               return (
                 <React.Fragment key={originalIndex}>

@@ -10,6 +10,13 @@ import EditEmailTemplateModalForm, {EditEmailTemplateModalFormRef} from './EditE
 import { useRef, useState } from 'react'
 import Swal from '../utils/AlertContainer'
 
+type EmailTemplate = {
+  id: number;
+  name: string;
+  envelopeSender: string;
+  subject: string;
+};
+
 export type EditEmailTemplateModalProps = {
   isOpen: boolean
   emailTemplate: EmailTemplate | null;

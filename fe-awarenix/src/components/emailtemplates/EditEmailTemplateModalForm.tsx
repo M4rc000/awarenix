@@ -5,6 +5,14 @@ import Tabs from "../common/Tabs";
 import EmailBodyEditor from "./EmailBodyEditorTemplate";
 import { forwardRef, useImperativeHandle } from "react";
 
+type EmailTemplate = {
+  id: number;
+  name: string;
+  envelopeSender: string;
+  subject: string;
+  bodyEmail: string;
+}
+
 export type EditEmailTemplateModalFormRef = {
   submitEmailTemplate: () => Promise<boolean>;
 };
@@ -192,7 +200,7 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
           templateName={formData.templateName}
           envelopeSender={formData.envelopeSender}
           subject={formData.subject}
-          onBodyChange={(html) => handleInputChange("bodyEmail", html)}
+          onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
           initialContent={formData.bodyEmail}
         />,
       },

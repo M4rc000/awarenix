@@ -418,7 +418,21 @@ const EMAIL_TEMPLATES = [
     { name: "Newsletter Update", content: TEMPLATE_NEWSLETTER },
 ];
 
-const EmailBodyEditorTemplate = ({ templateName, envelopeSender, subject, onBodyChange, initialContent = "" }) => {
+type EmailBodyEditorTemplateProps = {
+    templateName?: string;
+    envelopeSender?: string;
+    subject?: string;
+    onBodyChange?: (body: string) => void;
+    initialContent?: string;
+};
+
+const EmailBodyEditorTemplate = ({
+    templateName,
+    envelopeSender,
+    subject,
+    onBodyChange,
+    initialContent = "",
+}: EmailBodyEditorTemplateProps) => {
     const [activeTab, setActiveTab] = useState(0);
     const [htmlContent, setHtmlContent] = useState(() => {
         // Find if initialContent matches any predefined template
@@ -436,11 +450,10 @@ const EmailBodyEditorTemplate = ({ templateName, envelopeSender, subject, onBody
         }
     }, [htmlContent, onBodyChange]); // Add onBodyChange to dependencies to avoid linting warnings
 
-    const handleTemplateChange = (event) => {
+    const handleTemplateChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const newTemplateName = event.target.value;
         setSelectedTemplate(newTemplateName);
         if (newTemplateName === "Custom") {
-            // Do nothing, user will edit manually or current content remains
             return;
         }
         const template = EMAIL_TEMPLATES.find(t => t.name === newTemplateName);
@@ -565,7 +578,7 @@ const EmailBodyEditorTemplate = ({ templateName, envelopeSender, subject, onBody
                             <div className="text-xs text-gray-500 dark:text-gray-500 space-y-1">
                                 <div><strong>From:</strong> <span className="text-gray-700 dark:text-gray-300">{envelopeSender || "your-team@company.com"}</span></div>
                                 <div><strong>Subject:</strong> <span className="text-gray-700 dark:text-gray-300">{subject || "Welcome to Our Platform!"}</span></div>
-                                <div><strong>Template:</strong> <span className="text-gray-700 dark:text-gray-300">{selectedTemplate || "Custom"}</span></div>
+                                <div><strong>Template:</strong> <span className="text-gray-700 dark:text-gray-300">{templateName || "Custom"}</span></div>
                             </div>
                         </div>
                         

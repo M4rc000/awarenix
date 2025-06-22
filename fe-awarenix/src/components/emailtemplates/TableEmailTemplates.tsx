@@ -85,6 +85,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
       const result = await res.json();
       setData(result.Data || result.data || result);
     } catch (err) {
+      console.log('Error: ', err);
       Swal.fire({
         text: 'Failed to load email template data',
         duration: 2000,
@@ -135,7 +136,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         header: 'Created At',
         cell: ({ getValue }) => {
           const raw = getValue();
-          if (!raw) return '-';
+          if (!raw || (typeof raw !== 'string' && typeof raw !== 'number' && !(raw instanceof Date))) return '-';
 
           const date = new Date(raw);
           if (isNaN(date.getTime())) return '-';

@@ -9,6 +9,14 @@ import { Fragment } from 'react'
 import ShowEmailTemplateDetailModalForm, {ShowEmailTemplateDetailModalFormRef} from './ShowEmailTemplateDetailModalForm'
 import { useRef } from 'react'
 
+type EmailTemplate = {
+  id: number;
+  name: string;
+  envelopeSender: string;
+  subject: string;
+  bodyEmail: string;
+}
+
 export type ShowEmailTemplateDetailModalProps = {
   isOpen: boolean
   onClose: () => void

@@ -5,6 +5,16 @@ import Swal from "../utils/AlertContainer";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
 import Select from "../form/Select";
 
+type User = {
+  name: string;
+  email: string;
+  position: string;
+  password: string;
+  role: string;
+  company: string;
+  isActive: string;
+}
+
 export type NewUserModalFormRef = {
   submitUsers: () => Promise<User | null>;
   user: User | null;

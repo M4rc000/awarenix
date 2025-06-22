@@ -8,7 +8,7 @@ import {
 import { Fragment } from 'react'
 import DeleteCampaignModalForm from './DeleteCampaignModalForm'
 
-export type DeleteGroupModalProps = {
+export type DeleteCampaignModalProps = {
   isOpen: boolean
   onClose: () => void
 }

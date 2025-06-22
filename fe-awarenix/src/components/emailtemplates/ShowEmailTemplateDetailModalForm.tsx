@@ -1,11 +1,19 @@
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
-import EmailBodyEditor from "./EmailBodyEditorTemplate";
+import ShowEmailBodyEditor from "./ShowEmailBodyEditorTemplate";
+
+type EmailTemplate = {
+  id: number;
+  name: string;
+  envelopeSender: string;
+  subject: string;
+  bodyEmail: string;
+}
 
 export type ShowEmailTemplateDetailModalFormRef = {
-  submitEmailTemplates: () => Promise<EmailTemplate | null>;
-  emailtemplate: EmailTemplate | null;
+  submitEmailTemplates: () => Promise<EmailTemplate>;
+  emailtemplate: EmailTemplate;
 };
 
 type EmailTemplateData = {
@@ -26,11 +34,10 @@ const ShowEmailTemplateDetailModalForm = ({ emailTemplate }: ShowEmailTemplateDe
   const emailTabs = [
     {
       label: "📝 Email Body",
-      content: <EmailBodyEditor 
+      content: <ShowEmailBodyEditor 
         templateName={emailTemplate.name}
         envelopeSender={emailTemplate.envelopeSender}
         subject={emailTemplate.subject}
-        onBodyChange={null}
         initialContent={emailTemplate.bodyEmail}
       />,
     },

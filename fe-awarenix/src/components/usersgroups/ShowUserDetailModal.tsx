@@ -8,6 +8,16 @@ import {
 import { Fragment, useRef } from 'react'
 import ShowUserDetailModalForm, { ShowUserModalFormRef } from './ShowUserDetailModalForm'
 
+type User = {
+  name: string;
+  email: string;
+  position: string;
+  password: string;
+  role: string;
+  company: string;
+  isActive: string;
+}
+
 export type ShowUserModalProps = {
   isOpen: boolean
   onClose: () => void

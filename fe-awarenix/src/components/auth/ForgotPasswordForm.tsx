@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "react-router";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
-import Button from "../ui/button/Button";
 import { ChevronLeftIcon } from "../../icons";
 
 export default function ForgotPasswordForm() {
@@ -42,9 +41,9 @@ export default function ForgotPasswordForm() {
                   <Input placeholder="info@gmail.com" />
                 </div>
                 <div>
-                  <Button className="w-full" size="sm" onClick={handleSubmit}>
+                  {/* <Button className="w-full" size="sm" onClick={handleSubmit}>
                     Reset Password
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
             </form>            

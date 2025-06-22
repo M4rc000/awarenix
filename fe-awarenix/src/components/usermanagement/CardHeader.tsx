@@ -82,7 +82,7 @@ export default function CardHeader({reloadTrigger}: CardHeaderUserManagementProp
       growth.growth_type === "increase"
         ? "success"
         : growth.growth_type === "decrease"
-        ? "danger"
+        ? "error"
         : "warning";
 
     return (

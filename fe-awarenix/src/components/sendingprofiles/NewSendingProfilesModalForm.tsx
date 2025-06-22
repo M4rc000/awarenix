@@ -1,18 +1,33 @@
 import { useState } from "react";
 
 // Mock components to match your existing structure
-const Label = ({ children }) => (
+interface LabelProps {
+  children: React.ReactNode;
+}
+
+const Label = ({ children }: LabelProps) => (
   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{children}</label>
 );
 
-const Input = ({ className, ...props }) => (
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  className?: string; // Meskipun sudah ada di InputHTMLAttributes, bisa dideklarasikan ulang untuk kejelasan
+}
+
+const Input = ({ className, ...props }: InputProps) => (
   <input 
     className={`border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 ${className}`}
     {...props}
   />
 );
 
-const Button = ({ children, variant = "default", size = "default", className = "", ...props }) => {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+  variant?: "default" | "destructive" | "outline" | "ghost";
+  size?: "default" | "sm" | "lg";
+  className?: string;
+}
+
+const Button = ({ children, variant = "default", size = "default", className = "", ...props }: ButtonProps) => {
   const baseClasses = "font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2";
   const variantClasses = {
     default: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
@@ -36,7 +51,12 @@ const Button = ({ children, variant = "default", size = "default", className = "
   );
 };
 
-const Table = ({ children, className = "" }) => (
+interface TableProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+const Table = ({ children, className = "" }: TableProps) => (
   <div className={`overflow-x-auto ${className}`}>
     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
       {children}
@@ -44,25 +64,42 @@ const Table = ({ children, className = "" }) => (
   </div>
 );
 
-const TableHeader = ({ children }) => (
+interface TableHeaderProps {
+  children: React.ReactNode;
+}
+
+const TableHeader = ({ children }: TableHeaderProps) => (
   <thead className="bg-gray-50 dark:bg-gray-800">
     {children}
   </thead>
 );
 
-const TableBody = ({ children }) => (
+interface TableBodyProps {
+  children: React.ReactNode;
+}
+
+const TableBody = ({ children }: TableBodyProps) => (
   <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
     {children}
   </tbody>
 );
 
-const TableRow = ({ children }) => (
+interface TableRowProps {
+  children: React.ReactNode;
+}
+
+const TableRow = ({ children }: TableRowProps) => (
   <tr className="hover:bg-gray-50 dark:hover:bg-gray-800">
     {children}
   </tr>
 );
 
-const TableCell = ({ children, className = "" }) => (
+interface TableCellProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+const TableCell = ({ children, className = "" }: TableCellProps) => (
   <td className={`px-6 py-4 whitespace-nowrap text-sm ${className}`}>
     {children}
   </td>
@@ -102,9 +139,6 @@ export default function NewSendingProfilesModalForm() {
   );
 
   // Calculate pagination
-  const totalEntries = filteredHeaders.length;
-  const startIndex = 0; // For simplicity, showing all filtered results
-  const endIndex = Math.min(entriesPerPage, totalEntries);
   const displayedHeaders = filteredHeaders.slice(0, entriesPerPage);
 
   return (
@@ -178,13 +212,13 @@ export default function NewSendingProfilesModalForm() {
           <Input
             placeholder="X-Custom-Header"
             value={newHeader}
-            onChange={(e) => setNewHeader(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewHeader(e.target.value)}
             className="flex-1 text-sm h-10 px-3"
           />
           <Input
             placeholder="{{.URL}}-gophish"
             value={newValue}
-            onChange={(e) => setNewValue(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewValue(e.target.value)}
             className="flex-1 text-sm h-10 px-3"
           />
           <Button
@@ -217,7 +251,7 @@ export default function NewSendingProfilesModalForm() {
               <Input
                 placeholder="Search headers..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                 className="w-48 text-sm h-8 px-2 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300"
               />
             </div>
@@ -251,7 +285,7 @@ export default function NewSendingProfilesModalForm() {
             <TableBody>
               {displayedHeaders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <TableCell className="text-center py-8 text-gray-500 dark:text-gray-400">
                     {searchTerm ? `No results found for "${searchTerm}"` : "No data available in table"}
                   </TableCell>
                 </TableRow>

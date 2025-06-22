@@ -29,7 +29,6 @@ export default function DeleteUserModal({
   isOpen,
   onClose,
   user,
-  onSuccess,
   onUserDeleted,
 }: DeleteUserModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -174,13 +173,13 @@ export default function DeleteUserModal({
                         })
                       }
                     } catch (error) {
+                      console.log('Error: ', error);
                       Swal.fire({
                         text: `An error occurred while updating user!`,
                         icon: "error",
                         duration: 2000
                       })
-                    } finally {
-                  }
+                    }
                   }}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >

@@ -65,10 +65,10 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
     return Object.keys(newErrors).length === 0;
   };
 
-  const submitEmailTemplate = async (): Promise<boolean> => {
+  const submitEmailTemplate = async (): Promise<EmailTemplate | null> => {
     // CEK VALIDASI
     if (!validateForm()) {
-      return false;
+      return null;
     }
 
     setIsSubmitting(true);
@@ -94,7 +94,6 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         }),
       });
 
-
       if (!response.ok) {
         let errorMessage = 'Failed to create user';
         
@@ -117,6 +116,9 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         throw new Error(errorMessage);
       }
 
+      // Parse the created template from the response
+      const createdTemplate: EmailTemplate = await response.json();
+
       Swal.fire({
         text: "Email Template successfully added!",
         icon: "success",
@@ -134,7 +136,7 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
       });
       setErrors({});
       
-      return true;
+      return createdTemplate;
       
     } catch (error) {
       console.error('Error creating user:', error);
@@ -162,14 +164,12 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         }
       }
       
-      return false;
+      return null;
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  // Expose methods to parent component
-  useImperativeHandle(ref, () => ({ submitEmailTemplate }));
+  useImperativeHandle(ref, () => ({ submitEmailTemplate, emailtemplate: null }));
 
   // Handle input changes - dengan safety check
   const handleInputChange = (field: keyof EmailTemplateData, value: string) => {
@@ -219,7 +219,6 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         </div>
       ), 
       content: <EmailBodyEditorCustom 
-        templateName={templateName}
         envelopeSender={envelopeSender}
         subject={subject}
         onBodyChange={(html) => {

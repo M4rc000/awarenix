@@ -6,7 +6,8 @@ export type ShowUserModalFormRef = {
   submitUsers: () => Promise<boolean>;
 };
 
-type UserData = {
+type User = {
+  id: number;
   name: string;
   email: string;
   position: string;
@@ -16,7 +17,9 @@ type UserData = {
 };
 
 type ShowUserDetailModalFormProps = {
-  user: UserData;
+  isOpen: boolean
+  onClose: () => void
+  user: User | null; // <--- CHANGE THIS LINE: Allow user to be null
 };
 
 const ShowUserDetailModalForm = ({ user }: ShowUserDetailModalFormProps) => {

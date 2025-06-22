@@ -29,21 +29,19 @@ export default function DeleteEmailTemplateModal({
   isOpen,
   onClose,
   emailTemplate,
-  onSuccess,
   onEmailTemplateDeleted,
 }: DeleteEmailTemplatesModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
   const formRef = useRef<DeleteEmailTemplateFormRef>(null);
 
-  
-  
+
   const API_URL = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem('token');
   const handleDelete = async () => {
     if (!emailTemplate) return;
-    setIsDeleting(true);
+    // setIsDeleting(true);
     setError('');
 
     try {
@@ -72,6 +70,8 @@ export default function DeleteEmailTemplateModal({
       }
     } catch (err) {
       setError('Unexpected error occurred');
+      console.log('Error: ', err);
+      
       Swal.fire({
         text: `Unexpected error occurred while deleting email template`,
         icon: 'error',
@@ -141,7 +141,7 @@ export default function DeleteEmailTemplateModal({
                   disabled={isDeleting}
                   onClick={async () => {
                     try {
-                      setIsLoading(true);                      
+                      // setIsLoading(true);                      
                       const success = await formRef.current?.submitDelete();
                       
                       if (success) {
@@ -170,7 +170,7 @@ export default function DeleteEmailTemplateModal({
                         duration: 2000
                       })
                     } finally {
-                      setIsLoading(false);
+                      // setIsLoading(false);
                     }
                   }}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-300 dark:bg-blue-600 dark:hover:bg-blue-500 text-gray-800 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"

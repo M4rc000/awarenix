@@ -90,6 +90,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
       const result = await res.json();
       setData(result.Data || result.data || result);
     } catch (err) {
+      console.log('Error: ', err);
       Swal.fire({
         text: 'Failed to load user data',
         duration: 2000,
@@ -164,7 +165,9 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
           const raw = getValue();
           if (!raw) return '-';
 
-          const date = new Date(raw);
+          const dateValue = (typeof raw === 'string' || typeof raw === 'number' || raw instanceof Date) ? raw : null;
+          if (!dateValue) return '-';
+          const date = new Date(dateValue);
           if (isNaN(date.getTime())) return '-';
           
           return date.toLocaleString('id-ID', {
@@ -185,7 +188,9 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
           const raw = getValue();
           if (!raw) return '-';
 
-          const date = new Date(raw);
+          const dateValue = (typeof raw === 'string' || typeof raw === 'number' || raw instanceof Date) ? raw : null;
+          if (!dateValue) return '-';
+          const date = new Date(dateValue);
           if (isNaN(date.getTime())) return '-';
           
           return date.toLocaleString('id-ID', {

@@ -38,9 +38,9 @@ export default function TableSendingProfiles() {
   const deferredSearch = useDeferredValue(search);
   const inputRef = useRef<HTMLInputElement>(null);
   const [activeModal, setActiveModal] = useState<'detail' | 'edit' | 'delete' | null>(null);
-  const [showSendingProfilesModalOpen, setShowSendingProfilesModalOpen] = useState(false);
-  const [updateSendingProfilesModalOpen, setUpdateSendingProfilesModalOpen] = useState(false);
-  const [deleteSendingProfilesModalOpen, setDeleteSendingProfilesModalOpen] = useState(false);
+  // const [showSendingProfilesModalOpen, setShowSendingProfilesModalOpen] = useState(false);
+  // const [updateSendingProfilesModalOpen, setUpdateSendingProfilesModalOpen] = useState(false);
+  // const [deleteSendingProfilesModalOpen, setDeleteSendingProfilesModalOpen] = useState(false);
   
   const onShowSendingProfiles = () => {
     setActiveModal('detail');

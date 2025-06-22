@@ -7,40 +7,7 @@ import { useUserSession } from "../context/UserSessionContext";
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, setUser } = useUserSession();
-
-  // useEffect(() => {
-  //   const fetchUserSession = async () => {
-  //     const token = localStorage.getItem("token");
-  //     const API_URL = import.meta.env.VITE_API_URL;
-  //     const raw = localStorage.getItem('user') || '';
-  //     const user_id = JSON.parse(raw).id;
-
-  //     if (!token || !raw) return;
-
-  //     try {
-  //       const res = await fetch(`${API_URL}/users/session`, {
-  //         method: 'POST',
-  //         headers: {
-  //           'Authorization': `Bearer ${token}`,
-  //           'Content-Type': 'application/json'
-  //         },
-  //         body: JSON.stringify({ user_id: user_id })
-  //       });
-
-  //       const result = await res.json();
-  //       if (result?.Success && result?.Data) {
-  //         // TIMPA LOCALSTORAGE USER
-  //         localStorage.setItem("user", JSON.stringify(result.Data));
-  //         setUser(result.Data);
-  //       }
-  //     } catch (err) {
-  //       console.error("Fetch user session failed:", err);
-  //     }
-  //   };
-
-  //   fetchUserSession();
-  // }, []);
+  const { user } = useUserSession();
 
   function toggleDropdown() {
     setIsOpen(!isOpen);

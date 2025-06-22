@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { X, Info, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Info, AlertTriangle, CheckCircle } from 'lucide-react';
 
 type ModernAlertProps = {
   type?: 'info' | 'danger' | 'success' | 'warning';

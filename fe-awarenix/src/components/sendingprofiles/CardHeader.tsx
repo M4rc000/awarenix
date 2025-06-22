@@ -8,9 +8,14 @@ export type CardHeaderSendingProfilesProps = {
   reloadTrigger: number
 }
 
+type GrowthData = {
+  growth_type: 'increase' | 'decrease' | 'no_change';
+  growth_percentage: number;
+};
+
 export default function CardHeader({reloadTrigger}: CardHeaderSendingProfilesProps) {
   const [totalSendingProfiles, setTotalSendingProfiles] = useState(0);
-  const [growthDataSendingProfiles, setGrowthDataSengrowthDataSendingProfiles] = useState(null);
+  const [growthDataSendingProfiles, setGrowthDataSengrowthDataSendingProfiles] = useState<GrowthData | null>(null);
 
   useEffect(() => {
     const API_URL = import.meta.env.VITE_API_URL;
@@ -92,7 +97,7 @@ export default function CardHeader({reloadTrigger}: CardHeaderSendingProfilesPro
                 growthDataSendingProfiles?.growth_type === 'increase'
                   ? 'success'
                   : growthDataSendingProfiles?.growth_type === 'decrease'
-                  ? 'danger'
+                  ? 'error'
                   : 'warning'
               }
               className="dark:text-gray-400"

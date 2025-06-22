@@ -10,7 +10,11 @@ type GrowthData = {
   growth_percentage: number;
 };
 
-export default function CardHeader({ reloadTrigger }) {
+type CardHeaderProps = {
+  reloadTrigger: unknown; 
+};
+
+export default function CardHeader({ reloadTrigger }: CardHeaderProps) {
   const [totalGroups, setTotalGroups] = useState(0);
   const [growthDataGroup, setGrowthDataGroup] = useState<GrowthData | null>(null);
 
@@ -18,10 +22,8 @@ export default function CardHeader({ reloadTrigger }) {
     const API_URL = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem("token");
 
-    // Function to fetch all data for the card
     const fetchCardData = async () => {
       try {
-        // Use Promise.all to fetch both data points concurrently for better performance
         const [groupsRes, growthRes] = await Promise.all([
           fetch(`${API_URL}/groups/all`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -53,7 +55,6 @@ export default function CardHeader({ reloadTrigger }) {
 
     fetchCardData();
 
-    // The entire effect now depends on reloadTrigger
   }, [reloadTrigger]);
 
   const renderBadge = (growth: GrowthData | null) => {

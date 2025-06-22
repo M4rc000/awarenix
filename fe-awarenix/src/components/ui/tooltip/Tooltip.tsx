@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { IoInformationCircleOutline } from "react-icons/io5";
 
 
-const Tooltip = ({ children, content, position = 'top' }) => {
+type TooltipProps = {
+  children: React.ReactNode;
+  content: React.ReactNode;
+  position?: 'top' | 'bottom' | 'left' | 'right';
+};
+
+const Tooltip = ({ children, content, position = 'top' }: TooltipProps) => {
   const [isVisible, setIsVisible] = useState(false);
 
   const positionClasses = {
@@ -42,7 +48,13 @@ const Tooltip = ({ children, content, position = 'top' }) => {
 
 
 // Label component with tooltip
-const LabelWithTooltip = ({ children, tooltip, required = false }) => (
+type LabelWithTooltipProps = {
+  children: React.ReactNode;
+  tooltip?: React.ReactNode;
+  required?: boolean;
+};
+
+const LabelWithTooltip = ({ children, tooltip, required = false }: LabelWithTooltipProps) => (
   <div className="flex items-center gap-2 mb-2">
     <label className="text-sm font-medium text-slate-300">
       {children}
@@ -59,11 +71,11 @@ const LabelWithTooltip = ({ children, tooltip, required = false }) => (
 );
 
 // Input component
-const Input = ({ className = "", error, ...props }) => (
-  <input
-    className={`w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${error ? 'border-red-500 focus:ring-red-500' : ''} ${className}`}
-    {...props}
-  />
-);
+// const Input = ({ className = "", error, ...props }) => (
+//   <input
+//     className={`w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${error ? 'border-red-500 focus:ring-red-500' : ''} ${className}`}
+//     {...props}
+//   />
+// );
 
 export default LabelWithTooltip;
