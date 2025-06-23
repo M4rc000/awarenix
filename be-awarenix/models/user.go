@@ -4,19 +4,19 @@ import "time"
 
 type User struct {
 	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name         string    `gorm:"not null" json:"name"`
-	Email        string    `gorm:"uniqueIndex;not null" json:"email"`
-	Position     string    `gorm:"not null" json:"position"`
-	PasswordHash string    `gorm:"not null" json:"password"`
-	IsActive     int       `gorm:"default:1" json:"isActive"`
-	Role         string    `gorm:"null" json:"role"`
-	Company      string    `gorm:"null" json:"company"`
-	Country      string    `gorm:"null" json:"country"`
-	LastLogin    time.Time `gorm:"null" json:"lastLogin"`
-	CreatedBy    uint      `gorm:"null" json:"createdBy"`
-	UpdatedBy    uint      `gorm:"null" json:"updatedBy"`
-	CreatedAt    time.Time `gorm:"null" json:"createdAt"`
-	UpdatedAt    time.Time `gorm:"null" json:"updatedAt"`
+	Name         string    `gorm:"type:varchar(50);not null" json:"name"`
+	Email        string    `gorm:"type:varchar(100);uniqueIndex;not null" json:"email"`
+	Position     string    `gorm:"type:varchar(50);not null" json:"position"`
+	PasswordHash string    `gorm:"type:varchar(255);not null" json:"password"`
+	IsActive     int       `gorm:"type:tinyint(1);default:1" json:"isActive"`
+	Role         string    `gorm:"type:varchar(15);default:'Member'" json:"role"`
+	Company      string    `gorm:"type:varchar(50);null" json:"company"`
+	Country      string    `gorm:"type:varchar(50);null" json:"country"`
+	LastLogin    time.Time `gorm:"type:datetime;null" json:"lastLogin"`
+	CreatedBy    uint      `gorm:"type:bigint;null" json:"createdBy"`
+	UpdatedBy    uint      `gorm:"type:bigint;null" json:"updatedBy"`
+	CreatedAt    time.Time `gorm:"type:datetime;null" json:"createdAt"`
+	UpdatedAt    time.Time `gorm:"type:datetime;null" json:"updatedAt"`
 }
 
 type GetUserTable struct {

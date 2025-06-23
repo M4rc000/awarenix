@@ -3,29 +3,28 @@ package models
 import "time"
 
 type Group struct {
-	ID           uint      `json:"id" gorm:"primaryKey"`
-	Name         string    `gorm:"not null" json:"name"`
-	DomainStatus string    `gorm:"not null" json:"domainStatus"`
-	CreatedBy    uint      `gorm:"null" json:"createdBy"`
-	UpdatedBy    uint      `gorm:"null" json:"updatedBy"`
-	CreatedAt    time.Time `gorm:"null" json:"createdAt"`
-	UpdatedAt    time.Time `gorm:"null" json:"updatedAt"`
-	// Add Members field for GORM relationship
-	Members []Member `gorm:"foreignKey:GroupID"`
+	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name         string    `gorm:"type:varchar(30);uniqueIndex;not null" json:"name"`
+	DomainStatus string    `gorm:"type:varchar(50);not null" json:"domainStatus"`
+	CreatedBy    uint      `gorm:"type:bigint;null" json:"createdBy"`
+	UpdatedBy    uint      `gorm:"type:bigint;null" json:"updatedBy"`
+	CreatedAt    time.Time `gorm:"type:datetime;null" json:"createdAt"`
+	UpdatedAt    time.Time `gorm:"type:datetime;null" json:"updatedAt"`
+	Members      []Member  `gorm:"foreignKey:GroupID"`
 }
 
 type Member struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
-	GroupID   uint      `json:"groupId" gorm:"not null;index;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	Name      string    `gorm:"not null" json:"name"`
-	Email     string    `gorm:"not null" json:"email"`
-	Position  string    `gorm:"not null" json:"position"`
-	Company   string    `gorm:"not null" json:"company"`
-	Country   string    `gorm:"not null" json:"Country"`
-	CreatedBy uint      `gorm:"null" json:"createdBy"`
-	UpdatedBy uint      `gorm:"null" json:"updatedBy"`
-	CreatedAt time.Time `gorm:"null" json:"createdAt"`
-	UpdatedAt time.Time `gorm:"null" json:"updatedAt"`
+	ID        uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	GroupID   uint      `gorm:"not null;index;constraint:OnUpdate:CASCADE,OnDelete:CASCADE" json:"groupId"`
+	Name      string    `gorm:"type:varchar(30);not null" json:"name"`
+	Email     string    `gorm:"type:varchar(50);not null" json:"email"`
+	Position  string    `gorm:"type:varchar(30);not null" json:"position"`
+	Company   string    `gorm:"type:varchar(50);null" json:"company"`
+	Country   string    `gorm:"type:varchar(50);null" json:"Country"`
+	CreatedBy uint      `gorm:"type:bigint;null" json:"createdBy"`
+	UpdatedBy uint      `gorm:"type:bigint;null" json:"updatedBy"`
+	CreatedAt time.Time `gorm:"type:datetime;null" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"type:datetime;null" json:"updatedAt"`
 }
 
 type MemberInput struct {
