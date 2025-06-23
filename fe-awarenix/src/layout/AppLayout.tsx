@@ -12,7 +12,7 @@ const breadcrumbMap: Record<string, { menu: string; title: string; icon: JSX.Ele
   "/dashboard": { menu: "Admin", title: "Dashboard", icon: <GridIcon /> },
   "/campaigns": { menu: "Admin", title: "Campaigns", icon: <CalenderIcon /> },
   "/user-management": { menu: "Admin", title: "User Management", icon: <UserIcon /> },
-  "/users-groups": { menu: "Admin", title: "Users & Groups", icon: <UserIcon /> },
+  "/groups-members": { menu: "Admin", title: "Groups and Members", icon: <UserIcon /> },
   "/email-templates": { menu: "Admin", title: "Email Templates", icon: <MailIcon /> },
   "/sending-profiles": { menu: "Admin", title: "Sending Profiles", icon: <MailIcon /> },
   "/landing-pages": { menu: "Admin", title: "Landing Pages", icon: <GridIcon /> },

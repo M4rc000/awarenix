@@ -8,19 +8,49 @@ import {
 import { Fragment } from 'react'
 import ShowGroupDetailModalForm from './ShowGroupDetailModalForm'
 
+// Perbarui tipe Group agar sesuai dengan data dari backend
+type Group = {
+  id: number;
+  name: string;
+  domainStatus: string;
+  memberCount: number;
+  createdAt: string; // Pastikan ini 'createdAt' (camelCase)
+  updatedAt: string; // Pastikan ini 'updatedAt' (camelCase)
+  // Tambahkan members jika Anda preload di GetGroups
+  members?: Member[]; // Jika Anda preload di BE, maka bisa ditambahkan di sini
+}
+
+// Tambahkan definisi Member di sini jika tidak ada di file types terpisah
+interface Member {
+    id: number;
+    name: string;
+    email: string;
+    position: string;
+    company: string;
+    country: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export type ShowGroupDetailModalProps = {
   isOpen: boolean
   onClose: () => void
+  group: Group | null; // Pastikan tipe ini konsisten
 }
 
 export default function ShowGroupDetailModal({
   isOpen,
   onClose,
+  group,
 }: ShowGroupDetailModalProps) {
   return (
     <Transition show={isOpen} as={Fragment}>
-      <Dialog open={isOpen} onClose={onClose} className="relative z-[999]">
-        {/* Backdrop with fade animation */}
+      <Dialog
+        open={isOpen}
+        onClose={onClose} // Izinkan penutupan melalui backdrop atau tombol Escape
+        className="relative z-[999]"
+      >
+        {/* Backdrop dengan animasi fade */}
         <Transition.Child
           as={Fragment}
           enter="transition-opacity duration-300"
@@ -34,7 +64,7 @@ export default function ShowGroupDetailModal({
         </Transition.Child>
 
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          {/* Panel with scale & slide-up animation */}
+          {/* Panel dengan animasi scale & slide-up */}
           <Transition.Child
             as={Fragment}
             enter="transition-transform duration-300 ease-out"
@@ -44,16 +74,19 @@ export default function ShowGroupDetailModal({
             leaveFrom="translate-y-0 opacity-100 scale-100"
             leaveTo="translate-y-4 opacity-0 scale-95"
           >
-            <DialogPanel className="w-full max-w-fit box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-hidden dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5 z-[9999999999999]">
+            <DialogPanel
+              className="w-full max-w-4xl box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-hidden dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5"
+              onClick={(e) => e.stopPropagation()} // Mencegah penutupan saat klik di dalam panel
+            >
               {/* HEADER */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-700 flex-shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-300 dark:border-b-gray-600 flex-shrink-0">
                 <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Show Detail Group
+                  Detail Group
                 </DialogTitle>
                 <button
                   onClick={onClose}
-                  aria-label="Close modal"
-                  className="text-gray-400 hover:text-gray-600"
+                  aria-label="Tutup modal"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   ✕
                 </button>
@@ -61,20 +94,20 @@ export default function ShowGroupDetailModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <ShowGroupDetailModalForm />
+                {/* Pastikan 'group' prop diteruskan ke ShowGroupDetailModalForm */}
+                <ShowGroupDetailModalForm group={group} />
               </div>
 
               {/* FOOTER */}
-              <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 dark:bg-gray-900 flex-shrink-0">
+              <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-400 rounded dark:hover:bg-gray-600  dark:bg-gray-400"
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-200 dark:text-gray-200 rounded"
                 >
                   Close
                 </button>
               </div>
             </DialogPanel>
-
           </Transition.Child>
         </div>
       </Dialog>

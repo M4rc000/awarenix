@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
-import EmailBodyEditor from "./EmailBodyEditorTemplate";
 import { forwardRef, useImperativeHandle } from "react";
+import { LuLayoutTemplate } from "react-icons/lu";
+import { FcIdea } from "react-icons/fc";
+import EmailBodyEditorTemplate from "./EmailBodyEditorTemplate";
+import EmailBodyEditorCustom from "./EmailBodyEditorCustom";
 
 type EmailTemplate = {
   id: number;
@@ -22,7 +25,6 @@ type EditEmailTemplateModalFormProps = {
   emailTemplate: EmailTemplate;
 };
 
-// Define email templaet data structure
 type EmailTemplateData = {
   templateName: string;
   envelopeSender: string;
@@ -194,14 +196,51 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
     };
 
     const emailTabs = [
+      // {
+      //   label: "📝 Email Body",
+      //   content: <EmailBodyEditor 
+      //     templateName={formData.templateName}
+      //     envelopeSender={formData.envelopeSender}
+      //     subject={formData.subject}
+      //     onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
+      //     initialContent={formData.bodyEmail}
+      //   />,
+      // },
       {
-        label: "📝 Email Body",
-        content: <EmailBodyEditor 
-          templateName={formData.templateName}
-          envelopeSender={formData.envelopeSender}
-          subject={formData.subject}
-          onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
-          initialContent={formData.bodyEmail}
+        label: (
+          <div className="flex items-center justify-center gap-2">
+          <LuLayoutTemplate />
+          <span>Template</span>
+        </div>
+        ), 
+        content: <EmailBodyEditorTemplate
+        templateName={formData.templateName}
+        envelopeSender={formData.envelopeSender}
+        subject={formData.subject}
+        initialContent={formData.bodyEmail}
+        onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
+        // onBodyChange={(html) => {
+          //   handleInputChange("bodyEmail", html);
+          //   setEmailTemplate(prev => ({ ...prev, bodyEmail: html })); // <-- ini penting
+          // }}
+          />,
+        },
+        {
+          label: (
+            <div className="flex items-center justify-center gap-2">
+            <FcIdea />
+            <span>Custom</span>
+          </div>
+        ), 
+        content: <EmailBodyEditorCustom 
+        envelopeSender={formData.envelopeSender}
+        subject={formData.subject}
+        initialContent={formData.bodyEmail}
+        onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
+        // onBodyChange={(html) => {
+        //     handleInputChange("bodyEmail", html);
+        //     setEmailTemplate(prev => ({ ...prev, bodyEmail: html })); // <-- ini penting
+        //   }}
         />,
       },
     ];

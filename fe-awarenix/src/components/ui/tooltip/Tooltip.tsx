@@ -70,12 +70,4 @@ const LabelWithTooltip = ({ children, tooltip, required = false }: LabelWithTool
   </div>
 );
 
-// Input component
-// const Input = ({ className = "", error, ...props }) => (
-//   <input
-//     className={`w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${error ? 'border-red-500 focus:ring-red-500' : ''} ${className}`}
-//     {...props}
-//   />
-// );
-
 export default LabelWithTooltip;

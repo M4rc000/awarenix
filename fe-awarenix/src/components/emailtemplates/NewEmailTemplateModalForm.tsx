@@ -198,27 +198,11 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
       label: (
       <div className="flex items-center justify-center gap-2">
         <LuLayoutTemplate />
-        <span>Template</span>
+        <span>Email Body</span>
       </div>
       ), 
       content: <EmailBodyEditorTemplate
         templateName={templateName}
-        envelopeSender={envelopeSender}
-        subject={subject}
-        onBodyChange={(html) => {
-          handleInputChange("bodyEmail", html);
-          setEmailTemplate(prev => ({ ...prev, bodyEmail: html })); // <-- ini penting
-        }}
-      />,
-    },
-    {
-      label: (
-        <div className="flex items-center justify-center gap-2">
-          <FcIdea />
-          <span>Custom</span>
-        </div>
-      ), 
-      content: <EmailBodyEditorCustom 
         envelopeSender={envelopeSender}
         subject={subject}
         onBodyChange={(html) => {

@@ -23,7 +23,9 @@ func SetupRoutes(router *gin.Engine) {
 		{
 			groups.POST("/register", controllers.RegisterGroup) // CREATE
 			groups.GET("/all", controllers.GetGroups)           // READ
-			groups.PUT("/:id", controllers.UpdateUser)          // UPDATE
+			groups.GET("/:id", controllers.GetGroupDetail)      // DETAIL
+			groups.PUT("/:id", controllers.UpdateUser)          // UPATE
+			groups.DELETE("/:id", controllers.DeleteGroup)      // DELETE
 		}
 
 		users := api.Group("/users")

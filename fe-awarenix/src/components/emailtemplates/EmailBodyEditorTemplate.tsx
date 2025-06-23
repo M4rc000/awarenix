@@ -1,83 +1,84 @@
 import { useState, useEffect } from "react";
+import Select from "../form/Select";
 
 // Dummy Templates
 const TEMPLATE_WELCOME = `<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Template</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-        <tr>
-            <td align="center" style="padding: 20px 0;">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <tr>
-                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">
-                                Welcome to Our Platform!
-                            </h1>
-                        </td>
-                    </tr>
-                    
-                    <tr>
-                        <td style="padding: 40px 30px;">
-                            <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 24px;">
-                                Hello There! 👋
-                            </h2>
-                            
-                            <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0; font-size: 16px;">
-                                Thank you for joining our community. We're excited to have you on board and can't wait for you to explore all the amazing features we have prepared for you.
-                            </p>
-                            
-                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-radius: 6px; margin: 25px 0;">
-                                <tr>
-                                    <td style="padding: 20px;">
-                                        <h3 style="color: #333333; margin: 0 0 10px 0; font-size: 18px;">
-                                            🚀 What's Next?
-                                        </h3>
-                                        <ul style="color: #666666; margin: 0; padding-left: 20px; line-height: 1.8;">
-                                            <li>Complete your profile setup</li>
-                                            <li>Explore our dashboard</li>
-                                            <li>Connect with other users</li>
-                                            <li>Start your first project</li>
-                                        </ul>
-                                    </td>
-                                </tr>
-                            </table>
-                            
-                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
-                                <tr>
-                                    <td align="center">
-                                        <a href="#" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 6px; font-weight: bold; font-size: 16px; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
-                                            Get Started Now
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
-                            
-                            <p style="color: #666666; line-height: 1.6; margin: 20px 0 0 0; font-size: 14px;">
-                                If you have any questions, our support team is here to help. Just reply to this email or visit our help center.
-                            </p>
-                        </td>
-                    </tr>
-                    
-                    <tr>
-                        <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;">
-                            <p style="color: #999999; margin: 0; font-size: 12px; line-height: 1.4;">
-                                © 2025 Your Company Name. All rights reserved.<br>
-                                123 Business Street, City, State 12345<br>
-                                <a href="#" style="color: #667eea; text-decoration: none;">Unsubscribe</a> | 
-                                <a href="#" style="color: #667eea; text-decoration: none;">Privacy Policy</a>
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>`;
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Email Template</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+            <tr>
+                <td align="center" style="padding: 20px 0;">
+                    <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <tr>
+                            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                                <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">
+                                    Welcome to Our Platform!
+                                </h1>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td style="padding: 40px 30px;">
+                                <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 24px;">
+                                    Hello There! 👋
+                                </h2>
+                                
+                                <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0; font-size: 16px;">
+                                    Thank you for joining our community. We're excited to have you on board and can't wait for you to explore all the amazing features we have prepared for you.
+                                </p>
+                                
+                                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-radius: 6px; margin: 25px 0;">
+                                    <tr>
+                                        <td style="padding: 20px;">
+                                            <h3 style="color: #333333; margin: 0 0 10px 0; font-size: 18px;">
+                                                🚀 What's Next?
+                                            </h3>
+                                            <ul style="color: #666666; margin: 0; padding-left: 20px; line-height: 1.8;">
+                                                <li>Complete your profile setup</li>
+                                                <li>Explore our dashboard</li>
+                                                <li>Connect with other users</li>
+                                                <li>Start your first project</li>
+                                            </ul>
+                                        </td>
+                                    </tr>
+                                </table>
+                                
+                                <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                                    <tr>
+                                        <td align="center">
+                                            <a href="#" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 6px; font-weight: bold; font-size: 16px; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
+                                                Get Started Now
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                                
+                                <p style="color: #666666; line-height: 1.6; margin: 20px 0 0 0; font-size: 14px;">
+                                    If you have any questions, our support team is here to help. Just reply to this email or visit our help center.
+                                </p>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;">
+                                <p style="color: #999999; margin: 0; font-size: 12px; line-height: 1.4;">
+                                    © 2025 Your Company Name. All rights reserved.<br>
+                                    123 Business Street, City, State 12345<br>
+                                    <a href="#" style="color: #667eea; text-decoration: none;">Unsubscribe</a> | 
+                                    <a href="#" style="color: #667eea; text-decoration: none;">Privacy Policy</a>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>`;
 
 const TEMPLATE_LOGIN_VERIFICATION = `<html>
 <head>
@@ -409,7 +410,6 @@ const TEMPLATE_NEWSLETTER = `<html>
 </html>`;
 
 
-// Define your templates with a name and the HTML content
 const EMAIL_TEMPLATES = [
     { name: "Welcome Email", content: TEMPLATE_WELCOME },
     { name: "Login Verification (Social Media/Software Popular)", content: TEMPLATE_LOGIN_VERIFICATION },
@@ -445,7 +445,7 @@ const EmailBodyEditorTemplate = ({
     });
 
     useEffect(() => {
-        if (onBodyChange) {
+        if (onBodyChange) { 
             onBodyChange(htmlContent);
         }
     }, [htmlContent, onBodyChange]); // Add onBodyChange to dependencies to avoid linting warnings
@@ -466,24 +466,34 @@ const EmailBodyEditorTemplate = ({
 
     return (
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800">
-            {/* Template Selector */}
-            <div className="p-4">
-                <label htmlFor="email-template-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Choose Email Template:
-                </label>
-                <select
-                    id="email-template-select"
-                    value={selectedTemplate}
-                    onChange={handleTemplateChange}
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm"
-                >
-                    <option value="Custom">Custom Template</option>
-                    {EMAIL_TEMPLATES.map((template) => (
-                        <option key={template.name} value={template.name}>
-                            {template.name}
-                        </option>
-                    ))}
-                </select>
+            <div className="grid grid-cols-2 gap-3">
+                {/* Template Selector */}
+                <div className="p-4">
+                    <label htmlFor="email-template-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Default Email Template:
+                    </label>
+                    <select
+                        id="email-template-select"
+                        value={selectedTemplate}
+                        onChange={handleTemplateChange}
+                        className="mt-1 block w-full pl-3 pr-10  py-3 text-base border dark:border-gray-700 focus:outline-none sm:text-sm rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm"
+                    >
+                        <option value="Custom">Custom Template</option>
+                        {EMAIL_TEMPLATES.map((template) => (
+                            <option key={template.name} value={template.name}>
+                                {template.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Import Template */}
+                <div className="p-4">
+                    <button
+                        className="mt-7 block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 w-36 h-[2.8rem] rounded text-xs">
+                        🌐 Import EML File
+                    </button>
+                </div>
             </div>
 
             {/* Tab Navigation */}

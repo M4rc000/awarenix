@@ -23,24 +23,36 @@ import { FaCircleInfo } from "react-icons/fa6";
 import Button from "../ui/button/Button";
 import type { SortingState } from '@tanstack/react-table';
 import { useSidebar } from "../../context/SidebarContext";
-import ShowUserDetailModal from './ShowUserDetailModal';
-import EditUserModal from './EditUserModal';
-import DeleteUserModal from './DeleteUserModal';
+import ShowGroupDetailModal from './ShowGroupDetailModal';
+import EditGroupModal from './EditGroupModal';
+import DeleteGroupModal from './DeleteGroupModal';
 import Swal from '../utils/AlertContainer';
-import { IoIosCheckmarkCircle } from "react-icons/io";
-import { IoCloseCircle } from "react-icons/io5";
 
-interface User {
+interface Group {
   id: number;
   name: string;
-  email: string;
-  position: string;
-  role: string;
-  isActive: number;
-  updated_at: string;
+  domainStatus: string; // Tambahkan ini jika ada di BE Anda
+  memberCount: number; // PASTIKAN NAMA KEY INI SAMA DENGAN DARI BACKEND
+  created_at: string; // Akan diganti ke createdAt
+  updated_at: string; // Akan diganti ke updatedAt
+  // Jika Anda ingin semua detail member langsung dari payload group:
+  members?: Member[];
 }
 
-export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?: number, onReload?: () => void }){
+// Tambahkan definisi Member di sini atau di file types terpisah
+interface Member {
+    id: number;
+    name: string;
+    email: string;
+    position: string;
+    company: string;
+    country: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+
+export default function TableGroups({ reloadTrigger, onReload }: { reloadTrigger?: number, onReload?: () => void }){
   const [activeModal, setActiveModal] = useState<'detail' | 'edit' | 'delete' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -53,8 +65,8 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
   const [sorting, setSorting] = useState<SortingState>([]);
   const deferredSearch = useDeferredValue(search);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [data, setData] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [data, setData] = useState<Group[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
   // CTRL K or Command K
   useEffect(() => {
@@ -77,7 +89,8 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/users/all`, {
+      // Pastikan endpoint ini sesuai dengan yang mengeluarkan GroupResponse dari backend
+      const res = await fetch(`${API_URL}/groups/all`, {
         credentials: 'include',
         headers: {
           "Content-Type": "application/json",
@@ -88,11 +101,12 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
       if (!res.ok) throw new Error('Failed to fetch data');
 
       const result = await res.json();
-      setData(result.Data || result.data || result);
+      // Pastikan result.Data adalah array dari Group (dengan memberCount)
+      setData(result.Data || []); // Gunakan || [] untuk memastikan ini array
     } catch (err) {
       console.log('Error: ', err);
       Swal.fire({
-        text: 'Failed to load user data',
+        text: 'Failed to load group data',
         duration: 2000,
         icon: "error"
       });
@@ -101,32 +115,28 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
     }
   }
 
+  // Gunakan useEffect ini saja, karena sudah menangani reloadTrigger dan initial fetch
   useEffect(() => {
     fetchData();
   }, [reloadTrigger]);
 
-  useEffect(() => {
-  if (reloadTrigger && reloadTrigger > 0) {
-    fetchData();
-  }
-  }, [reloadTrigger]);
 
-  const onShowDetail = (user: User) => {
-    setSelectedUser(user);
+  const onShowDetail = (group: Group) => { // Ganti user menjadi group untuk konsistensi
+    setSelectedGroup(group);
     setActiveModal('detail');
   };
 
-  const onEditUser = (user: User) => {
-    setSelectedUser(user);
+  const onEditUser = (group: Group) => { // Ganti user menjadi group
+    setSelectedGroup(group);
     setActiveModal('edit');
   }
-  
-  const onDeleteUser = (user: User) => {
-    setSelectedUser(user);
-    setActiveModal('delete'); 
-  } 
-  
-  const columns = useMemo<ColumnDef<User>[]>(
+
+  const onDeleteUser = (group: Group) => { // Ganti user menjadi group
+    setSelectedGroup(group);
+    setActiveModal('delete');
+  }
+
+  const columns = useMemo<ColumnDef<Group>[]>(
     () => [
       {
         accessorKey: 'id',
@@ -138,38 +148,19 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         header: 'Name',
       },
       {
-        accessorKey: 'email',
-        header: 'Email',
+        accessorKey: 'memberCount', // Pastikan nama ini cocok dengan payload backend
+        header: 'Member Count', // Perbarui header menjadi lebih jelas
       },
       {
-        accessorKey: 'role',
-        header: 'Role',
-        cell:({getValue})=>{
-          const raw = getValue();
-          if(!raw) return '-'
-          return raw;
-        }
-      },
-      {
-        accessorKey: 'isActive',
-        header: 'Status',
-        cell:({getValue})=>{
-          const raw = getValue();
-          return raw == true ? <IoIosCheckmarkCircle className='ml-2 w-5 h-4 ' color='green'/> : <IoCloseCircle className='ml-2 w-5 h-4 ' color='gray'/>;
-        }
-      },
-      {
-        accessorKey: 'createdAt',
+        accessorKey: 'createdAt', // Ganti created_at menjadi createdAt
         header: 'Created At',
         cell: ({ getValue }) => {
-          const raw = getValue();
+          const raw = getValue() as string | number | Date | undefined | null; // Cast to more flexible type
           if (!raw) return '-';
 
-          const dateValue = (typeof raw === 'string' || typeof raw === 'number' || raw instanceof Date) ? raw : null;
-          if (!dateValue) return '-';
-          const date = new Date(dateValue);
+          const date = new Date(raw);
           if (isNaN(date.getTime())) return '-';
-          
+
           return date.toLocaleString('id-ID', {
             timeZone: 'Asia/Jakarta',
             day: '2-digit',
@@ -182,17 +173,15 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         }
       },
       {
-        accessorKey: 'updatedAt',
+        accessorKey: 'updatedAt', // Ganti updated_at menjadi updatedAt
         header: 'Last Modified',
         cell: ({ getValue }) => {
-          const raw = getValue();
+          const raw = getValue() as string | number | Date | undefined | null; // Cast to more flexible type
           if (!raw) return '-';
 
-          const dateValue = (typeof raw === 'string' || typeof raw === 'number' || raw instanceof Date) ? raw : null;
-          if (!dateValue) return '-';
-          const date = new Date(dateValue);
+          const date = new Date(raw);
           if (isNaN(date.getTime())) return '-';
-          
+
           return date.toLocaleString('id-ID', {
             timeZone: 'Asia/Jakarta',
             day: '2-digit',
@@ -208,7 +197,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         id: 'actions',
         accessorKey: 'actions',
         header: 'Action',
-        cell: (row: CellContext<User, unknown>) => (          
+        cell: (row: CellContext<Group, unknown>) => (
           <div className="flex items-center space-x-2">
             <Button size="xs" variant="info" onClick={() => onShowDetail(row.row.original)}>
               <FaCircleInfo />
@@ -240,33 +229,9 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onPaginationChange: setPagination, 
+    onPaginationChange: setPagination,
   });
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const API_URL = import.meta.env.VITE_API_URL;
-    const fetchData = async () => {
-      try {
-        const res = await fetch(`${API_URL}/users/all`, {
-          credentials: 'include',
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) throw new Error('Failed to fetch data');
-
-        const result = await res.json();
-        setData(result.Data || result.data || result);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchData();
-  }, [reloadTrigger]);
   return (
     <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] border border-1-gray-500 dark:border-gray-700">
       <div className="p-4 rounded-lg bg-white dark:bg-white/[0.03]">
@@ -299,13 +264,13 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                   viewBox="0 0 20 20"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  >
+                >
                   <path
                     fillRule="evenodd"
                     clipRule="evenodd"
                     d="M3.04175 9.37363C3.04175 5.87693 5.87711 3.04199 9.37508 3.04199C12.8731 3.04199 15.7084 5.87693 15.7084 9.37363C15.7084 12.8703 12.8731 15.7053 9.37508 15.7053C5.87711 15.7053 3.04175 12.8703 3.04175 9.37363ZM9.37508 1.54199C5.04902 1.54199 1.54175 5.04817 1.54175 9.37363C1.54175 13.6991 5.04902 17.2053 9.37508 17.2053C11.2674 17.2053 13.003 16.5344 14.357 15.4176L17.177 18.238C17.4699 18.5309 17.9448 18.5309 18.2377 18.238C18.5306 17.9451 18.5306 17.4703 18.2377 17.1774L15.418 14.3573C16.5365 13.0033 17.2084 11.2669 17.2084 9.37363C17.2084 5.04817 13.7011 1.54199 9.37508 1.54199Z"
                     fill=""
-                    />
+                  />
                 </svg>
               </span>
               <input
@@ -315,7 +280,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                 className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[430px]"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                />
+              />
               <button className="absolute right-2.5 xl:px-3 xl:w-12 xl:left-92 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs -tracking-[0.2px] text-gray-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400">
                 <span className='text-center'> ⌘ </span>
                 <span> K </span>
@@ -331,7 +296,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
-                  const isSorted = header.column.getIsSorted();  // 'asc' | 'desc' | false
+                  const isSorted = header.column.getIsSorted(); // 'asc' | 'desc' | false
                   const canSort = header.column.getCanSort();
 
                   return (
@@ -339,12 +304,12 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                       key={header.id}
                       isHeader
                       className="
-                        relative 
+                        relative
                         px-5 py-3 pr-6
-                        text-center text-gray-500 text-sm 
+                        text-center text-gray-500 text-sm
                         cursor-pointer select-none
                       "
-                      >
+                    >
                       <div
                         onClick={header.column.getToggleSortingHandler()}>
                         {flexRender(header.column.columnDef.header, header.getContext())}
@@ -356,7 +321,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                                 ${isSorted === "asc"
                                   ? "text-gray-800"
                                   : "text-gray-300"}
-                            `}
+                              `}
                             >
                               ▲
                             </span>
@@ -365,7 +330,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                                 ${isSorted === "desc"
                                   ? "text-gray-800"
                                   : "text-gray-300"
-                              }`}
+                                }`}
                             >
                               ▼
                             </span>
@@ -416,8 +381,11 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
       {/* PAGINATION */}
       <div className="flex items-center justify-between p-4 text-gray-600 dark:text-gray-500 text-sm">
         <div>
-          Showing {table.getState().pagination.pageIndex + 1} to {table.getState().pagination.pageSize}  of{' '}
-          {table.getPageCount()}
+          Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} of{' '}
+          {table.getFilteredRowModel().rows.length} entries
+          {table.getFilteredRowModel().rows.length !== data.length && (
+            <span className="text-gray-500"> (filtered from {data.length} total)</span>
+          )}
         </div>
         <div className="space-x-2">
           <div>
@@ -446,32 +414,35 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                   page === totalPage - 1 ||
                   Math.abs(currentPage - page) <= 1
                 ) {
-                return (
-                  <a
-                    key={page}
-                    onClick={() => table.setPageIndex(page)}
-                    href="#"
-                    aria-current="page"
-                    className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-regular focus:z-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:text-grey-400 ${
-                      currentPage === page
-                        ? 'z-10 bg-indigo-600 text-white focus:outline-indigo-600 ring-gray-300 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
-                        : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
-                    }`}>
-                    {page + 1}
-                  </a>
-              )}
+                  return (
+                    <a
+                      key={page}
+                      onClick={() => table.setPageIndex(page)}
+                      href="#"
+                      aria-current="page"
+                      className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-regular focus:z-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:text-grey-400 ${
+                        currentPage === page
+                          ? 'z-10 bg-indigo-600 text-white focus:outline-indigo-600 ring-gray-300 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
+                          : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
+                      }`}
+                    >
+                      {page + 1}
+                    </a>
+                  );
+                }
 
-              if (
-                page === currentPage - 2 ||
-                page === currentPage + 2
-              ) {
-                return (
-                <a
-                  href="#"
-                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-gray-300 dark:ring-gray-700 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
-                    ...
-                </a>
-                );
+                if (
+                  page === currentPage - 2 ||
+                  page === currentPage + 2
+                ) {
+                  return (
+                    <a
+                      key={page} // Add key for list rendering
+                      href="#"
+                      className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-gray-300 dark:ring-gray-700 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                      ...
+                    </a>
+                  );
                 }
                 return null;
               })}
@@ -494,43 +465,41 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
       </div>
 
       {/* SHOW MODAL */}
-      <ShowUserDetailModal 
+      <ShowGroupDetailModal
         isOpen={activeModal === 'detail'}
         onClose={() => {
           setActiveModal(null);
-          setSelectedUser(null);
+          setSelectedGroup(null);
         }}
-        user={selectedUser}
-        />
+        group={selectedGroup} // Pastikan selectedGroup diteruskan
+      />
 
       {/* EDIT MODAL */}
-      <EditUserModal 
+      <EditGroupModal
         isOpen={activeModal === 'edit'}
         onClose={() => {
           setActiveModal(null);
-          setSelectedUser(null);
+          setSelectedGroup(null);
         }}
-        user={selectedUser}
-        onUserUpdated={() => {
+        group={selectedGroup}
+        onGroupUpdated={() => { // Ganti onUserUpdated menjadi onGroupUpdated
           fetchData()
-        }
-      }
-        
+        }}
       />
 
       {/* DELETE MODAL */}
-      <DeleteUserModal 
+      <DeleteGroupModal
         isOpen={activeModal === 'delete'}
         onClose={() => {
           setActiveModal(null);
-          setSelectedUser(null);
+          setSelectedGroup(null);
         }}
-        user={selectedUser}
-        onUserDeleted={() => {
+        group={selectedGroup}
+        onGroupDeleted={() => { // Ganti onUserDeleted menjadi onGroupDeleted
           fetchData();
           if (onReload) onReload();
         }}
-      />   
+      />
     </div>
   )
 }

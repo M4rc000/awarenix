@@ -12,12 +12,12 @@ export default function ManageGroup({reloadTrigger, onReload}: ManageGroupProps)
     const [modalOpen, setModalOpen] = useState(false);
     return (
         <div>
-        <Button className="text-md mt-2 mb-3" onClick={()=> setModalOpen(true)}>New Group</Button>
-        <TableUsersGroups/>
-        <NewGroupModal
-            isOpen={modalOpen}
-            onClose={() => setModalOpen(false)}
-        />
+            <Button className="text-md mt-2 mb-3" onClick={()=> setModalOpen(true)}>New Group</Button>
+            <TableUsersGroups/>
+            <NewGroupModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+            />
         </div>
     );
 }

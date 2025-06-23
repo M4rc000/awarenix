@@ -5,20 +5,80 @@ import {
   DialogTitle,
   Transition,
 } from '@headlessui/react'
-import { Fragment } from 'react'
-import DeleteGroupModalForm from './DeleteGroupModalForm'
+import { Fragment, useState, useRef } from 'react'
+import DeleteGroupModalForm, {DeleteGroupModalFormRef} from './DeleteGroupModalForm'
+import Swal from '../utils/AlertContainer'
 
-export type DeleteGroupModalProps = {
-  isOpen: boolean
-  onClose: () => void
+export type Group = {
+  id: number
+  name: string
 }
 
-export default function DeleteGroupModal({
+export type DeleteUserModalProps = {
+  isOpen: boolean
+  onClose: () => void
+  group: Group | null
+  onSuccess?: () => void
+  onGroupDeleted?: () => void
+}
+
+export default function DeleteUserModal({
   isOpen,
   onClose,
-}: DeleteGroupModalProps) {
+  group,
+  onGroupDeleted,
+}: DeleteUserModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string>('');
+  const formRef = useRef<DeleteGroupModalFormRef>(null);
+
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem('token');
+  const handleDelete = async () => {
+    if (!group) return;
+    
+    setIsDeleting(true);
+    setError('');
+
+    try {
+      const res = await fetch(`${API_URL}/groups/${group.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.error || 'Failed to delete user');
+        Swal.fire({
+          text: 'Failed to delete user',
+          icon: 'error',
+          duration: 2000
+        });
+        return;
+      }
+      onGroupDeleted?.(); // 🔁 trigger fetch
+      onClose();         // ❎ close modal
+
+    } catch (err) {
+      setError('Unexpected error occurred');
+      console.log('Error: ', err);
+      
+      Swal.fire({
+        text: `Unexpected error occurred while deleting user`,
+        icon: 'error',
+        duration: 2000,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <Transition show={isOpen} as={Fragment}>
+     <Transition show={isOpen} as={Fragment}>
       <Dialog open={isOpen} onClose={()=>{}} className="relative z-[999]">
         {/* Backdrop with fade animation */}
         <Transition.Child
@@ -54,7 +114,12 @@ export default function DeleteGroupModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <DeleteGroupModalForm />
+                <DeleteGroupModalForm 
+                  ref={formRef}
+                  onDelete={handleDelete}
+                  error={error}
+                  isDeleting={isDeleting} 
+                  group={group!}/>
               </div>
 
               {/* FOOTER */}
@@ -66,8 +131,37 @@ export default function DeleteGroupModal({
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    onClose()
+                  onClick={async () => {
+                    try {
+                      const success = await formRef.current?.submitDelete();
+                      
+                      if (success) {
+                        onClose();
+                        Swal.fire({
+                          text: 'Group deleted successfully',
+                          icon: "success",
+                          duration: 2000
+                        });
+                        
+                        // Panggil callback untuk refresh data
+                        if (onGroupDeleted) {
+                          onGroupDeleted();
+                        }
+                      } else {
+                        Swal.fire({
+                          text: 'Failed to delete group. Please try again!',
+                          icon: "error",
+                          duration: 2000
+                        })
+                      }
+                    } catch (error) {
+                      console.log('Error: ', error);
+                      Swal.fire({
+                        text: `An error occurred while updating group!`,
+                        icon: "error",
+                        duration: 2000
+                      })
+                    }
                   }}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >

@@ -62,8 +62,8 @@ const navGroups: NavGroup[] = [
       },
       {
         icon: <GroupIcon />,
-        name: "Users & Groups",
-        path: "/users-groups",
+        name: "Groups & Members",
+        path: "/groups-members",
       },
       {
         icon: <MailIcon />,
@@ -103,8 +103,8 @@ const navGroups: NavGroup[] = [
       },
       {
         icon: <GroupIcon />,
-        name: "Users & Groups",
-        path: "/users-groups",
+        name: "Groups & Members",
+        path: "/groups-members",
       },
       {
         icon: <MailIcon />,

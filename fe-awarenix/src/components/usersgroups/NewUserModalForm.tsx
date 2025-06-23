@@ -55,7 +55,6 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
     company: "",
     isActive: "0",
   });
-
   const [errors, setErrors] = useState<Partial<Record<keyof UserData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 

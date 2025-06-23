@@ -8,7 +8,7 @@ import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import { Helmet } from "react-helmet-async";
 import Dashboard from "./pages/Dashboard/Dashboard";
-import UsersGroups from "./pages/UsersGroups/UsersGroups";
+import MembersGroups from "./pages/UsersGroups/MembersGroups";
 import EmailTemplates from "./pages/EmailTemplates/EmailTemplates";
 import ForgotPassword from "./components/auth/ForgotPassword";
 import SendingProfiles from "./pages/SendingProfiles/SendingProfiles"
@@ -37,7 +37,7 @@ export default function App() {
                 <Route index path="/dashboard" element={<Dashboard />} />
                 <Route path="/campaigns" element={<Campaigns />} />
                 <Route path="/user-management" element={<UserManagement />} />
-                <Route path="/users-groups" element={<UsersGroups />} />
+                <Route path="/groups-members" element={<MembersGroups />} />
                 <Route path="/email-templates" element={<EmailTemplates />} />
                 <Route path="/sending-profiles" element={<SendingProfiles />} />
                 <Route path="/landing-pages" element={<LandingPages />} />

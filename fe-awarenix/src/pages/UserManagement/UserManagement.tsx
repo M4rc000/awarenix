@@ -42,8 +42,8 @@ export default function UserManagement() { // Sekarang UserManagement tidak mene
           setModalOpen(false);
         }}
         onUserAdded={() => {
-          setModalOpen(false); // Pastikan modal tertutup setelah user ditambahkan
-          fetchData(); // Panggil fetchData untuk memuat ulang daftar pengguna
+          setModalOpen(false);
+          fetchData();
         }}
       />
     </div>

@@ -63,7 +63,7 @@ export default function EditEmailTemplateModal({
             <DialogPanel className="w-full xl:max-w-fit box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-hidden dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5 z-[9999999999999]">
               
               {/* HEADER */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-700 flex-shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-300 dark:border-b-gray-600 flex-shrink-0">
                 <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Edit Email Template
                 </DialogTitle>
@@ -85,7 +85,7 @@ export default function EditEmailTemplateModal({
               <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-200 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
@@ -127,7 +127,7 @@ export default function EditEmailTemplateModal({
                     }
                   }}
                   disabled={isLoading}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-300 dark:bg-blue-600 dark:hover:bg-blue-500 text-gray-800 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {isLoading ? 'Saving...' : 'Save'}
                 </button>
