@@ -31,24 +31,24 @@ import Swal from '../utils/AlertContainer';
 interface Group {
   id: number;
   name: string;
-  domainStatus: string; // Tambahkan ini jika ada di BE Anda
-  memberCount: number; // PASTIKAN NAMA KEY INI SAMA DENGAN DARI BACKEND
-  created_at: string; // Akan diganti ke createdAt
-  updated_at: string; // Akan diganti ke updatedAt
-  // Jika Anda ingin semua detail member langsung dari payload group:
+  domainStatus: string;
+  memberCount: number; 
+  createdAt: string; 
+  createdBy: number; 
+  updatedAt: string; 
+  updatedBy: number; 
   members?: Member[];
 }
 
-// Tambahkan definisi Member di sini atau di file types terpisah
 interface Member {
-    id: number;
-    name: string;
-    email: string;
-    position: string;
-    company: string;
-    country: string;
-    createdAt: string;
-    updatedAt: string;
+  id: number;
+  name: string;
+  email: string;
+  position: string;
+  company: string;
+  country: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 
@@ -148,20 +148,20 @@ export default function TableGroups({ reloadTrigger, onReload }: { reloadTrigger
         header: 'Name',
       },
       {
-        accessorKey: 'memberCount', // Pastikan nama ini cocok dengan payload backend
-        header: 'Member Count', // Perbarui header menjadi lebih jelas
+        accessorKey: 'memberCount', 
+        header: 'Member Count',
       },
       {
-        accessorKey: 'createdAt', // Ganti created_at menjadi createdAt
+        accessorKey: 'createdAt',
         header: 'Created At',
         cell: ({ getValue }) => {
-          const raw = getValue() as string | number | Date | undefined | null; // Cast to more flexible type
+          const raw = getValue() as string | number | Date | undefined | null;
           if (!raw) return '-';
 
           const date = new Date(raw);
           if (isNaN(date.getTime())) return '-';
 
-          return date.toLocaleString('id-ID', {
+          return date.toLocaleString('en-US', {
             timeZone: 'Asia/Jakarta',
             day: '2-digit',
             month: 'long',
@@ -173,16 +173,16 @@ export default function TableGroups({ reloadTrigger, onReload }: { reloadTrigger
         }
       },
       {
-        accessorKey: 'updatedAt', // Ganti updated_at menjadi updatedAt
+        accessorKey: 'updatedAt', 
         header: 'Last Modified',
         cell: ({ getValue }) => {
-          const raw = getValue() as string | number | Date | undefined | null; // Cast to more flexible type
+          const raw = getValue() as string | number | Date | undefined | null; 
           if (!raw) return '-';
 
           const date = new Date(raw);
           if (isNaN(date.getTime())) return '-';
 
-          return date.toLocaleString('id-ID', {
+          return date.toLocaleString('en-US', {
             timeZone: 'Asia/Jakarta',
             day: '2-digit',
             month: 'long',
@@ -471,7 +471,7 @@ export default function TableGroups({ reloadTrigger, onReload }: { reloadTrigger
           setActiveModal(null);
           setSelectedGroup(null);
         }}
-        group={selectedGroup} // Pastikan selectedGroup diteruskan
+        group={selectedGroup}
       />
 
       {/* EDIT MODAL */}
@@ -482,8 +482,9 @@ export default function TableGroups({ reloadTrigger, onReload }: { reloadTrigger
           setSelectedGroup(null);
         }}
         group={selectedGroup}
-        onGroupUpdated={() => { // Ganti onUserUpdated menjadi onGroupUpdated
+        onGroupUpdated={() => {
           fetchData()
+          if (onReload) onReload();
         }}
       />
 

@@ -14,7 +14,7 @@ interface User {
   name: string;
   email: string;
   position: string;
-  updated_at: string;
+  updatedAt: string;
 }
 
 export type EditUserModalProps = {
@@ -29,7 +29,7 @@ export default function EditUserModal({
   isOpen,
   onClose,
   user,
-  onUserUpdated, // Tambahkan parameter ini
+  onUserUpdated, 
 }: EditUserModalProps) {
   const formRef = useRef<EditUserModalFormRef>(null);
   const [isLoading, setIsLoading] = useState(false);

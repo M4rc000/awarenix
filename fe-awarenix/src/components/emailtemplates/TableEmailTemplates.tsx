@@ -29,7 +29,7 @@ import DeleteEmailTemplateModal from './DeleteEmailTemplateModal';
 
 interface EmailTemplate{
   id: number;
-  templateName: string;
+  name: string;
   envelopeSender: string;
   subject: string;
   updated_at: string;
@@ -141,7 +141,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
           const date = new Date(raw);
           if (isNaN(date.getTime())) return '-';
           
-          return date.toLocaleString('id-ID', {
+          return date.toLocaleString('en-US', {
             timeZone: 'Asia/Jakarta',
             day: '2-digit',
             month: 'long',
@@ -162,7 +162,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
           const date = new Date(raw);
           if (isNaN(date.getTime()) || date.getFullYear() < 2000) return '-';
 
-          return date.toLocaleString('id-ID', {
+          return date.toLocaleString('en-US', {
             timeZone: 'Asia/Jakarta',
             day: '2-digit',
             month: 'long',

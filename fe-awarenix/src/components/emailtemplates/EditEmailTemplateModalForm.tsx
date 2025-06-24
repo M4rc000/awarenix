@@ -1,12 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
 import { forwardRef, useImperativeHandle } from "react";
 import { LuLayoutTemplate } from "react-icons/lu";
-import { FcIdea } from "react-icons/fc";
 import EmailBodyEditorTemplate from "./EmailBodyEditorTemplate";
-import EmailBodyEditorCustom from "./EmailBodyEditorCustom";
 
 type EmailTemplate = {
   id: number;
@@ -34,26 +32,27 @@ type EmailTemplateData = {
 
 const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, EditEmailTemplateModalFormProps>(
   ({ emailTemplate, onSuccess }, ref) => {
+    if (!emailTemplate) return false;
      const [formData, setFormData] = useState<EmailTemplateData>({
-      templateName: "",
-      envelopeSender: "",
-      subject: "",
-      bodyEmail: "",
+        templateName: emailTemplate.name || "",
+        envelopeSender: emailTemplate.envelopeSender || "",
+        subject: emailTemplate.subject || "",
+        bodyEmail: emailTemplate.bodyEmail || "",
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Partial<EmailTemplateData>>({});
 
     // Initialize form data when emailTemplate prop changes
-    useEffect(() => {
-      if (emailTemplate) {
-        setFormData({
-          templateName: emailTemplate.name || "",
-          envelopeSender: emailTemplate.envelopeSender || "",
-          subject: emailTemplate.subject || "",
-          bodyEmail: emailTemplate.bodyEmail || "",
-        });
-      }
-    }, [emailTemplate]);
+    // useEffect(() => {
+    //   if (emailTemplate) {
+    //     setFormData({
+    //       templateName: emailTemplate.name || "",
+    //       envelopeSender: emailTemplate.envelopeSender || "",
+    //       subject: emailTemplate.subject || "",
+    //       bodyEmail: emailTemplate.bodyEmail || "",
+    //     });
+    //   }
+    // }, [emailTemplate]);
 
     // VALIDATION FUNCTION
     const validateForm = (): boolean => {
@@ -97,7 +96,7 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
             templateName: formData.templateName,
             envelopeSender: formData.envelopeSender,
             subject: formData.subject,
-            bodyEmail: formData.bodyEmail || "",
+            bodyEmail: formData .bodyEmail || "",
             updatedBy: updatedBy,
           }),
         });
@@ -196,53 +195,21 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
     };
 
     const emailTabs = [
-      // {
-      //   label: "📝 Email Body",
-      //   content: <EmailBodyEditor 
-      //     templateName={formData.templateName}
-      //     envelopeSender={formData.envelopeSender}
-      //     subject={formData.subject}
-      //     onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
-      //     initialContent={formData.bodyEmail}
-      //   />,
-      // },
       {
         label: (
           <div className="flex items-center justify-center gap-2">
-          <LuLayoutTemplate />
-          <span>Template</span>
-        </div>
-        ), 
-        content: <EmailBodyEditorTemplate
-        templateName={formData.templateName}
-        envelopeSender={formData.envelopeSender}
-        subject={formData.subject}
-        initialContent={formData.bodyEmail}
-        onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
-        // onBodyChange={(html) => {
-          //   handleInputChange("bodyEmail", html);
-          //   setEmailTemplate(prev => ({ ...prev, bodyEmail: html })); // <-- ini penting
-          // }}
-          />,
-        },
-        {
-          label: (
-            <div className="flex items-center justify-center gap-2">
-            <FcIdea />
-            <span>Custom</span>
+            <LuLayoutTemplate />
+            <span>Template</span>
           </div>
         ), 
-        content: <EmailBodyEditorCustom 
-        envelopeSender={formData.envelopeSender}
-        subject={formData.subject}
-        initialContent={formData.bodyEmail}
-        onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
-        // onBodyChange={(html) => {
-        //     handleInputChange("bodyEmail", html);
-        //     setEmailTemplate(prev => ({ ...prev, bodyEmail: html })); // <-- ini penting
-        //   }}
-        />,
-      },
+        content: <EmailBodyEditorTemplate
+            templateName={formData.templateName}
+            envelopeSender={formData.envelopeSender}
+            subject={formData.subject}
+            initialContent={formData.bodyEmail}
+            onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
+          />,
+        },
     ];
     return (
       <div className="space-y-6 p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">

@@ -31,14 +31,14 @@ type MemberInput struct {
 	Name     string `json:"name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
 	Position string `json:"position" binding:"required"`
-	Company  string `json:"company"` // Optional, or make required if needed
-	Country  string `json:"country"` // Optional, or make required if needed
+	Company  string `json:"company"`
+	Country  string `json:"country"`
 }
 
 type CreateGroupInput struct {
 	Name         string        `json:"groupName" binding:"required"`
-	DomainStatus string        `json:"domainStatus" binding:"required"` // Assuming this is set by frontend
-	Members      []MemberInput `json:"members" binding:"dive"`          // "dive" to validate each item in the slice
+	DomainStatus string        `json:"domainStatus" binding:"required"`
+	Members      []MemberInput `json:"members" binding:"dive"`
 	CreatedBy    uint          `gorm:"null" json:"createdBy"`
 }
 
@@ -60,5 +60,20 @@ type GroupResponse struct {
 	CreatedAt    time.Time        `json:"createdAt"`
 	UpdatedAt    time.Time        `json:"updatedAt"`
 	Members      []MemberResponse `json:"members"`
-	MemberCount  int              `json:"memberCount"` // Added this field
+	MemberCount  int              `json:"memberCount"`
+}
+
+type UpdateGroupRequest struct {
+	GroupName    string      `json:"groupName" binding:"required"`
+	DomainStatus string      `json:"domainStatus" binding:"required"`
+	CreatedBy    uint        `json:"createdBy"`
+	Members      []NewMember `json:"members" binding:"required"`
+}
+
+type NewMember struct {
+	Name     string `json:"name" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Position string `json:"position" binding:"required"`
+	Company  string `json:"company"`
+	Country  string `json:"country"`
 }

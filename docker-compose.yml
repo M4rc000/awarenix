@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./fe-awarenix
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://backend:3000/api/v1 # Use backend service name
+    networks:
+      - awarenix-network
+
+  backend:
+    build:
+      context: ./be-awarenix
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080" # Consider using a different host port if 3000 conflicts
+    environment:
+      DB_HOST: db # Use db service name if using a separate database container
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: ""
+      DB_NAME: warenix-app
+      TIMEZONE: Asia/Jakarta
+      JWT_SECRET: azsxdcfv
+      JWT_PRIVATE_KEY_PATH: /secrets/jwt.key # Consider using Docker volumes or secrets for these
+      JWT_PUBLIC_KEY_PATH: /secrets/jwt.pub  # Consider using Docker volumes or secrets for these
+      ARGON2_TIME: 1
+      ARGON2_MEMORY: 65536
+      ARGON2_THREADS: 4
+      AES_GCM_KEY: 32bytesbase64string== # Consider using Docker secrets
+      SMTP_HOST: smtp.yourdomain.com
+      SMTP_PORT: 587
+      SMTP_USER: smtpuser
+      SMTP_PASS: smtppass
+    networks:
+      - awarenix-network
+
+  db: # Assuming you're using a database like MySQL
+    image: mysql:8.0 # Or your preferred database image
+    environment:
+      MYSQL_ROOT_PASSWORD: "" # Consider a stronger password in production
+      MYSQL_DATABASE: warenix-app
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ""
+    volumes:
+      - db-data:/var/lib/mysql # Persist database data
+    ports:
+      - "3306:3306" # Only needed if you want to access the DB from the host
+    networks:
+      - awarenix-network
+
+networks:
+  awarenix-network:
+    driver: bridge
+
+volumes:
+  db-data:

@@ -11,7 +11,6 @@ import {
 import { FaRegTrashAlt } from "react-icons/fa";
 import Button from "../ui/button/Button";
 import { BsFillPersonPlusFill } from "react-icons/bs";
-import { HiMail } from "react-icons/hi";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
 import Swal from "../utils/AlertContainer";
 
@@ -147,7 +146,7 @@ const NewGroupModalForm = forwardRef<NewGroupModalFormRef, NewGroupModalFormProp
 
     const payload = {
       groupName: groupName.trim(),
-      domainStatus: "active", 
+      domainStatus: "Active", 
       createdBy: createdBy,
       members: membersPayload,
     };
@@ -467,15 +466,6 @@ const NewGroupModalForm = forwardRef<NewGroupModalFormRef, NewGroupModalFormProp
           {submitMessage.text}
         </div>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3">
-        <Input placeholder="example@org.com" className="flex-grow"></Input>
-        <Button
-          className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 transition-colors duration-200 flex-shrink-0"
-        >
-          <HiMail className="w-4 h-4" />
-          <span>Send Test Email</span>
-        </Button>
-      </div>
     </div>
   );
 });

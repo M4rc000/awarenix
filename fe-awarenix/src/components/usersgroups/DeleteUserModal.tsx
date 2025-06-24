@@ -15,6 +15,7 @@ export type User = {
   name: string
   email: string
   position: string
+  updatedAt: string
 }
 
 export type DeleteUserModalProps = {

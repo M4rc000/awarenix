@@ -25,7 +25,16 @@ import { useSidebar } from "../../context/SidebarContext";
 import ShowSendingProfilesModal from './ShowSendingProfilesModal';
 import UpdateSendingProfilesModal from './UpdateSendingProfilesModal';
 import DeleteSendingProfilesModal from './DeleteSendingProfilesModal'
+import Swal from '../utils/AlertContainer';
 
+interface SendingProfiles {
+    id: number;
+    name: string;
+    senderAddress: string;
+    subject: string;
+    body: string;
+    lastModified: string;
+  }
 
 export default function TableSendingProfiles() {
   const [search, setSearch] = useState('');
@@ -38,6 +47,8 @@ export default function TableSendingProfiles() {
   const deferredSearch = useDeferredValue(search);
   const inputRef = useRef<HTMLInputElement>(null);
   const [activeModal, setActiveModal] = useState<'detail' | 'edit' | 'delete' | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState<SendingProfiles[]>([]);
   // const [showSendingProfilesModalOpen, setShowSendingProfilesModalOpen] = useState(false);
   // const [updateSendingProfilesModalOpen, setUpdateSendingProfilesModalOpen] = useState(false);
   // const [deleteSendingProfilesModalOpen, setDeleteSendingProfilesModalOpen] = useState(false);
@@ -69,35 +80,38 @@ export default function TableSendingProfiles() {
     };
   }, []);
 
-  interface SendingProfiles {
-    id: number;
-    name: string;
-    senderAddress: string;
-    subject: string;
-    body: string;
-    lastModified: string;
-  }
-
-  const tableData: SendingProfiles[] = [
-    {
-      id: 1,
-      name: "Google Meet",
-      senderAddress: "",
-      subject: "Google Meet Invitation",
-      body:"",
-      lastModified: "01 March 2025",
-    },
-    {
-      id: 2,
-      name: "Zoom",
-      senderAddress: "",
-      subject: "Zoom Invitation",
-      body:"",
-      lastModified: "01 March 2025",
-    },
-  ];
-
-  const data = useMemo(() => tableData, []);
+  // FETCH DATA
+  useEffect(()=>{
+    const API_URL = import.meta.env.VITE_API_URL;
+    const token = localStorage.getItem("token");
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/landing-page/all`, {
+          credentials: 'include',
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        if (!res.ok) throw new Error('Failed to fetch data');
+  
+        const result = await res.json();
+        setData(result.Data || result.data || result);
+      } catch (err) {
+        console.log('Error: ', err);
+        Swal.fire({
+          text: 'Failed to load email template data',
+          duration: 2000,
+          icon: "error"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }; 
+    fetchData();
+  }, [])
 
   const columns = useMemo<ColumnDef<SendingProfiles>[]>(
     () => [
@@ -115,8 +129,47 @@ export default function TableSendingProfiles() {
         header: 'Subject',
       },
       {
-        accessorKey: 'lastModified',
+        accessorKey: 'createdAt',
+        header: 'Created At',
+        cell: ({ getValue }) => {
+          const raw = getValue();
+          if (!raw || (typeof raw !== 'string' && typeof raw !== 'number' && !(raw instanceof Date))) return '-';
+
+          // Only pass string, number, or Date to Date constructor
+          const date = (typeof raw === 'string' || typeof raw === 'number' || raw instanceof Date) ? new Date(raw) : null;
+          if (!date || isNaN(date.getTime())) return '-';
+          
+          return date.toLocaleString('en-US', {
+            timeZone: 'Asia/Jakarta',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          }).replace(' pukul ', ' ');
+        }
+      },
+      {
+        accessorKey: 'updatedAt',
         header: 'Last Modified',
+        cell: ({ getValue }) => {
+          const raw = getValue();
+          if (!raw || (typeof raw !== 'string' && typeof raw !== 'number' && !(raw instanceof Date))) return '-';
+
+          const date = (typeof raw === 'string' || typeof raw === 'number' || raw instanceof Date) ? new Date(raw) : null;
+          if (!date || isNaN(date.getTime())) return '-';
+          
+          return date.toLocaleString('en-US', {
+            timeZone: 'Asia/Jakarta',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          }).replace(' pukul ', ' ');
+        }
       },
       {
         id: 'actions',
@@ -215,7 +268,7 @@ export default function TableSendingProfiles() {
         </form>
       </div>
 
-      <div className="max-w-full overflow-x-auto">
+      <div className="max-w-full overflow-x-auto xl:overflow-x-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
@@ -269,15 +322,36 @@ export default function TableSendingProfiles() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map(row => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map(cell => (
-                  <TableCell key={cell.id} className="px-5 py-3 text-sm text-gray-600 text-center">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            {isLoading ? (
+              <tr>
+                <td colSpan={columns.length} className="relative h-[40px]">
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-500 italic">
+                    <svg className="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+                    </svg>
+                  </div>
+                </td>
+              </tr>
+            ) : table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map(row => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map(cell => (
+                    <TableCell key={cell.id} className="px-5 py-3 text-sm text-gray-600 text-center">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={columns.length} className="relative h-[40px]">
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-500 italic">
+                    No data available
+                  </div>
+                </td>
+              </tr>
+            )}
           </TableBody>
         </Table>
       </div>

@@ -117,6 +117,21 @@ func GetGrowthPercentage(c *gin.Context) {
 			return
 		}
 
+	case "members":
+		// Hitung landing page bulan ini
+		err = config.DB.Model(&models.Member{}).Where("created_at BETWEEN ? AND ?", currentMonthStart, currentMonthEnd).Count(&currentCount).Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count current month member"})
+			return
+		}
+
+		// Hitung landing page bulan lalu
+		err = config.DB.Model(&models.Member{}).Where("created_at BETWEEN ? AND ?", previousMonthStart, previousMonthEnd).Count(&previousCount).Error
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count previous month member"})
+			return
+		}
+
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid type parameter."})
 		return

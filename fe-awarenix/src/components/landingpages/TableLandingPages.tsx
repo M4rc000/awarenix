@@ -68,7 +68,7 @@ export default function TableLandingPages() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`${API_URL}/email-template/all`, {
+        const res = await fetch(`${API_URL}/landing-page/all`, {
           credentials: 'include',
           headers: {
             "Content-Type": "application/json",
@@ -81,6 +81,7 @@ export default function TableLandingPages() {
         const result = await res.json();
         setData(result.Data || result.data || result);
       } catch (err) {
+        console.log('Error: ', err);
         Swal.fire({
           text: 'Failed to load email template data',
           duration: 2000,
@@ -111,10 +112,45 @@ export default function TableLandingPages() {
       {
         accessorKey: 'createdAt',
         header: 'Created At',
+        cell: ({ getValue }) => {
+          const raw = getValue();
+          if (!raw || (typeof raw !== 'string' && typeof raw !== 'number' && !(raw instanceof Date))) return '-';
+
+          // Only pass string, number, or Date to Date constructor
+          const date = (typeof raw === 'string' || typeof raw === 'number' || raw instanceof Date) ? new Date(raw) : null;
+          if (!date || isNaN(date.getTime())) return '-';
+          
+          return date.toLocaleString('en-US', {
+            timeZone: 'Asia/Jakarta',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          }).replace(' pukul ', ' ');
+        }
       },
       {
         accessorKey: 'updatedAt',
-        header: 'Updated At',
+        header: 'Last Modified',
+        cell: ({ getValue }) => {
+          const raw = getValue();
+          if (!raw || (typeof raw !== 'string' && typeof raw !== 'number' && !(raw instanceof Date))) return '-';
+
+          const date = (typeof raw === 'string' || typeof raw === 'number' || raw instanceof Date) ? new Date(raw) : null;
+          if (!date || isNaN(date.getTime())) return '-';
+          
+          return date.toLocaleString('en-US', {
+            timeZone: 'Asia/Jakarta',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          }).replace(' pukul ', ' ');
+        }
       },
       {
         id: 'actions',

@@ -12,7 +12,7 @@ import Swal from '../utils/AlertContainer'
 
 export type EmailTemplate = {
   id: number;
-  templateName: string;
+  name: string;
   envelopeSender: string;
   subject: string;
 }
@@ -132,7 +132,7 @@ export default function DeleteEmailTemplateModal({
               <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 dark:bg-gray-900 flex-shrink-0">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-400 rounded dark:hover:bg-gray-600  dark:bg-gray-400"
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-200 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isDeleting}
                 >
                   Cancel
@@ -164,6 +164,7 @@ export default function DeleteEmailTemplateModal({
                         })
                       }
                     } catch (error) {
+                      console.log('Error: ', error);
                       Swal.fire({
                         text: `An error occurred while updating email template!`,
                         icon: "error",
@@ -173,7 +174,7 @@ export default function DeleteEmailTemplateModal({
                       // setIsLoading(false);
                     }
                   }}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-300 dark:bg-blue-600 dark:hover:bg-blue-500 text-gray-800 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {isDeleting ? 'Deleting...' : 'Confirm'}
                 </button>

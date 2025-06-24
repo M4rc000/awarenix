@@ -70,6 +70,38 @@ func GetGroups(c *gin.Context) {
 	})
 }
 
+func GetMembers(c *gin.Context) {
+	// Ini akan memuat semua anggota untuk setiap grup.
+	query := config.DB.Model(&models.Member{})
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Success": false,
+			"Message": "Failed to count groups",
+			"Error":   err.Error(),
+		})
+		return
+	}
+
+	var members []models.Member
+	if err := query.Find(&members).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Success": false,
+			"Message": "Failed to fetch members",
+			"Error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Success": true,
+		"Message": "Members retrieved successfully",
+		"Data":    members,
+		"Total":   total,
+	})
+}
+
 func GetGroupDetail(c *gin.Context) {
 	groupID := c.Param("id") // Ambil ID grup dari URL parameter
 
@@ -121,6 +153,127 @@ func GetGroupDetail(c *gin.Context) {
 		"Success": true,
 		"Message": "Group details retrieved successfully",
 		"Data":    groupResponse, // Mengembalikan objek grup tunggal dengan anggota
+	})
+}
+
+func UpdateGroup(c *gin.Context) {
+	idParam := c.Param("id")
+	groupID, err := strconv.ParseUint(idParam, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid group ID format. Please provide a valid numeric ID.",
+		})
+		return
+	}
+
+	var req models.UpdateGroupRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request payload. Please check your input.",
+			// "error":   err.Error(), // For debugging, you can include the raw error
+		})
+		return
+	}
+
+	// Start a database transaction
+	tx := config.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to begin database transaction. Please try again.",
+		})
+		return
+	}
+
+	var existingGroup models.Group
+	// Find the group to update
+	if err := tx.First(&existingGroup, groupID).Error; err != nil {
+		tx.Rollback()
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{
+				"status":  "error",
+				"message": "Group not found. It may have been deleted or never existed.",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to retrieve group for update. Please try again.",
+		})
+		return
+	}
+
+	// Update group details
+	existingGroup.Name = req.GroupName
+	existingGroup.DomainStatus = req.DomainStatus
+	existingGroup.UpdatedAt = time.Now() // Manually update UpdatedAt if not using gorm.Model hooks
+
+	if err := tx.Save(&existingGroup).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to update group details. Please try again.",
+		})
+		return
+	}
+
+	// --- Handle Members ---
+	// 1. Delete existing members for this group
+	if err := tx.Where("group_id = ?", groupID).Delete(&models.Member{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to clear existing members for the group. Please try again.",
+		})
+		return
+	}
+
+	// 2. Create new members from the request payload
+	if len(req.Members) > 0 {
+		newMembers := make([]models.Member, len(req.Members))
+		for i, m := range req.Members {
+			// Check for duplicate emails for *new* members within the request
+			// This is a basic check. For more robust checks, you might query the DB.
+			for j, checkM := range req.Members {
+				if i != j && m.Email == checkM.Email {
+					tx.Rollback()
+					c.JSON(http.StatusBadRequest, gin.H{
+						"status":  "error",
+						"message": "Duplicate email found in the new members list: " + m.Email,
+					})
+					return
+				}
+			}
+
+			newMembers[i] = models.Member{
+				GroupID:  uint(groupID), // Assign the group ID to each member
+				Name:     m.Name,
+				Email:    m.Email,
+				Position: m.Position,
+				Company:  m.Company,
+				Country:  m.Country,
+				// GORM will automatically set CreatedAt/UpdatedAt if using gorm.Model
+			}
+		}
+
+		if err := tx.Create(&newMembers).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status":  "error",
+				"message": "Failed to add new members to the group. Please check member data.",
+			})
+			return
+		}
+	}
+
+	// Commit the transaction
+	tx.Commit()
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Group and its members updated successfully!",
 	})
 }
 
@@ -248,9 +401,8 @@ func RegisterGroup(c *gin.Context) {
 }
 
 func DeleteGroup(c *gin.Context) {
-	// Ambil ID grup dari URL parameter
 	idParam := c.Param("id")
-	groupID, err := strconv.ParseUint(idParam, 10, 64) // Konversi string ID ke uint
+	groupID, err := strconv.ParseUint(idParam, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Success": false,
@@ -260,9 +412,22 @@ func DeleteGroup(c *gin.Context) {
 		return
 	}
 
+	// Mulai transaksi database untuk memastikan atomicity
+	// Artinya, jika ada langkah yang gagal, semua perubahan akan di-rollback
+	tx := config.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Success": false,
+			"Message": "Failed to begin database transaction",
+			"Error":   tx.Error.Error(),
+		})
+		return
+	}
+
 	var group models.Group
 	// Periksa apakah grup ada sebelum menghapus
-	if err := config.DB.First(&group, groupID).Error; err != nil {
+	if err := tx.First(&group, groupID).Error; err != nil {
+		tx.Rollback() // Rollback jika grup tidak ditemukan atau error
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
 				"Success": false,
@@ -278,7 +443,20 @@ func DeleteGroup(c *gin.Context) {
 		return
 	}
 
-	if err := config.DB.Delete(&group).Error; err != nil {
+	// --- Hapus semua anggota terkait dengan groupID ini ---
+	if err := tx.Where("group_id = ?", groupID).Delete(&models.Member{}).Error; err != nil {
+		tx.Rollback() // Rollback jika gagal menghapus anggota
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Success": false,
+			"Message": "Failed to delete group members",
+			"Error":   err.Error(),
+		})
+		return
+	}
+
+	// --- Kemudian, hapus grup itu sendiri ---
+	if err := tx.Delete(&group).Error; err != nil {
+		tx.Rollback() // Rollback jika gagal menghapus grup
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Success": false,
 			"Message": "Failed to delete group",
@@ -287,8 +465,11 @@ func DeleteGroup(c *gin.Context) {
 		return
 	}
 
+	// Commit transaksi jika semua operasi berhasil
+	tx.Commit()
+
 	c.JSON(http.StatusOK, gin.H{
 		"Success": true,
-		"Message": "Group deleted successfully",
+		"Message": "Group and its members deleted successfully",
 	})
 }

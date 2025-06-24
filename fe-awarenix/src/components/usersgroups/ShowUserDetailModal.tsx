@@ -8,7 +8,7 @@ import {
 import { Fragment, useRef } from 'react'
 import ShowUserDetailModalForm, { ShowUserModalFormRef } from './ShowUserDetailModalForm'
 
-type User = {
+interface User {
   name: string;
   email: string;
   position: string;
@@ -16,12 +16,13 @@ type User = {
   role: string;
   company: string;
   isActive: string;
+  updatedAt: string;
 }
 
 export type ShowUserModalProps = {
+  user: User | null;
   isOpen: boolean
   onClose: () => void
-  user: User | null;
 }
 
 export default function ShowUserModal({

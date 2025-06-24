@@ -3,6 +3,7 @@ import Badge from "../ui/badge/Badge";
 import { MdGroups } from "react-icons/md";
 import { CgArrowsExchange } from "react-icons/cg";
 import { TbArrowBigUpLine, TbArrowBigDownLine } from "react-icons/tb";
+import { FaUserAlt } from "react-icons/fa";
 
 // Define a type for the growth data for better type safety
 type GrowthData = {
@@ -17,12 +18,14 @@ type CardHeaderProps = {
 export default function CardHeader({ reloadTrigger }: CardHeaderProps) {
   const [totalGroups, setTotalGroups] = useState(0);
   const [growthDataGroup, setGrowthDataGroup] = useState<GrowthData | null>(null);
+  const [growthDataMember, setGrowthDataMember] = useState<GrowthData | null>(null);
+  const [totalMembers, setTotalMembers] = useState(0);
 
   useEffect(() => {
     const API_URL = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem("token");
 
-    const fetchCardData = async () => {
+    const fetchCardDataGroup = async () => {
       try {
         const [groupsRes, growthRes] = await Promise.all([
           fetch(`${API_URL}/groups/all`, {
@@ -52,11 +55,48 @@ export default function CardHeader({ reloadTrigger }: CardHeaderProps) {
         console.error("Failed to fetch card data:", err);
       }
     };
-
-    fetchCardData();
-
+    
+    fetchCardDataGroup();
   }, [reloadTrigger]);
+  
+  useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    const token = localStorage.getItem("token");
 
+    const fetchCardDataMember = async () => {
+      try {
+        const [memberRes, growthRes] = await Promise.all([
+          fetch(`${API_URL}/groups/members/all`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_URL}/analytics/growth-percentage?type=members`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+  
+        if (!memberRes.ok) throw new Error(`Failed to fetch members: ${memberRes.status}`);
+        if (!growthRes.ok) throw new Error(`Failed to fetch growth data: ${growthRes.status}`);
+  
+        const groupsData = await memberRes.json();
+        const growthData = await growthRes.json();
+  
+        // Update states after both fetches are successful
+        if (groupsData.Success && typeof groupsData.Total === "number") {
+          setTotalMembers(groupsData.Total);
+        }
+  
+        if (growthData.success && growthData.data) {
+          setGrowthDataMember(growthData.data);
+        }
+  
+      } catch (err) {
+        console.error("Failed to fetch card data:", err);
+      }
+    };
+  
+    fetchCardDataMember();
+  }, [reloadTrigger]);
+  
   const renderBadge = (growth: GrowthData | null) => {
     if (!growth) return null;
 
@@ -102,6 +142,24 @@ export default function CardHeader({ reloadTrigger }: CardHeaderProps) {
           </h4>
         </div>
         <div className="mt-2 flex justify-end">{renderBadge(growthDataGroup)}</div>
+      </div>
+      
+      {/* Total Members */}
+      <div className="flex flex-col justify-between rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] hover:shadow-sm hover:shadow-gray-600 hover:-translate-y-2 transition duration-300 ease-in-out cursor-pointer">
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg dark:bg-gray-800 flex-shrink-0">
+              <FaUserAlt className="text-gray-800 text-xl dark:text-white/90" />
+            </div>
+            <span className="text-base font-medium text-gray-500 dark:text-gray-400 truncate">
+              Total Members
+            </span>
+          </div>
+          <h4 className="text-xl font-bold text-gray-800 dark:text-white text-right whitespace-nowrap">
+            {totalMembers}
+          </h4>
+        </div>
+        <div className="mt-2 flex justify-end">{renderBadge(growthDataMember)}</div>
       </div>
     </div>
   );

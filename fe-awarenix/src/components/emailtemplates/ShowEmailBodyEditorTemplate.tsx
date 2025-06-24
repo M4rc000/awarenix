@@ -21,7 +21,7 @@ const ShowEmailBodyEditorTemplate = ({
     return (
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800">
             {/* Tab Navigation */}
-            <div className="flex space-x-1 mx-4 bg-gray-100 dark:bg-gray-800 p-1 mb-0 rounded-lg">
+            <div className="flex space-x-1 mx-4 bg-gray-100 dark:bg-gray-800 p-1 mb-0 mt-2 rounded-lg">
                 {tabs.map((tab, index) => (
                     <button
                         key={index}

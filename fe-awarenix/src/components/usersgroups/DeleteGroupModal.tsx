@@ -50,8 +50,8 @@ export default function DeleteUserModal({
       });
 
       const data = await res.json();
-
-      if (!res.ok || !data.success) {
+      
+      if (!res.ok || !data.Success) {
         setError(data.error || 'Failed to delete user');
         Swal.fire({
           text: 'Failed to delete user',

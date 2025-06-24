@@ -48,7 +48,9 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
   const [groupName, setGroupName] = useState("");
   const [domainStatus, setDomainStatus] = useState("");
   const [createdAt, setCreatedAt] = useState("");
+  const [createdBy, setCreatedBy] = useState("");
   const [updatedAt, setUpdatedAt] = useState("");
+  const [updatedBy, setUpdatedBy] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
@@ -106,13 +108,17 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
         setGroupName(result.Data.name || '');
         setDomainStatus(result.Data.domainStatus || '');
         setCreatedAt(result.Data.createdAt || '');
+        setCreatedBy(result.Data.createdBy || '');
         setUpdatedAt(result.Data.updatedAt || '');
+        setUpdatedBy(result.Data.updatedBy || '');
         setMembers(result.Data.members || []); 
       } else {
         setGroupName("");
         setDomainStatus("");
         setCreatedAt("");
+        setCreatedBy("");
         setUpdatedAt("");
+        setUpdatedBy("");
         setMembers([]);
 
         Swal.fire({
@@ -143,7 +149,9 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
       setGroupName("");
       setDomainStatus("");
       setCreatedAt("");
+      setCreatedBy("");
       setUpdatedAt("");
+      setUpdatedBy("");
       setMembers([]);
       setPagination({ pageIndex: 0, pageSize: 10 });
       setSearchTerm("");
@@ -178,17 +186,16 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
         cell: info => highlightText(info.getValue() as string | number | null | undefined, searchTerm),
       },
       {
-        accessorKey: 'country',
+        accessorKey: 'Country',
         header: 'Country',
         cell: info => highlightText(info.getValue() as string | number | null | undefined, searchTerm),
       },
     ],
     [searchTerm]
   );
-
-  // Inisialisasi useReactTable
+ 
   const table = useReactTable({
-    data: members, // Data untuk tabel adalah state 'members'
+    data: members,
     columns,
     state: {
       globalFilter: searchTerm,
@@ -225,6 +232,78 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
             id="domain-status"
             type="text"
             value={domainStatus}
+            className="w-full mt-1"
+            readonly
+          />
+        </div>
+        <div>
+          <Label htmlFor="created-at" className="text-sm font-medium">
+            Created At
+          </Label>
+          <Input
+            id="created-at"
+            type="text"
+            value={
+              createdAt
+                ? new Date(createdAt).toLocaleDateString('en-GB', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false,
+                  timeZoneName: 'short',  
+                  })
+                : ''
+            }
+            className="w-full mt-1"
+            readonly
+          />
+        </div>
+        <div>
+          <Label htmlFor="created-by" className="text-sm font-medium">
+            Created By
+          </Label>
+          <Input
+            id="created-by"
+            type="text"
+            value={createdBy}
+            className="w-full mt-1"
+            readonly
+          />
+        </div>
+        <div>
+          <Label htmlFor="updated-at" className="text-sm font-medium">
+            Updated At
+          </Label>
+          <Input
+            id="updated-at"
+            type="text"
+            value={
+              updatedAt
+                ? new Date(updatedAt).toLocaleDateString('en-GB', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false,
+                  timeZoneName: 'short',  
+                  })
+                : ''
+            }
+            className="w-full mt-1"
+            readonly
+          />
+        </div>
+        <div>
+          <Label htmlFor="updated-by" className="text-sm font-medium">
+            Updated By
+          </Label>
+          <Input
+            id="updated-by"
+            type="text"
+            value={updatedBy}
             className="w-full mt-1"
             readonly
           />
@@ -293,7 +372,7 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
                     </svg>
-                    Memuat anggota...
+                    Loading member...
                   </div>
                 </td>
               </tr>
@@ -305,8 +384,8 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
                 >
                   <div className="flex flex-col items-center justify-center h-[70px] w-full text-gray-900 dark:text-gray-500 italic font-medium rounded-md mx-auto my-2">
                     {searchTerm
-                      ? `Tidak ada anggota yang cocok dengan "${searchTerm}"`
-                      : "Tidak ada anggota dalam grup ini."}
+                      ? `There are no matching members "${searchTerm}"`
+                      : "There are no members in this group."}
                   </div>
                 </td>
               </tr>
@@ -319,7 +398,7 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
                   {row.getVisibleCells().map(cell => (
                     <TableCell
                       key={cell.id}
-                      className="text-gray-900 dark:text-gray-100 py-3 border border-gray-200 dark:border-gray-700"
+                      className="text-gray-900 dark:text-gray-100 py-3 px-2 border border-gray-200 dark:border-gray-700"
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>

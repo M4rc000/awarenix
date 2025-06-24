@@ -5,21 +5,78 @@ import {
   DialogTitle,
   Transition,
 } from '@headlessui/react'
-import { Fragment } from 'react'
-import EditGroupModalForm from './EditGroupModalForm'
+import { Fragment, useRef, useState } from 'react'
+import EditGroupModalForm, { EditGroupModalFormRef } from './EditGroupModalForm'
+import Swal from '../utils/AlertContainer'
+
+interface Group {
+  id: number;
+  name: string;
+  domainStatus: string;
+  memberCount: number; 
+  createdAt: string;
+  UpdatedAt: string;
+  members?: Member[];
+}
+
+interface Member {
+  id: number;
+  name: string;
+  email: string;
+  position: string;
+  company: string;
+  country: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export type EditGroupModalProps = {
+  group: Group | null;
   isOpen: boolean
   onClose: () => void
+  onGroupUpdated?: () => void; 
 }
 
 export default function EditGroupModal({
+  group,
   isOpen,
   onClose,
+  onGroupUpdated,
 }: EditGroupModalProps) {
+  const formRef = useRef<EditGroupModalFormRef>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSave = async () => {
+    if (!formRef.current) return;
+
+    try {
+      setIsSubmitting(true);
+      // Calls the submitGroups method exposed by the child form
+      const success = await formRef.current.submitGroups();
+
+      if (success) {
+        Swal.fire({
+          text: 'The Group successfully updated',
+          icon: 'success',
+          duration: 3000,
+        });
+
+        onGroupUpdated?.();
+        onClose(); 
+      }
+    } catch (error) {
+      console.error('Failed to save group:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Transition show={isOpen} as={Fragment}>
-      <Dialog open={isOpen} onClose={()=>{}} className="relative z-[999]">
+      <Dialog
+        open={isOpen}
+        onClose={onClose}
+        className="relative z-[999]">
         {/* Backdrop with fade animation */}
         <Transition.Child
           as={Fragment}
@@ -33,8 +90,7 @@ export default function EditGroupModal({
           <DialogBackdrop className="fixed inset-0 bg-black/40" />
         </Transition.Child>
 
-        <div className="fixed inset-0 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-          {/* Panel with scale & slide-up animation */}
+        <div className="fixed inset-0 flex items-center justify-center p-4">
           <Transition.Child
             as={Fragment}
             enter="transition-transform duration-300 ease-out"
@@ -44,16 +100,20 @@ export default function EditGroupModal({
             leaveFrom="translate-y-0 opacity-100 scale-100"
             leaveTo="translate-y-4 opacity-0 scale-95"
           >
-            <DialogPanel className="w-full max-w-fit box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-hidden dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5 z-[9999999999999]" onClick={(e) => e.stopPropagation()}>
+            <DialogPanel
+              className="w-full max-w-4xl box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-hidden dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5"
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* HEADER */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-700 flex-shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-300 dark:border-b-gray-600 flex-shrink-0">
                 <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Edit Group
                 </DialogTitle>
                 <button
                   onClick={onClose}
+                  disabled={isSubmitting} 
                   aria-label="Close modal"
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   ✕
                 </button>
@@ -61,28 +121,45 @@ export default function EditGroupModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <EditGroupModalForm />
+                <EditGroupModalForm ref={formRef} group={group!} />
               </div>
 
               {/* FOOTER */}
-              <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 dark:bg-gray-900 flex-shrink-0">
+              <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-400 rounded dark:hover:bg-gray-600  dark:bg-gray-400"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-200 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    onClose()
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  onClick={handleSave}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Save
+                  {isSubmitting && (
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                  )}
+                  {isSubmitting ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </DialogPanel>
-
           </Transition.Child>
         </div>
       </Dialog>

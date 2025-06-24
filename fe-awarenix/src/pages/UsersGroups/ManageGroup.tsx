@@ -8,13 +8,17 @@ type ManageGroupProps = {
   onReload: () => void;
 };
 
-export default function ManageGroup({reloadTrigger, onReload}: ManageGroupProps) {
+export default function ManageGroup({onReload}: ManageGroupProps) {
     const [modalOpen, setModalOpen] = useState(false);
+    const fetchData = () => {
+        onReload();
+    }
     return (
         <div>
             <Button className="text-md mt-2 mb-3" onClick={()=> setModalOpen(true)}>New Group</Button>
             <TableUsersGroups/>
             <NewGroupModal
+                onGroupAdded={fetchData}
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
             />

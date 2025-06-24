@@ -98,6 +98,8 @@ func RegisterEmailTemplate(c *gin.Context) {
 		EnvelopeSender: input.EnvelopeSender,
 		Subject:        input.Subject,
 		Body:           input.Body,
+		CreatedAt:      time.Now(),
+		CreatedBy:      input.CreatedBy,
 	}
 
 	// SIMPAN KE DATABASE

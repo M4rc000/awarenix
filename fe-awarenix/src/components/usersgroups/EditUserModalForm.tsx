@@ -6,7 +6,6 @@ import { useUserSession } from "../context/UserSessionContext";
 import Select from "../form/Select";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
 
-// Define the ref methods that parent can call
 export type EditUserModalFormRef = {
   submitUsers: () => Promise<boolean>;
 };

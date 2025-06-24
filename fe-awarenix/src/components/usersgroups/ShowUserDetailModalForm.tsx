@@ -14,12 +14,16 @@ type User = {
   company: string;
   role: string;
   lastLogin: Date;
+  createdAt: Date;
+  createddBy: number;
+  updatedAt: Date;
+  updatedBy: number;
 };
 
 type ShowUserDetailModalFormProps = {
   isOpen: boolean
   onClose: () => void
-  user: User | null; // <--- CHANGE THIS LINE: Allow user to be null
+  user: User | null; 
 };
 
 const ShowUserDetailModalForm = ({ user }: ShowUserDetailModalFormProps) => {
@@ -74,6 +78,79 @@ const ShowUserDetailModalForm = ({ user }: ShowUserDetailModalFormProps) => {
               />
             </div>
             
+            <div>
+              <Label htmlFor="created-at" className="text-sm font-medium">
+                Created At
+              </Label>
+              <Input
+                id="created-at"
+                type="text"
+                value={
+                  user.createdAt
+                    ? new Date(user.createdAt).toLocaleDateString('en-GB', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false,
+                      timeZoneName: 'short',  
+                      })
+                    : ''
+                }
+                className="w-full mt-1"
+                readonly
+              />
+            </div>
+            <div>
+              <Label htmlFor="created-by" className="text-sm font-medium">
+                Created By
+              </Label>
+              <Input
+                id="created-by"
+                type="text"
+                value={user.createdBy}
+                className="w-full mt-1"
+                readonly
+              />
+            </div>
+            <div>
+              <Label htmlFor="updated-at" className="text-sm font-medium">
+                Updated At
+              </Label>
+              <Input
+                id="updated-at"
+                type="text"
+                value={
+                  user.updatedAt
+                    ? new Date(user.updatedAt).toLocaleDateString('en-GB', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false,
+                      timeZoneName: 'short',  
+                      })
+                    : ''
+                }
+                className="w-full mt-1"
+                readonly
+              />
+            </div>
+            <div>
+              <Label htmlFor="updated-by" className="text-sm font-medium">
+                Updated By
+              </Label>
+              <Input
+                id="updated-by"
+                type="text"
+                value={user.updatedBy}
+                className="w-full mt-1"
+                readonly
+              />
+            </div>
+
             <div>
               <Label>Last Login</Label>
               <Input

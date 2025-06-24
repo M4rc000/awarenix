@@ -3,18 +3,19 @@ import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
 import EmailBodyEditorTemplate from "./EmailBodyEditorTemplate";
-import EmailBodyEditorCustom from "./EmailBodyEditorCustom";
 import { forwardRef, useImperativeHandle } from "react";
 import Swal from "../utils/AlertContainer";
 import { LuLayoutTemplate } from "react-icons/lu";
-import { FcIdea } from "react-icons/fc";
 
 interface EmailTemplate{
   id: number;
   templateName: string;
   envelopeSender: string;
   subject: string;
-  updated_at: string;
+  createdAt: string;
+  createdBy: string;
+  updatedAt: string;
+  updatedBy: string;
 }
 
 export type NewEmailTemplateModalFormRef = {
@@ -94,6 +95,15 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         }),
       });
 
+      console.log('Body: ', {
+        templateName: templateName,
+        envelopeSender: envelopeSender,
+        subject: subject,
+        bodyEmail: emailtemplate.bodyEmail,
+        createdAt: new Date().toISOString(),
+        createdBy: createdBy,
+      });
+      
       if (!response.ok) {
         let errorMessage = 'Failed to create user';
         

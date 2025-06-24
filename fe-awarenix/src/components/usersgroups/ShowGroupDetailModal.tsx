@@ -8,19 +8,18 @@ import {
 import { Fragment } from 'react'
 import ShowGroupDetailModalForm from './ShowGroupDetailModalForm'
 
-// Perbarui tipe Group agar sesuai dengan data dari backend
 type Group = {
   id: number;
   name: string;
   domainStatus: string;
-  memberCount: number;
-  createdAt: string; // Pastikan ini 'createdAt' (camelCase)
-  updatedAt: string; // Pastikan ini 'updatedAt' (camelCase)
-  // Tambahkan members jika Anda preload di GetGroups
-  members?: Member[]; // Jika Anda preload di BE, maka bisa ditambahkan di sini
+  memberCount: number; 
+  createdAt: string; 
+  createdBy: number; 
+  updatedAt: string; 
+  updatedBy: number; 
+  members?: Member[];
 }
 
-// Tambahkan definisi Member di sini jika tidak ada di file types terpisah
 interface Member {
     id: number;
     name: string;
@@ -35,7 +34,7 @@ interface Member {
 export type ShowGroupDetailModalProps = {
   isOpen: boolean
   onClose: () => void
-  group: Group | null; // Pastikan tipe ini konsisten
+  group: Group | null; 
 }
 
 export default function ShowGroupDetailModal({

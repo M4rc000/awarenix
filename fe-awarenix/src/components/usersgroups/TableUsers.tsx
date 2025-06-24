@@ -37,7 +37,7 @@ interface User {
   position: string;
   role: string;
   isActive: number;
-  updated_at: string;
+  updatedAt: string;
 }
 
 export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?: number, onReload?: () => void }){
@@ -166,7 +166,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
           const date = (typeof raw === 'string' || typeof raw === 'number' || raw instanceof Date) ? new Date(raw) : null;
           if (!date || isNaN(date.getTime())) return '-';
           
-          return date.toLocaleString('id-ID', {
+          return date.toLocaleString('en-US', {
             timeZone: 'Asia/Jakarta',
             day: '2-digit',
             month: 'long',
@@ -187,7 +187,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
           const date = (typeof raw === 'string' || typeof raw === 'number' || raw instanceof Date) ? new Date(raw) : null;
           if (!date || isNaN(date.getTime())) return '-';
           
-          return date.toLocaleString('id-ID', {
+          return date.toLocaleString('en-US', {
             timeZone: 'Asia/Jakarta',
             day: '2-digit',
             month: 'long',
