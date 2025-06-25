@@ -32,7 +32,7 @@ export default function CardHeader({reloadTrigger}: CardHeaderSendingProfilesPro
           setTotalSendingProfiles(data.Total);
         }
       } catch (err) {
-        console.error("Failed to fetch total groups:", err);
+        console.error("Failed to fetch total sending profile:", err);
       }
     };
     
@@ -42,7 +42,7 @@ export default function CardHeader({reloadTrigger}: CardHeaderSendingProfilesPro
   useEffect(() => {
     const token = localStorage.getItem("token");
     const API_URL = import.meta.env.VITE_API_URL;
-    fetch(`${API_URL}/analytics/growth-percentage?type=groups`, {
+    fetch(`${API_URL}/analytics/growth-percentage?type=sendingprofiles`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

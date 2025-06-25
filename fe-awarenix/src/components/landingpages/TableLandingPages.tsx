@@ -1,4 +1,4 @@
-import { useState, useMemo, useDeferredValue, useRef, useEffect } from 'react';
+import { useState, useMemo, useDeferredValue, useRef, useEffect, useCallback } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -23,16 +23,19 @@ import Button from "../ui/button/Button";
 import type { SortingState } from '@tanstack/react-table';
 import { useSidebar } from "../../context/SidebarContext";
 import Swal from '../utils/AlertContainer';
+import ShowLandingPageModal from './ShowLandingPageModal'
 
 interface LandingPage{
   id: number;
   name: string;
   body: string;
   createdAt: string;
+  createdBy: number;
   updatedAt: string;
+  updatedBy: number;
 }
 
-export default function TableLandingPages() {
+export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?: number, onReload?: () => void }){
   const [search, setSearch] = useState('');
   const { isExpanded } = useSidebar();
   const [pagination, setPagination] = useState({
@@ -44,8 +47,9 @@ export default function TableLandingPages() {
   const deferredSearch = useDeferredValue(search);
   const inputRef = useRef<HTMLInputElement>(null);
   const [data, setData] = useState<LandingPage[]>([]);
-  
-  
+  const [activeModal, setActiveModal] = useState<'detail' | 'edit' | 'delete' | null>(null);
+  const [selectedLandingPage, setSelectedLandingPage] = useState<LandingPage | null>(null);
+    
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "k") {
@@ -62,37 +66,71 @@ export default function TableLandingPages() {
   }, []);
 
   // FETCH DATA
-  useEffect(()=>{
-    const API_URL = import.meta.env.VITE_API_URL;
-    const token = localStorage.getItem("token");
-    const fetchData = async () => {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem("token");
+  const fetchData = useCallback(async (showLoader = true) => {
+    if (showLoader) {
       setIsLoading(true);
+    }
       try {
-        const res = await fetch(`${API_URL}/landing-page/all`, {
-          credentials: 'include',
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-  
-        if (!res.ok) throw new Error('Failed to fetch data');
-  
-        const result = await res.json();
-        setData(result.Data || result.data || result);
+      const res = await fetch(`${API_URL}/landing-page/all`, {
+      credentials: 'include',
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+      if (!res.ok) throw new Error('Failed to fetch data');
+
+      const result = await res.json();
+      setData(result.Data || result.data || result);
       } catch (err) {
         console.log('Error: ', err);
         Swal.fire({
-          text: 'Failed to load email template data',
+          text: 'Failed to load landing page data',
           duration: 2000,
           icon: "error"
         });
       } finally {
         setIsLoading(false);
       }
-    }; 
+    }, [API_URL, token]); 
+
+    useEffect(() => {
+      fetchData(true);
+
+      const intervalId = setInterval(() => {
+        fetchData(false);
+      }, 5000);
+
+      return () => clearInterval(intervalId);
+    }, [reloadTrigger, fetchData]);
+
+  useEffect(() => {
     fetchData();
-  }, [])
+  }, [reloadTrigger, fetchData]);
+
+  useEffect(() => {
+  if (reloadTrigger && reloadTrigger > 0) {
+    fetchData();
+  }
+  }, [reloadTrigger, fetchData]);
+
+  const onShowDetail = (landingPage: LandingPage) => {
+    setSelectedLandingPage(landingPage);
+    setActiveModal('detail');
+  }
+  
+  const onEdit = (landingPage: LandingPage) => {
+    setSelectedLandingPage(landingPage);
+    setActiveModal('edit');
+  }
+  
+  const onDelete = (landingPage: LandingPage) => {
+    setSelectedLandingPage(landingPage);
+    setActiveModal('delete');
+  }
 
   const columns = useMemo<ColumnDef<LandingPage>[]>(
     () => [
@@ -152,15 +190,15 @@ export default function TableLandingPages() {
         id: 'actions',
         accessorKey: 'actions',
         header: 'Action',
-        cell: () => (
+        cell: (row) => (
           <div className="flex items-center justify-center space-x-2">
-            <Button size="xs" variant="info">
+            <Button size="xs" variant="info" onClick={() => onShowDetail(row.row.original)}>
               <FaCircleInfo />
             </Button>
-            <Button size="xs" variant="warning">
+            <Button size="xs" variant="warning" onClick={() => onEdit(row.row.original)}>
               <BiSolidEditAlt />
             </Button>
-            <Button size="xs" variant="danger">
+            <Button size="xs" variant="danger" onClick={() => onDelete(row.row.original)}>
               <FaRegTrashAlt />
             </Button>
           </div>
@@ -412,6 +450,45 @@ export default function TableLandingPages() {
           </div>
         </div>
       </div>
+
+      {/* SHOW MODAL */}
+      <ShowLandingPageModal 
+        isOpen={activeModal === 'detail'}
+        onClose={() => {
+          setActiveModal(null);
+          setSelectedLandingPage(null);
+        }}
+        landingPage={selectedLandingPage}
+      />
+
+      {/* EDIT MODAL */}
+      {/* <EditLandingPageModal 
+        isOpen={activeModal === 'edit'}
+        onClose={() => {
+          setActiveModal(null);
+          setSelectedLandingPage(null);
+        }}
+        landingPage={selectedLandingPage}
+        onUserUpdated={() => {
+          fetchData()
+        }}     
+      /> */}
+
+      {/* DELETE MODAL */}
+      {/* <DeleteLandingPageModal 
+        isOpen={activeModal === 'delete'}
+        onClose={() => {
+          setActiveModal(null);
+          setSelectedLandingPage(null);
+        }}
+        landingPage={
+          selectedLandingPage
+        }
+        onLandingPageDeleted={() => {
+          fetchData();
+          if (onReload) onReload();
+        }}
+      /> */}
     </div>
   );
 }

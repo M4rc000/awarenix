@@ -1,0 +1,108 @@
+import { useState } from "react";
+import { RiPagesLine } from "react-icons/ri";
+
+type ShowLandingPageBodyEditorProps = {
+  name?: string;
+  initialContent?: string;
+};
+
+const ShowLandingPageBodyEditor = ({
+  initialContent = "",
+}: ShowLandingPageBodyEditorProps) => {
+  const [activeTab, setActiveTab] = useState(0);
+
+  const tabs = ["HTML Editor", "Live Preview"];
+
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800">
+      {/* Tab Navigation */}
+      <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 mb-0 rounded-md mx-2 mt-2">
+        {tabs.map((tab, index) => (
+          <button
+            key={index}
+            onClick={() => setActiveTab(index)}
+            className={`flex-1 rounded-lg py-2.5 text-sm font-medium leading-5 transition-all duration-200 ease-in-out ${
+              activeTab === index
+                ? "bg-white text-blue-600 shadow-md dark:bg-gray-700 dark:text-blue-400"
+                : "text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-600"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div className="rounded-b-xl min-h-[500px]">
+        {activeTab === 0 ? (
+          // HTML Editor Tab
+          <div className="p-4 h-full">
+            <div className="mb-4">
+              <label htmlFor="html-editor-textarea" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Edit HTML Landing Page Template:
+              </label>
+              <textarea
+                id="html-editor-textarea"
+                value={initialContent}
+                readOnly
+                className="w-full h-96 p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 shadow-sm"
+                placeholder="Masukkan HTML content di sini..."
+              />
+            </div>
+
+            <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-md shadow-inner">
+              <strong className="block mb-1 text-gray-700 dark:text-gray-300">💡 Important Tips for Email HTML:</strong>
+              <ul className="mt-1 space-y-1 list-disc list-inside">
+                <li><strong>Security:</strong> Link and script tags are disabled in the preview for security reasons.</li>
+                <li><strong>Styling:</strong> Prefer inline CSS for styling elements, as external stylesheets might not be supported.</li>
+                <li><strong>Responsiveness:</strong> Use media queries and fluid layouts for optimal mobile viewing.</li>
+                <li><strong>Width:</strong> Use fixed widths in pixels for main content tables (e.g., `max-width: 600px`).</li>
+              </ul>
+            </div>
+          </div>
+        ) : (
+          // Live Preview Tab
+          <div className="p-4 h-full">
+            {/* Live Preview */}
+            <div className="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 min-h-[400px] overflow-hidden flex items-center justify-center relative">
+              {initialContent ? (
+                <iframe
+                  srcDoc={initialContent}
+                  className="w-full h-full min-h-[400px] border-none"
+                  title="Email Preview"
+                  sandbox="allow-same-origin allow-popups"
+                  style={{ background: '#ffffff' }}
+                />
+              ) : (
+                <div className="p-8 text-gray-400 text-center">
+                  <div className="text-6xl mb-4 animate-bounce flex justify-center">
+                    <RiPagesLine />
+                  </div>
+                  <div className="text-lg font-medium">No HTML content to display.</div>
+                  <div className="text-sm mt-2">Start typing in the HTML editor or choose a template!</div>
+                </div>
+              )}
+            </div>
+
+            {/* Preview Notes */}
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-900">
+                <div className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                  <strong><span className="text-base">🖥️</span> Desktop View Insight</strong><br/>
+                  This preview reflects how your email will likely appear in common desktop clients (e.g., Chrome, Edge, Safari).
+                </div>
+              </div>
+              <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-100 dark:border-orange-900">
+                <div className="text-xs text-orange-700 dark:text-orange-300 font-medium">
+                  <strong><span className="text-base">📱</span> Mobile Responsiveness Reminder</strong><br/>
+                  For optimal mobile experience, ensure you incorporate responsive design techniques like media queries. This preview may not fully represent mobile rendering.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ShowLandingPageBodyEditor;

@@ -1,4 +1,4 @@
-import { useState, useMemo, useDeferredValue, useRef, useEffect } from 'react';
+import { useState, useMemo, useDeferredValue, useRef, useEffect, useCallback } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -69,32 +69,45 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
   // FETCH DATA
   const API_URL = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("token");
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/email-template/all`, {
-        credentials: 'include',
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error('Failed to fetch data');
-
-      const result = await res.json();
-      setData(result.Data || result.data || result);
-    } catch (err) {
-      console.log('Error: ', err);
-      Swal.fire({
-        text: 'Failed to load email template data',
-        duration: 2000,
-        icon: "error"
-      });
-    } finally {
-      setIsLoading(false);
+  const fetchData = useCallback(async (showLoader = true) => {
+    // Hanya set isLoading jika showLoader adalah true
+    if (showLoader) {
+      setIsLoading(true);
     }
-  }; 
+     try {
+      const res = await fetch(`${API_URL}/email-template/all`, {
+      credentials: 'include',
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+     },
+   });
+
+     if (!res.ok) throw new Error('Failed to fetch data');
+
+     const result = await res.json();
+     setData(result.Data || result.data || result);
+     } catch (err) {
+        console.log('Error: ', err);
+        Swal.fire({
+          text: 'Failed to load email template data',
+          duration: 2000,
+          icon: "error"
+        });
+     } finally {
+        setIsLoading(false);
+     }
+   }, [API_URL, token]); 
+
+   useEffect(() => {
+     fetchData(true);
+
+     const intervalId = setInterval(() => {
+        fetchData(false);
+     }, 5000);
+
+     return () => clearInterval(intervalId);
+   }, [reloadTrigger, fetchData]);
 
   // ACTIVATE FUNCTION MODAL
   const onShowDetail = (emailTemplate: EmailTemplate) => {

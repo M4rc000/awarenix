@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { RiPagesLine } from "react-icons/ri";
 import { TbArrowBigUpLine, TbArrowBigDownLine } from "react-icons/tb";
 import { CgArrowsExchange } from "react-icons/cg";
@@ -13,48 +13,55 @@ export default function CardHeader({ reloadTrigger }: { reloadTrigger: number })
 
   const [growthDataLandingPages, setGrowthDataLandingPages] = useState<GrowthData | null>(null);
 
-  useEffect(() => {
+  const fetchTotalLandingPages = useCallback(async () => {
     const API_URL = import.meta.env.VITE_API_URL;
-    const fetchTotalLandingPages = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(`${API_URL}/landing-page/all`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (data.Success && typeof data.Total === "number") {
-          setTotalLandingPages(data.Total);
-        }
-      } catch (err) {
-        console.error("Failed to fetch total landing page:", err);
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/landing-page/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.Success && typeof data.Total === "number") {
+        setTotalLandingPages(data.Total);
       }
-    };
-    fetchTotalLandingPages();
-  }, [reloadTrigger]);
+    } catch (err) {
+      console.error("Failed to fetch total landing page:", err);
+    }
+  }, []);
+
+  const fetchGrowthData = useCallback(async () => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/analytics/growth-percentage?type=landingpages`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setGrowthDataLandingPages(data.data);
+      }
+    } catch (error) {
+      console.error("❌ Fetch error:", error);
+    }
+  }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const API_URL = import.meta.env.VITE_API_URL;
-    fetch(`${API_URL}/analytics/growth-percentage?type=landingpages`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-    })
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        if (data.success && data.data) {
-          setGrowthDataLandingPages(data.data);
-        }
-      })
-      .catch(error => {
-        console.error("❌ Fetch error:", error);
-      });
-  }, [reloadTrigger]);
+    fetchTotalLandingPages();
+    fetchGrowthData();
+
+    const intervalId = setInterval(() => {
+      fetchTotalLandingPages();
+      fetchGrowthData();
+    }, 5000); 
+
+    return () => clearInterval(intervalId);
+
+  }, [reloadTrigger, fetchTotalLandingPages, fetchGrowthData]); 
 
   return (
     <>
@@ -78,27 +85,29 @@ export default function CardHeader({ reloadTrigger }: { reloadTrigger: number })
 
           {/* Badge Section */}
           <div className="mt-2 flex justify-end">
-            <Badge
-              color={
-                growthDataLandingPages?.growth_type === 'increase'
-                  ? 'success'
-                  : growthDataLandingPages?.growth_type === 'decrease'
-                  ? 'error'
-                  : 'warning'
-              }
-              className="dark:text-gray-400"
-            >
-              {growthDataLandingPages?.growth_type === 'increase' && (
-                <TbArrowBigUpLine className="mr-1" />
-              )}
-              {growthDataLandingPages?.growth_type === 'decrease' && (
-                <TbArrowBigDownLine className="mr-1" />
-              )}
-              {growthDataLandingPages?.growth_type === 'no_change' && (
-                <CgArrowsExchange className="mr-1 rotate-180" />
-              )}
-              {growthDataLandingPages?.growth_percentage.toFixed(2)}%
-            </Badge>
+            {growthDataLandingPages && (
+                <Badge
+                    color={
+                        growthDataLandingPages.growth_type === 'increase'
+                        ? 'success'
+                        : growthDataLandingPages.growth_type === 'decrease'
+                        ? 'error'
+                        : 'warning'
+                    }
+                    className="dark:text-gray-400"
+                >
+                    {growthDataLandingPages.growth_type === 'increase' && (
+                        <TbArrowBigUpLine className="mr-1" />
+                    )}
+                    {growthDataLandingPages.growth_type === 'decrease' && (
+                        <TbArrowBigDownLine className="mr-1" />
+                    )}
+                    {growthDataLandingPages.growth_type === 'no_change' && (
+                        <CgArrowsExchange className="mr-1 rotate-180" />
+                    )}
+                    {growthDataLandingPages.growth_percentage.toFixed(2)}%
+                </Badge>
+            )}
           </div>
         </div>
       </div>
