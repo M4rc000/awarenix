@@ -29,5 +29,8 @@ func InitDatabase() {
 		&models.User{}, &models.Event{}, &models.Group{}, &models.EmailTemplate{}, &models.LandingPage{}, &models.SendingProfiles{}, &models.Menu{}, &models.Submenu{}, &models.Role{}, &models.Member{},
 	)
 
+	SeedUsers(db)
+	SeedRoles(db)
+
 	DB = db
 }
