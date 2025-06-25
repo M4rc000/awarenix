@@ -154,7 +154,7 @@ func UpdateEmailTemplate(c *gin.Context) {
 	emailTemplate.EnvelopeSender = updatedData.EnvelopSender
 	emailTemplate.Subject = updatedData.Subject
 	emailTemplate.Body = updatedData.Body
-	emailTemplate.UpdatedBy = uint(updatedData.UpdatedBy)
+	emailTemplate.UpdatedBy = int(updatedData.UpdatedBy)
 	emailTemplate.UpdatedAt = time.Now()
 
 	if err := config.DB.Save(&emailTemplate).Error; err != nil {

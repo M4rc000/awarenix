@@ -217,7 +217,7 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         subject={subject}
         onBodyChange={(html) => {
           handleInputChange("bodyEmail", html);
-          setEmailTemplate(prev => ({ ...prev, bodyEmail: html })); // <-- ini penting
+          setEmailTemplate(prev => ({ ...prev, bodyEmail: html })); 
         }}
       />,
     },

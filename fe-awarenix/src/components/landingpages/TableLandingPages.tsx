@@ -106,10 +106,6 @@ export default function TableLandingPages() {
         header: 'Name',
       },
       {
-        accessorKey: 'body',
-        header: 'Body',
-      },
-      {
         accessorKey: 'createdAt',
         header: 'Created At',
         cell: ({ getValue }) => {

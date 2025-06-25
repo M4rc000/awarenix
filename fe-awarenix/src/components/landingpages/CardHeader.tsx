@@ -4,13 +4,13 @@ import { TbArrowBigUpLine, TbArrowBigDownLine } from "react-icons/tb";
 import { CgArrowsExchange } from "react-icons/cg";
 import Badge from "../ui/badge/Badge";
 
-type GrowthData = {
-  growth_type: 'increase' | 'decrease' | 'no_change';
-  growth_percentage: number;
-};
-
-export default function CardHeader() {
+export default function CardHeader({ reloadTrigger }: { reloadTrigger: number }) {
   const [totalLandingPages, setTotalLandingPages] = useState(0);
+  type GrowthData = {
+    growth_type: 'increase' | 'decrease' | 'no_change';
+    growth_percentage: number;
+  } | null;
+
   const [growthDataLandingPages, setGrowthDataLandingPages] = useState<GrowthData | null>(null);
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function CardHeader() {
       }
     };
     fetchTotalLandingPages();
-  }, []);
+  }, [reloadTrigger]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -54,7 +54,7 @@ export default function CardHeader() {
       .catch(error => {
         console.error("❌ Fetch error:", error);
       });
-  }, []);
+  }, [reloadTrigger]);
 
   return (
     <>

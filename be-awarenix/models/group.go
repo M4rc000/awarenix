@@ -6,10 +6,10 @@ type Group struct {
 	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name         string    `gorm:"type:varchar(30);uniqueIndex;not null" json:"name"`
 	DomainStatus string    `gorm:"type:varchar(50);not null" json:"domainStatus"`
-	CreatedBy    uint      `gorm:"type:bigint;null" json:"createdBy"`
-	UpdatedBy    uint      `gorm:"type:bigint;null" json:"updatedBy"`
 	CreatedAt    time.Time `gorm:"type:datetime;null" json:"createdAt"`
+	CreatedBy    int       `gorm:"type:tinyint(3);null" json:"createdBy"`
 	UpdatedAt    time.Time `gorm:"type:datetime;null" json:"updatedAt"`
+	UpdatedBy    int       `gorm:"type:tinyint(3);null" json:"updatedBy"`
 	Members      []Member  `gorm:"foreignKey:GroupID"`
 }
 
@@ -21,10 +21,10 @@ type Member struct {
 	Position  string    `gorm:"type:varchar(30);not null" json:"position"`
 	Company   string    `gorm:"type:varchar(50);null" json:"company"`
 	Country   string    `gorm:"type:varchar(50);null" json:"Country"`
-	CreatedBy uint      `gorm:"type:bigint;null" json:"createdBy"`
-	UpdatedBy uint      `gorm:"type:bigint;null" json:"updatedBy"`
 	CreatedAt time.Time `gorm:"type:datetime;null" json:"createdAt"`
+	CreatedBy int       `gorm:"type:tinyint(3);null" json:"createdBy"`
 	UpdatedAt time.Time `gorm:"type:datetime;null" json:"updatedAt"`
+	UpdatedBy int       `gorm:"type:tinyint(3);null" json:"updatedBy"`
 }
 
 type MemberInput struct {
@@ -39,7 +39,7 @@ type CreateGroupInput struct {
 	Name         string        `json:"groupName" binding:"required"`
 	DomainStatus string        `json:"domainStatus" binding:"required"`
 	Members      []MemberInput `json:"members" binding:"dive"`
-	CreatedBy    uint          `gorm:"null" json:"createdBy"`
+	CreatedBy    int           `gorm:"null" json:"createdBy"`
 }
 
 type MemberResponse struct {

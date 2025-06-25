@@ -38,7 +38,7 @@ export default function EditUserModal({
     <Transition show={isOpen} as={Fragment}>
       <Dialog 
         open={isOpen} 
-        onClose={onClose}
+        onClose={() => {}}
         className="relative z-[999]"
       >
         <Transition.Child

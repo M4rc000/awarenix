@@ -4,12 +4,14 @@ import "time"
 
 type Submenu struct {
 	ID        uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name      string    `gorm:"not null" json:"name"`
-	Icon      string    `gorm:"not null" json:"icon"`
-	Url       string    `gorm:"not null" json:"url"`
-	IsActive  string    `gorm:"not null" json:"isActive"`
-	CreatedBy uint      `gorm:"null" json:"createdBy"`
-	UpdatedBy uint      `gorm:"null" json:"updatedBy"`
-	CreatedAt time.Time `gorm:"null" json:"createdAt"`
-	UpdatedAt time.Time `gorm:"null" json:"updatedAt"`
+	MenuID    uint      `gorm:"not null" json:"menuId"`
+	Menu      Menu      `gorm:"foreignKey:MenuID" json:"-"`
+	Name      string    `gorm:"type:varchar(50);not null" json:"name"`
+	Icon      string    `gorm:"type:varchar(20);not null" json:"icon"`
+	Url       string    `gorm:"type:varchar(30);not null" json:"url"`
+	IsActive  int       `gorm:"type:tinyint(1);default:1" json:"isActive"`
+	CreatedAt time.Time `gorm:"type:datetime;null" json:"createdAt"`
+	CreatedBy int       `gorm:"type:tinyint(3);null" json:"createdBy"`
+	UpdatedAt time.Time `gorm:"type:datetime;null" json:"updatedAt"`
+	UpdatedBy int       `gorm:"type:tinyint(3);null" json:"updatedBy"`
 }

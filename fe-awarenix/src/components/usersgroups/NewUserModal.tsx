@@ -44,7 +44,7 @@ export default function NewUserModal({
     <Transition show={isOpen} as={Fragment}>
       <Dialog 
         open={isOpen} 
-        onClose={onClose} // Allow closing via backdrop/escape key
+        onClose={() => {}}
         className="relative z-[999]"
       >
         {/* Backdrop with fade animation */}

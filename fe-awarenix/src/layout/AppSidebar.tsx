@@ -5,6 +5,7 @@ import { CgWebsite } from "react-icons/cg";
 import { IoIosBookmarks } from "react-icons/io";
 import { IoSettingsOutline } from "react-icons/io5";
 import { FaMoneyCheckAlt } from "react-icons/fa";
+import { DiEnvato } from "react-icons/di";
 import {
   CalenderIcon,
   ChevronDownIcon,
@@ -42,49 +43,8 @@ type NavGroup = {
 
 const navGroups: NavGroup[] = [
   {
-    title: "Super Admin",
-    key: "main",
-    items: [
-      {
-        icon: <GridIcon />,
-        name: "Dashboard",
-        path: "/dashboard",
-      },
-      {
-        icon: <CalenderIcon />,
-        name: "Campaigns",
-        path: "/campaigns",
-      },
-      {
-        icon: <User />,
-        name: "User Management",
-        path: "/user-management",
-      },
-      {
-        icon: <GroupIcon />,
-        name: "Groups & Members",
-        path: "/groups-members",
-      },
-      {
-        icon: <MailIcon />,
-        name: "Email Templates",
-        path: "/email-templates",
-      },
-      {
-        icon: <TableIcon />,
-        name: "Landing Pages",
-        path: "/landing-pages",
-      },
-      {
-        icon: <UserIcon />,
-        name: "Sending Profiles",
-        path: "/sending-profiles",
-      },
-    ],
-  },
-  {
     title: "Admin",
-    key: "admin",
+    key: "main",
     items: [
       {
         icon: <GridIcon />,
@@ -161,13 +121,18 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    title: "Support",
-    key: "support",
+    title: "Logging & Monitoring",
+    key: "loging-monitoring",
     items: [
       {
         icon: <IoFootstepsOutline />,
-        name: "Monitoring Log",
-        path: "/monitoring-log",
+        name: "Logging Activity",
+        path: "/logging-activity",
+      },
+      {
+        icon: <DiEnvato />,
+        name: "Environtment Check",
+        path: "/environtment-check",
       },
     ],
   },

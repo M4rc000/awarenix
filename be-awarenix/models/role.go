@@ -4,9 +4,10 @@ import "time"
 
 type Role struct {
 	ID        uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name      string    `gorm:"not null" json:"name"`
-	CreatedBy uint      `gorm:"null" json:"createdBy"`
-	UpdatedBy uint      `gorm:"null" json:"updatedBy"`
-	CreatedAt time.Time `gorm:"null" json:"createdAt"`
-	UpdatedAt time.Time `gorm:"null" json:"updatedAt"`
+	Name      string    `gorm:"type:varchar(50);uniqueIndex;not null" json:"name"`
+	IsActive  int       `gorm:"type:tinyint(1);default:1" json:"isActive"`
+	CreatedAt time.Time `gorm:"type:datetime;null" json:"createdAt"`
+	CreatedBy uint      `gorm:"type:bigint;null" json:"createdBy"`
+	UpdatedBy uint      `gorm:"type:bigint;null" json:"updatedBy"`
+	UpdatedAt time.Time `gorm:"type:datetime;null" json:"updatedAt"`
 }

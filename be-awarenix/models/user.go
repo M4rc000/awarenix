@@ -13,10 +13,10 @@ type User struct {
 	Company      string    `gorm:"type:varchar(50);null" json:"company"`
 	Country      string    `gorm:"type:varchar(50);null" json:"country"`
 	LastLogin    time.Time `gorm:"type:datetime;null" json:"lastLogin"`
-	CreatedBy    uint      `gorm:"type:bigint;null" json:"createdBy"`
-	UpdatedBy    uint      `gorm:"type:bigint;null" json:"updatedBy"`
 	CreatedAt    time.Time `gorm:"type:datetime;null" json:"createdAt"`
+	CreatedBy    int       `gorm:"type:tinyint(3);null" json:"createdBy"`
 	UpdatedAt    time.Time `gorm:"type:datetime;null" json:"updatedAt"`
+	UpdatedBy    int       `gorm:"type:tinyint(3);null" json:"updatedBy"`
 }
 
 type GetUserTable struct {
@@ -29,8 +29,8 @@ type GetUserTable struct {
 	Company   string    `json:"company"`
 	Country   string    `json:"country"`
 	LastLogin time.Time `json:"lastLogin"`
-	CreatedBy uint      `json:"createdBy"`
-	UpdatedBy uint      `json:"updatedBy"`
+	CreatedBy int       `json:"createdBy"`
+	UpdatedBy int       `json:"updatedBy"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -43,7 +43,7 @@ type CreateUserInput struct {
 	Role      string    `json:"role"`
 	Password  string    `json:"password" binding:"required,min=6"`
 	CreatedAt time.Time `gorm:"null" json:"createdAt"`
-	CreatedBy uint      `gorm:"null" json:"createdBy"`
+	CreatedBy int       `gorm:"null" json:"createdBy"`
 }
 type UpdateUserInput struct {
 	Name      string    `json:"name"     binding:"required"`
@@ -54,7 +54,7 @@ type UpdateUserInput struct {
 	IsActive  int       `json:"isActive"`
 	Password  string    `json:"password"`
 	UpdatedAt time.Time `gorm:"null"`
-	UpdatedBy uint      `gorm:"null" json:"updatedBy"`
+	UpdatedBy int       `gorm:"null" json:"updatedBy"`
 }
 
 type UserSession struct {

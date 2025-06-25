@@ -44,16 +44,15 @@ func SetupRoutes(router *gin.Engine) {
 			emailTemplate.GET("/all", controllers.GetEmailTemplates)         // READ
 			emailTemplate.PUT("/:id", controllers.UpdateEmailTemplate)       // UPDATE
 			emailTemplate.DELETE("/:id", controllers.DeleteEmailTemplate)    // DELETE
-
 		}
 
 		landingPage := api.Group("/landing-page")
 		{
-			landingPage.POST("/create", controllers.RegisterEmailTemplate) // CREATE
-			landingPage.GET("/all", controllers.GetLandingPages)           // READ
-			landingPage.PUT("/:id", controllers.UpdateEmailTemplate)       // UPDATE
-			landingPage.DELETE("/:id", controllers.DeleteEmailTemplate)    // DELETE
-			landingPage.POST("/clone-site", controllers.CloneSiteHTML)     // DISINI
+			landingPage.POST("/create", controllers.RegisterLandingPage) // CREATE
+			landingPage.GET("/all", controllers.GetLandingPages)         // READ
+			landingPage.PUT("/:id", controllers.UpdateEmailTemplate)     // UPDATE
+			landingPage.DELETE("/:id", controllers.DeleteEmailTemplate)  // DELETE
+			landingPage.POST("/clone-site", controllers.CloneSite)       // CLONE SITE
 		}
 
 		sendingprofiles := api.Group("/sending-profile")
