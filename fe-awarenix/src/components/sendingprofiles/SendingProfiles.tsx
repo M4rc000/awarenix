@@ -8,6 +8,11 @@ import TableSendingProfiles from "../../components/sendingprofiles/TableSendingP
 
 export default function SendingProfiles() {
   const [newModalOpen, setNewModalOpen] = useState(false);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
+
+  const fetchData = () => {
+    setReloadTrigger(prev => prev + 1);
+  };
   return (
     <>
       <Breadcrump icon={<CalenderIcon/>} title="Sending Profiles" />
@@ -18,9 +23,10 @@ export default function SendingProfiles() {
       </div>
       <Button className="text-md mt-5 mb-3" onClick={()=> setNewModalOpen(true)}>New Sending Profile</Button>
 
-      <TableSendingProfiles/>
+      <TableSendingProfiles reloadTrigger={reloadTrigger} onReload={fetchData}/>
 
       <NewSendingProfilesModal
+        onSendingProfileAdded={fetchData}
         isOpen={newModalOpen}
         onClose={() => setNewModalOpen(false)}
       />

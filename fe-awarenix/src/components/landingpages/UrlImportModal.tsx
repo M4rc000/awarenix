@@ -1,6 +1,13 @@
 import { useState } from 'react';
 
-const UrlImportModal = ({ isOpen, onClose, onImport, isLoading }) => {
+interface UrlImportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onImport: (url: string) => void;
+  isLoading: boolean;
+}
+
+const UrlImportModal = ({ isOpen, onClose, onImport, isLoading }: UrlImportModalProps) => {
   const [url, setUrl] = useState('');
 
   if (!isOpen) {

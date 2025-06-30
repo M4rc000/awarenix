@@ -76,40 +76,40 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
     if (showLoader) {
       setIsLoading(true);
     }
-      try {
-      const res = await fetch(`${API_URL}/landing-page/all`, {
-      credentials: 'include',
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+    const res = await fetch(`${API_URL}/landing-page/all`, {
+    credentials: 'include',
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-      if (!res.ok) throw new Error('Failed to fetch data');
+    if (!res.ok) throw new Error('Failed to fetch data');
 
-      const result = await res.json();
-      setData(result.Data || result.data || result);
-      } catch (err) {
-        console.log('Error: ', err);
-        Swal.fire({
-          text: 'Failed to load landing page data',
-          duration: 2000,
-          icon: "error"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    }, [API_URL, token]); 
+    const result = await res.json();
+    setData(result.Data || result.data || result);
+    } catch (err) {
+      console.log('Error: ', err);
+      Swal.fire({
+        text: 'Failed to load landing page data',
+        duration: 2000,
+        icon: "error"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [API_URL, token]); 
 
-    useEffect(() => {
-      fetchData(true);
+  useEffect(() => {
+    fetchData(true);
 
-      const intervalId = setInterval(() => {
-        fetchData(false);
-      }, 5000);
+    const intervalId = setInterval(() => {
+      fetchData(false);
+    }, 5000);
 
-      return () => clearInterval(intervalId);
-    }, [reloadTrigger, fetchData]);
+    return () => clearInterval(intervalId);
+  }, [reloadTrigger, fetchData]);
 
   useEffect(() => {
     fetchData();
