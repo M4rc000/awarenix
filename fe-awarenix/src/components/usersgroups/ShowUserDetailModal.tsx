@@ -5,18 +5,24 @@ import {
   DialogTitle,
   Transition,
 } from '@headlessui/react'
-import { Fragment, useRef } from 'react'
-import ShowUserDetailModalForm, { ShowUserModalFormRef } from './ShowUserDetailModalForm'
+import { Fragment } from 'react'
+import ShowUserDetailModalForm from './ShowUserDetailModalForm'
 
 interface User {
+  id: number;
   name: string;
   email: string;
   position: string;
-  password: string;
   role: string;
   company: string;
   isActive: string;
+  createdAt: string;
+  createdBy: number;
+  createdByName: string;
   updatedAt: string;
+  updatedBy: number;
+  updatedByName: string;
+  lastLogin: Date;
 }
 
 export type ShowUserModalProps = {
@@ -30,8 +36,6 @@ export default function ShowUserModal({
   onClose,
   user,
 }: ShowUserModalProps) {
-  const formRef = useRef<ShowUserModalFormRef>(null);
-
   return (
     <Transition show={isOpen} as={Fragment}>
       <Dialog 
@@ -83,7 +87,7 @@ export default function ShowUserModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <ShowUserDetailModalForm ref={formRef} user={user!}/>
+                <ShowUserDetailModalForm user={user!}/>
               </div>
 
               {/* FOOTER */}

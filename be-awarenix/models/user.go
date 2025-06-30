@@ -20,19 +20,21 @@ type User struct {
 }
 
 type GetUserTable struct {
-	ID        uint      `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Position  string    `json:"position"`
-	IsActive  bool      `json:"isActive"`
-	Role      string    `json:"role"`
-	Company   string    `json:"company"`
-	Country   string    `json:"country"`
-	LastLogin time.Time `json:"lastLogin"`
-	CreatedBy int       `json:"createdBy"`
-	UpdatedBy int       `json:"updatedBy"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID            uint      `json:"id"`
+	Name          string    `json:"name"`
+	Email         string    `json:"email"`
+	Position      string    `json:"position"`
+	IsActive      bool      `json:"isActive"`
+	Role          string    `json:"role"`
+	Company       string    `json:"company"`
+	Country       string    `json:"country"`
+	LastLogin     time.Time `json:"lastLogin"`
+	CreatedBy     int       `json:"createdBy"`
+	UpdatedBy     int       `json:"updatedBy"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+	CreatedByName string    `json:"createdByName"`
+	UpdatedByName string    `json:"updatedByName"`
 }
 
 type CreateUserInput struct {

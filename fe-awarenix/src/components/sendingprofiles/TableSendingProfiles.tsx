@@ -49,9 +49,6 @@ export default function TableSendingProfiles() {
   const [activeModal, setActiveModal] = useState<'detail' | 'edit' | 'delete' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<SendingProfiles[]>([]);
-  // const [showSendingProfilesModalOpen, setShowSendingProfilesModalOpen] = useState(false);
-  // const [updateSendingProfilesModalOpen, setUpdateSendingProfilesModalOpen] = useState(false);
-  // const [deleteSendingProfilesModalOpen, setDeleteSendingProfilesModalOpen] = useState(false);
   
   const onShowSendingProfiles = () => {
     setActiveModal('detail');
@@ -87,7 +84,7 @@ export default function TableSendingProfiles() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`${API_URL}/landing-page/all`, {
+        const res = await fetch(`${API_URL}/sending-profile/all`, {
           credentials: 'include',
           headers: {
             "Content-Type": "application/json",

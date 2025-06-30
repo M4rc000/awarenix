@@ -23,7 +23,9 @@ import Button from "../ui/button/Button";
 import type { SortingState } from '@tanstack/react-table';
 import { useSidebar } from "../../context/SidebarContext";
 import Swal from '../utils/AlertContainer';
-import ShowLandingPageModal from './ShowLandingPageModal'
+import ShowLandingPageModal from './ShowLandingPageModal';
+import EditLandingPageModal from './EditLandingPageModal';
+import DeleteLandingPageModal from './DeleteLandingPageModal';
 
 interface LandingPage{
   id: number;
@@ -31,8 +33,10 @@ interface LandingPage{
   body: string;
   createdAt: string;
   createdBy: number;
+  createdByName: string;
   updatedAt: string;
   updatedBy: number;
+  updatedByName: string;
 }
 
 export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?: number, onReload?: () => void }){
@@ -462,20 +466,20 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
       />
 
       {/* EDIT MODAL */}
-      {/* <EditLandingPageModal 
+      <EditLandingPageModal 
         isOpen={activeModal === 'edit'}
         onClose={() => {
           setActiveModal(null);
           setSelectedLandingPage(null);
         }}
         landingPage={selectedLandingPage}
-        onUserUpdated={() => {
+        onLandingPageUpdated={() => {
           fetchData()
         }}     
-      /> */}
+      />
 
       {/* DELETE MODAL */}
-      {/* <DeleteLandingPageModal 
+      <DeleteLandingPageModal 
         isOpen={activeModal === 'delete'}
         onClose={() => {
           setActiveModal(null);
@@ -488,7 +492,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
           fetchData();
           if (onReload) onReload();
         }}
-      /> */}
+      />
     </div>
   );
 }

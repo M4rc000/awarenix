@@ -16,7 +16,8 @@ type User = {
 }
 
 export type NewUserModalFormRef = {
-  submitUsers: () => Promise<User | null>;
+  // submitUsers: () => Promise<User | null>;
+  submitUsers: () => Promise<boolean>;
   user: User | null;
 };
 
@@ -202,6 +203,7 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     submitUsers,
+    user: user as User,
   }));
 
   // Handle input changes - dengan safety check

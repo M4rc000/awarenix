@@ -12,6 +12,7 @@ interface EmailTemplate{
   templateName: string;
   envelopeSender: string;
   subject: string;
+  trackerImage: number;
   createdAt: string;
   createdBy: string;
   updatedAt: string;
@@ -27,12 +28,12 @@ type NewEmailTemplateModalFormProps = {
   onSuccess?: () => void;
 };
 
-// Define user data structure
 type EmailTemplateData = {
   templateName: string;
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
+  trackerImage: number;
 };
 
 const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEmailTemplateModalFormProps>(({ onSuccess }, ref) => {
@@ -41,6 +42,7 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
     envelopeSender: "",
     subject: "",
     bodyEmail: "",
+    trackerImage: 1,
   });
   const [templateName, setTemplateName] = useState("Welcome Email");
   const [envelopeSender, setEnvelopeSender] = useState("team@company.com");
@@ -79,33 +81,28 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
       const token = localStorage.getItem("token");
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       const createdBy = userData?.id || 0; 
+      const payload = {
+        templateName: emailtemplate.templateName, 
+        envelopeSender: emailtemplate.envelopeSender,
+        subject: emailtemplate.subject, 
+        bodyEmail: emailtemplate.bodyEmail || "",
+        trackerImage: emailtemplate.trackerImage,
+        createdAt: new Date().toISOString(),
+        createdBy: createdBy,
+      };
       const response = await fetch(`${API_URL}/email-template/create`, {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          templateName: templateName,
-          envelopeSender: envelopeSender,
-          subject: subject,
-          bodyEmail: emailtemplate.bodyEmail || "",
-          createdAt: new Date().toISOString(),
-          createdBy: createdBy,
-        }),
+        body: JSON.stringify(payload),
       });
 
-      console.log('Body: ', {
-        templateName: templateName,
-        envelopeSender: envelopeSender,
-        subject: subject,
-        bodyEmail: emailtemplate.bodyEmail,
-        createdAt: new Date().toISOString(),
-        createdBy: createdBy,
-      });
+      console.log('Body: ', payload);
       
       if (!response.ok) {
-        let errorMessage = 'Failed to create user';
+        let errorMessage = 'Failed to create email template';
         
         // Cek content type sebelum parsing
         const contentType = response.headers.get('content-type');
@@ -143,15 +140,16 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         envelopeSender: "",
         subject: "",
         bodyEmail: "",
+        trackerImage: 1,
       });
       setErrors({});
       
       return createdTemplate;
       
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error('Error creating email template:', error);
       
-      // Set error message untuk user
+      // Set error message untuk email template
       if (error instanceof Error) {
         // Cek jika error terkait network
         if (error.message.includes('fetch')) {
@@ -181,8 +179,12 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
   };
   useImperativeHandle(ref, () => ({ submitEmailTemplate, emailtemplate: null }));
 
+  const handleTrackerChange = (trackerValue: number) => {
+    handleInputChange("trackerImage", trackerValue);
+  };
+
   // Handle input changes - dengan safety check
-  const handleInputChange = (field: keyof EmailTemplateData, value: string) => {
+  const handleInputChange = (field: keyof EmailTemplateData, value: string | number) => {
     // Prevent submit trigger dari input change
     if (isSubmitting) {
       // console.log('Ignoring input change during submission');
@@ -215,6 +217,7 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         templateName={templateName}
         envelopeSender={envelopeSender}
         subject={subject}
+        onTrackerChange={handleTrackerChange} 
         onBodyChange={(html) => {
           handleInputChange("bodyEmail", html);
           setEmailTemplate(prev => ({ ...prev, bodyEmail: html })); 

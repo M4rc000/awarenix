@@ -32,7 +32,14 @@ interface EmailTemplate{
   name: string;
   envelopeSender: string;
   subject: string;
-  updated_at: string;
+  bodyEmail: string;
+  trackerImage: number;
+  createdAt: string;
+  createdBy: number;
+  createdByName: string;
+  updatedAt: string;
+  updatedBy: number;
+  updatedByName: string;
 }
 
 export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?: number, onReload?: () => void }){

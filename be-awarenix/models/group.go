@@ -54,19 +54,21 @@ type MemberResponse struct {
 }
 
 type GroupResponse struct {
-	ID           uint             `json:"id"`
-	Name         string           `json:"name"`
-	DomainStatus string           `json:"domainStatus"`
-	CreatedAt    time.Time        `json:"createdAt"`
-	UpdatedAt    time.Time        `json:"updatedAt"`
-	Members      []MemberResponse `json:"members"`
-	MemberCount  int              `json:"memberCount"`
+	ID            uint             `json:"id"`
+	Name          string           `json:"name"`
+	DomainStatus  string           `json:"domainStatus"`
+	CreatedAt     time.Time        `json:"createdAt"`
+	UpdatedAt     time.Time        `json:"updatedAt"`
+	Members       []MemberResponse `json:"members"`
+	MemberCount   int              `json:"memberCount"`
+	CreatedByName string           `json:"createdByName"`
+	UpdatedByName string           `json:"updatedByName"`
 }
 
 type UpdateGroupRequest struct {
 	GroupName    string      `json:"groupName" binding:"required"`
 	DomainStatus string      `json:"domainStatus" binding:"required"`
-	CreatedBy    uint        `json:"createdBy"`
+	UpdatedBy    uint        `json:"updatedBy"`
 	Members      []NewMember `json:"members" binding:"required"`
 }
 
@@ -76,4 +78,10 @@ type NewMember struct {
 	Position string `json:"position" binding:"required"`
 	Company  string `json:"company"`
 	Country  string `json:"country"`
+}
+
+type GroupWithUserNames struct {
+	Group
+	CreatedByName string `json:"createdByName"`
+	UpdatedByName string `json:"updatedByName"`
 }

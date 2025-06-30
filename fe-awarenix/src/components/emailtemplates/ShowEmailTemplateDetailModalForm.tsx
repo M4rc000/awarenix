@@ -9,6 +9,11 @@ type EmailTemplate = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
+  trackerImage: number;
+  createdAt: string;
+  createdBy: number;
+  updatedAt: string;
+  updatedBy: number;
 }
 
 export type ShowEmailTemplateDetailModalFormRef = {
@@ -21,6 +26,13 @@ type EmailTemplateData = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
+  trackerImage: number;
+  createdAt: string;
+  createdBy: number;
+  createdByName: string;
+  updatedAt: string;
+  updatedBy: number;
+  updatedByName: string;
 };
 
 type ShowEmailTemplateDetailModalFormProps = {
@@ -49,7 +61,7 @@ const ShowEmailTemplateDetailModalForm = ({ emailTemplate }: ShowEmailTemplateDe
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
           📧 Email Configuration
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-2">
           <div>
             <Label>Template Name</Label>
             <Input 
@@ -63,7 +75,6 @@ const ShowEmailTemplateDetailModalForm = ({ emailTemplate }: ShowEmailTemplateDe
           <div>
             <Label>Envelope Sender</Label>
             <Input 
-              placeholder="team@company.com" 
               type="email" 
               value={emailTemplate.envelopeSender} 
               className={`w-full text-sm sm:text-base h-10 px-3 `}
@@ -73,12 +84,83 @@ const ShowEmailTemplateDetailModalForm = ({ emailTemplate }: ShowEmailTemplateDe
           <div>
             <Label>Subject Line</Label>
             <Input 
-              placeholder="Welcome to Our Platform!" 
               type="text"
               required 
               value={emailTemplate.subject} 
               readonly
               className={`w-full text-sm sm:text-base h-10 px-3`}
+            />
+          </div>
+          <div>
+            <Label>Tracker Image</Label>
+            <Input 
+              type="text"
+              required 
+              value={emailTemplate.trackerImage == 1 ? 'Active' : 'Not Active'} 
+              readonly
+              className={`w-full text-sm sm:text-base h-10 px-3`}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-5">
+          <div>
+            <Label>Created At</Label>
+            <Input 
+              type="text" 
+              value={
+                emailTemplate.createdAt
+                  ? new Date(emailTemplate.createdAt).toLocaleDateString('en-GB', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false,
+                    timeZoneName: 'short',  
+                    })
+                  : ''
+              }
+              className={`w-full text-sm sm:text-base h-10 px-3`}
+              readonly
+              />
+          </div>
+          <div>
+            <Label>Created By</Label>
+            <Input 
+              type="text" 
+              value={emailTemplate.createdByName} 
+              className={`w-full text-sm sm:text-base h-10 px-3`}
+              readonly
+            />
+          </div>
+          <div>
+            <Label>Updated At</Label>
+            <Input 
+              type="text" 
+              value={
+                emailTemplate.updatedAt
+                  ? new Date(emailTemplate.updatedAt).toLocaleDateString('en-GB', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false,
+                    timeZoneName: 'short',  
+                    })
+                  : ''
+              }
+              className={`w-full text-sm sm:text-base h-10 px-3`}
+              readonly
+              />
+          </div>
+          <div>
+            <Label>Updated By</Label>
+            <Input 
+              type="text" 
+              value={emailTemplate.updatedByName} 
+              className={`w-full text-sm sm:text-base h-10 px-3`}
+              readonly
             />
           </div>
         </div>

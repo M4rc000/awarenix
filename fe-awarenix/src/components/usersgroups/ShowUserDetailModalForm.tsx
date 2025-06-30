@@ -1,28 +1,26 @@
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 
-// Define the ref methods that parent can call
-export type ShowUserModalFormRef = {
-  submitUsers: () => Promise<boolean>;
-};
-
 type User = {
   id: number;
   name: string;
   email: string;
   position: string;
   company: string;
+  isActive: string;
   role: string;
-  lastLogin: Date;
-  createdAt: Date;
-  createddBy: number;
-  updatedAt: Date;
+  lastLogin: string;
+  createdAt: string;
+  createdBy: number;
+  createdByName: string;
+  updatedAt: string;
   updatedBy: number;
+  updatedByName: string;
 };
 
 type ShowUserDetailModalFormProps = {
-  isOpen: boolean
-  onClose: () => void
+  // isOpen: boolean
+  // onClose: () => void
   user: User | null; 
 };
 
@@ -109,7 +107,7 @@ const ShowUserDetailModalForm = ({ user }: ShowUserDetailModalFormProps) => {
               <Input
                 id="created-by"
                 type="text"
-                value={user.createdBy}
+                value={user.createdByName}
                 className="w-full mt-1"
                 readonly
               />
@@ -145,7 +143,7 @@ const ShowUserDetailModalForm = ({ user }: ShowUserDetailModalFormProps) => {
               <Input
                 id="updated-by"
                 type="text"
-                value={user.updatedBy}
+                value={user.updatedByName}
                 className="w-full mt-1"
                 readonly
               />
@@ -153,23 +151,27 @@ const ShowUserDetailModalForm = ({ user }: ShowUserDetailModalFormProps) => {
 
             <div>
               <Label>Last Login</Label>
-              <Input
-                placeholder="1 Jan 1970"
-                value={
-                  user.lastLogin
-                    ? new Date(user.lastLogin).toLocaleDateString('en-GB', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false,
-                        timeZoneName: 'short',  
-                      })
-                    : ''
-                }
-                readonly
-              />
+                <Input
+                  placeholder="Never logged in"
+                  value={
+                    !user.lastLogin ||
+                    user.lastLogin === "0000-00-00 00:00:00" ||
+                    isNaN(Date.parse(user.lastLogin)) ||
+                    new Date(user.lastLogin).getFullYear() === 1 ||
+                    new Date(user.lastLogin).getTime() === 0
+                      ? 'Never logged in'
+                      : new Date(user.lastLogin).toLocaleString('en-GB', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false,
+                          timeZone: 'Asia/Jakarta',
+                        })
+                  }
+                  readonly
+                />
             </div>
           </div>
       </div>

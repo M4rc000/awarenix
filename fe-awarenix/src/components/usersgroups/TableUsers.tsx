@@ -35,9 +35,16 @@ interface User {
   name: string;
   email: string;
   position: string;
+  company: string;
   role: string;
-  isActive: number;
+  isActive: string;
+  createdAt: string;
+  createdBy: number;
+  createdByName: string;
   updatedAt: string;
+  updatedBy: number;
+  updatedByName: string;
+  lastLogin: Date;
 }
 
 export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?: number, onReload?: () => void }){

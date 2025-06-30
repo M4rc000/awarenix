@@ -13,3 +13,9 @@ type SendingProfiles struct {
 	UpdatedAt     time.Time `gorm:"type:datetime;null" json:"updatedAt"`
 	UpdatedBy     int       `gorm:"type:tinyint(3);null" json:"updatedBy"`
 }
+
+type GetSendingProfile struct {
+	SendingProfiles
+	CreatedByName string `json:"createdByName"`
+	UpdatedByName string `json:"updatedByName"`
+}

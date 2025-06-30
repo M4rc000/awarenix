@@ -33,7 +33,7 @@ export default function CardHeader({ reloadTrigger }: { reloadTrigger: number })
     const API_URL = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`${API_URL}/analytics/growth-percentage?type=emailtemplate`, {
+      const res = await fetch(`${API_URL}/analytics/growth-percentage?type=emailtemplates`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

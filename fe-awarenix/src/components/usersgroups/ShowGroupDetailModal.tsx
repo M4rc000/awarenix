@@ -15,8 +15,10 @@ type Group = {
   memberCount: number; 
   createdAt: string; 
   createdBy: number; 
+  createdByName: string; 
   updatedAt: string; 
   updatedBy: number; 
+  updatedByName: string; 
   members?: Member[];
 }
 
@@ -46,7 +48,7 @@ export default function ShowGroupDetailModal({
     <Transition show={isOpen} as={Fragment}>
       <Dialog
         open={isOpen}
-        onClose={onClose} // Izinkan penutupan melalui backdrop atau tombol Escape
+        onClose={()=>{}}
         className="relative z-[999]"
       >
         {/* Backdrop dengan animasi fade */}
@@ -93,7 +95,6 @@ export default function ShowGroupDetailModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                {/* Pastikan 'group' prop diteruskan ke ShowGroupDetailModalForm */}
                 <ShowGroupDetailModalForm group={group} />
               </div>
 

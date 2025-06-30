@@ -54,19 +54,33 @@ const NewGroupModalForm = forwardRef<NewGroupModalFormRef, NewGroupModalFormProp
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const addUser = () => {
     const { name, email, position, company, country } = newUser;
     if (!name.trim() || !email.trim() || !position.trim()) {
-        setSubmitMessage({ type: 'error', text: "Name, Email, and Position are required for a new member." });
-        return;
+      Swal.fire({
+        text: 'Name, Email, and Position are required for a new member.',
+        icon: 'error',
+        duration: 3000,
+      });
+      return;
+    } else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      Swal.fire({
+        text: 'Please enter a valid email.',
+        icon: 'error',
+        duration: 3000,
+      });
+      return;
     }
-
+    
     // Client-side check for duplicate email in the current list before adding
     if (users.some(u => u.email.toLowerCase() === email.trim().toLowerCase())) {
-        setSubmitMessage({ type: 'error', text: "Member with this email is already added to the list." });
-        return;
+      Swal.fire({
+        text: 'Member with this email is already added to the list.',
+        icon: 'error',
+        duration: 3000,
+      })
+      return;
     }
 
     const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
@@ -81,19 +95,16 @@ const NewGroupModalForm = forwardRef<NewGroupModalFormRef, NewGroupModalFormProp
     }]);
 
     setNewUser({ name: "", email: "", position: "", company: "", country: "" });
-    setSubmitMessage(null); // Clear message on successful add
   };
 
   const removeUser = (id: number) => {
     setUsers(prev => prev.filter(user => user.id !== id));
-    setSubmitMessage(null); // Clear message on remove
   };
 
   const handleInputChange = (field: keyof typeof newUser) => (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     setNewUser(prev => ({ ...prev, [field]: e.target.value }));
-    setSubmitMessage(null); // Clear message when typing
   };
 
   // The logic for filtering and displaying users remains the same
@@ -127,18 +138,21 @@ const NewGroupModalForm = forwardRef<NewGroupModalFormRef, NewGroupModalFormProp
   // The submitGroups function, as requested, REMAINS UNTOUCHED in its core logic (API_URL, body, headers)
   const submitGroups = async (): Promise<boolean> => {
     if (!isGroupFormValid) {
-        setSubmitMessage({ type: 'error', text: "Please provide a group name and add at least one member." });
-        return false; // Return false on validation failure
+      Swal.fire({
+        icon: 'error',
+        text: 'Please provide a group name and add at least one member.',
+        duration: 3000,
+      })
+      return false;
     }
 
     setIsSubmitting(true);
-    setSubmitMessage(null);
 
     // Prepare members data for the backend (remove the frontend-only 'id' field)
     const membersPayload = users.map(({ ...rest }) => ({ // Deconstruct id to exclude it
         ...rest,
-        company: "", // These should be from newUser state if inputs exist, or removed if fixed on BE
-        country: "", // These should be from newUser state if inputs exist, or removed if fixed on BE
+        company: "",
+        country: "",
     }));
 
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
@@ -174,16 +188,31 @@ const NewGroupModalForm = forwardRef<NewGroupModalFormRef, NewGroupModalFormProp
         setSearchTerm("");
         return true;
       } else {
+        console.log('HTTP Response Failed:', response);
+        console.error('Error data from server:', data); 
+
+        let errorMessage = 'Failed to save group and members.'; 
+
+        if (data && data.message) {
+          errorMessage = data.message;
+        } else if (data && data.error) {
+          errorMessage = data.error;
+        }
+
         Swal.fire({
-          text: 'Failed to save group and members',
+          text: errorMessage, 
           icon: 'error',
           duration: 3000,
-        })
-        console.error("Failed to save group:", data.error || "Unknown error");
+        });
+        
         return false; 
-      }
+      } 
     } catch (error) {
-      setSubmitMessage({ type: 'error', text: "Network error. Please try again." });
+      Swal.fire({
+        text: 'Network error. Please try again.',
+        icon: 'error',
+        duration: 3000,
+      })
       console.error("Error saving group:", error);
       return false; 
     } finally {
@@ -210,7 +239,7 @@ const NewGroupModalForm = forwardRef<NewGroupModalFormRef, NewGroupModalFormProp
           placeholder="Enter group name (e.g., Development Team)"
           type="text"
           value={groupName}
-          onChange={(e) => { setGroupName(e.target.value); setSubmitMessage(null); }} 
+          onChange={(e) => { setGroupName(e.target.value);}} 
           className="w-full mt-1"
           disabled={isSubmitting} // Disable while submitting
         />
@@ -459,13 +488,6 @@ const NewGroupModalForm = forwardRef<NewGroupModalFormRef, NewGroupModalFormProp
           </div>
         )}
       </div>
-
-      {/* Submit and Test Email Section */}
-      {submitMessage && (
-        <div className={`p-3 rounded-md text-sm ${submitMessage.type === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300'}`}>
-          {submitMessage.text}
-        </div>
-      )}
     </div>
   );
 });

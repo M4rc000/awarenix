@@ -14,14 +14,13 @@ import { BsFillPersonPlusFill } from "react-icons/bs";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
 import Swal from "../utils/AlertContainer";
 
-// Types (Pastikan ini sesuai dengan struktur data API Anda)
 type Group = {
   id: number;
   name: string;
   domainStatus: string;
   memberCount: number;
   createdAt: string;
-  UpdatedAt: string;
+  updatedAt: string;
   members?: User[];
 };
 
@@ -45,7 +44,7 @@ type EditGroupModalFormProps = {
 
 const EditGroupModalForm = forwardRef<EditGroupModalFormRef, EditGroupModalFormProps>(({ group, onSuccess }, ref) => {
   const [currentGroupName, setCurrentGroupName] = useState<Group>(
-    group || { id: 0, name: "", domainStatus: "active", memberCount: 0, createdAt: "", UpdatedAt: "", members: [] }
+    group || { id: 0, name: "", domainStatus: "active", memberCount: 0, createdAt: "", updatedAt: "", members: [] }
   );
 
   const [users, setUsers] = useState<User[]>([]);
@@ -59,7 +58,7 @@ const EditGroupModalForm = forwardRef<EditGroupModalFormRef, EditGroupModalFormP
       setUsers(group.members || []);
     } else {
         // Jika group null (misal untuk form create baru), reset states
-        setCurrentGroupName({ id: 0, name: "", domainStatus: "active", memberCount: 0, createdAt: "", UpdatedAt: "", members: [] });
+        setCurrentGroupName({ id: 0, name: "", domainStatus: "active", memberCount: 0, createdAt: "", updatedAt: "", members: [] });
         setUsers([]);
     }
   }, [group]);
@@ -74,45 +73,54 @@ const EditGroupModalForm = forwardRef<EditGroupModalFormRef, EditGroupModalFormP
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const addUser = () => {
     const { name, email, position, company, country } = newUser;
     if (!name.trim() || !email.trim() || !position.trim()) {
-      setSubmitMessage({ type: 'error', text: "Name, Email, and Position are required for a new member." });
+      Swal.fire({
+        icon: 'error',
+        text: "Name, Email, and Position are required for a new member.",
+        duration: 2000,
+      });
       return;
     }
-
-    if (!/\S+@\S+\.\S+/.test(email.trim())) { // Simple email format validation
-        setSubmitMessage({ type: 'error', text: "Please enter a valid email address." });
-        return;
+    
+    if (!/\S+@\S+\.\S+/.test(email.trim())) { 
+      Swal.fire({
+        icon: 'warning',
+        text: "Please enter a valid email address.",
+        duration: 2000,
+      });
+      return;
     }
-
+    
     if (users.some(u => u.email.toLowerCase() === email.trim().toLowerCase())) {
-      setSubmitMessage({ type: 'error', text: "Member with this email is already added to the list." });
+      Swal.fire({
+        icon: 'warning',
+        text: "Member with this email is already added to the list.",
+        duration: 2000,
+      });
       return;
     }
-
+    
     // Generate a temporary client-side ID.
     // In a real app, if editing existing members, the backend should provide real IDs.
     const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
 
     setUsers(prev => [...prev, {
-      id: newId, // Temporary client-side ID
+      id: newId,
       name: name.trim(),
       email: email.trim(),
       position: position.trim(),
       company: company.trim(),
       country: country.trim(),
     }]);
-
+    
     setNewUser({ name: "", email: "", position: "", company: "", country: "" });
-    setSubmitMessage(null); // Clear message on successful add
   };
 
   const removeUser = (id: number) => {
     setUsers(prev => prev.filter(user => user.id !== id));
-    setSubmitMessage(null); // Clear message on remove
   };
 
   // --- Fungsi baru untuk mengedit anggota yang ada di tabel ---
@@ -124,14 +132,14 @@ const EditGroupModalForm = forwardRef<EditGroupModalFormRef, EditGroupModalFormP
 
       // Optional: Real-time duplicate email check for edited users
       if (field === 'email') {
-          const editedUser = updatedUsers.find(u => u.id === id);
-          if (editedUser && updatedUsers.some(u => u.id !== id && u.email.toLowerCase() === editedUser.email.toLowerCase())) {
-              setSubmitMessage({ type: 'error', text: "Another member in the list already has this email." });
-          } else {
-              setSubmitMessage(null); // Clear if no duplicates
-          }
-      } else {
-          setSubmitMessage(null); // Clear message when typing non-email fields
+        const editedUser = updatedUsers.find(u => u.id === id);
+        if (editedUser && updatedUsers.some(u => u.id !== id && u.email.toLowerCase() === editedUser.email.toLowerCase())) {
+          Swal.fire({
+            icon: 'error',
+            text: "Another member in the list already has this email.",
+            duration: 2000,
+          });
+        }
       }
       return updatedUsers;
     });
@@ -142,7 +150,6 @@ const EditGroupModalForm = forwardRef<EditGroupModalFormRef, EditGroupModalFormP
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     setNewUser(prev => ({ ...prev, [field]: e.target.value }));
-    setSubmitMessage(null); // Clear message when typing
   };
 
   const filteredUsers = users.filter(user =>
@@ -178,7 +185,6 @@ const EditGroupModalForm = forwardRef<EditGroupModalFormRef, EditGroupModalFormP
     }
 
     setIsSubmitting(true);
-    setSubmitMessage(null);
 
     const membersPayload = users.map(user => ({
       id: user.id,
@@ -196,6 +202,7 @@ const EditGroupModalForm = forwardRef<EditGroupModalFormRef, EditGroupModalFormP
       groupName: currentGroupName.name.trim(),
       domainStatus: "active",
       members: membersPayload,
+      updatedBy: createdBy
     };
 
     const API_URL = import.meta.env.VITE_API_URL;
@@ -278,7 +285,6 @@ const EditGroupModalForm = forwardRef<EditGroupModalFormRef, EditGroupModalFormP
           value={currentGroupName.name}
           onChange={(e) => {
             setCurrentGroupName(prev => ({ ...prev, name: e.target.value }));
-            setSubmitMessage(null);
           }}
           className="w-full mt-1"
           disabled={isSubmitting}
@@ -566,12 +572,6 @@ const EditGroupModalForm = forwardRef<EditGroupModalFormRef, EditGroupModalFormP
         )}
       </div>
 
-      {/* Submit and Test Email Section */}
-      {submitMessage && (
-        <div className={`p-3 rounded-md text-sm ${submitMessage.type === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300'}`}>
-          {submitMessage.text}
-        </div>
-      )}
     </div>
   );
 });

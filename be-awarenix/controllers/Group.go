@@ -12,33 +12,38 @@ import (
 )
 
 func GetGroups(c *gin.Context) {
-	// Ini akan memuat semua anggota untuk setiap grup.
 	query := config.DB.Model(&models.Group{}).Preload("Members")
 
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Success": false,
-			"Message": "Failed to count groups",
+			"Message": "Failed to count group",
 			"Error":   err.Error(),
 		})
 		return
 	}
 
-	var groups []models.Group // Ini akan berisi grup dengan anggota yang sudah di-preload
-	if err := query.Find(&groups).Error; err != nil {
+	query = config.DB.Table("groups").
+		Select("groups.*, created_by_user.name AS created_by_name, updated_by_user.name AS updated_by_name").
+		Joins("LEFT JOIN users AS created_by_user ON created_by_user.id = groups.created_by").
+		Joins("LEFT JOIN users AS updated_by_user ON updated_by_user.id = groups.updated_by").
+		Preload("Members")
+
+	var groupsWithUserNames []models.GroupWithUserNames
+	if err := query.Find(&groupsWithUserNames).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Success": false,
-			"Message": "Failed to fetch groups",
+			"Message": "Failed to fetch group",
 			"Error":   err.Error(),
 		})
 		return
 	}
 
-	var groupsWithFullDataResponse []models.GroupResponse // Ganti nama variabel agar lebih jelas
-	for _, group := range groups {
+	var groupsResponse []models.GroupResponse
+	for _, groupData := range groupsWithUserNames { // Iterasi melalui struct gabungan
 		var membersResponse []models.MemberResponse
-		for _, member := range group.Members {
+		for _, member := range groupData.Members { // Members di-preload ke groupData.Group.Members
 			membersResponse = append(membersResponse, models.MemberResponse{
 				ID:        member.ID,
 				Name:      member.Name,
@@ -51,27 +56,28 @@ func GetGroups(c *gin.Context) {
 			})
 		}
 
-		groupsWithFullDataResponse = append(groupsWithFullDataResponse, models.GroupResponse{
-			ID:           group.ID,
-			Name:         group.Name,
-			DomainStatus: group.DomainStatus,
-			CreatedAt:    group.CreatedAt,
-			UpdatedAt:    group.UpdatedAt,
-			MemberCount:  len(group.Members),
-			Members:      membersResponse, // <--- DETAIL ANGGOTA LENGKAP DIKIRIM DI SINI
+		groupsResponse = append(groupsResponse, models.GroupResponse{
+			ID:            groupData.ID,
+			Name:          groupData.Name,
+			DomainStatus:  groupData.DomainStatus,
+			CreatedAt:     groupData.CreatedAt,
+			UpdatedAt:     groupData.UpdatedAt,
+			MemberCount:   len(groupData.Members),
+			Members:       membersResponse,
+			CreatedByName: groupData.CreatedByName,
+			UpdatedByName: groupData.UpdatedByName,
 		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"Success": true,
-		"Message": "Groups retrieved successfully",
-		"Data":    groupsWithFullDataResponse,
+		"Message": "Grup retrieved successfully",
+		"Data":    groupsResponse,
 		"Total":   total,
 	})
 }
 
 func GetMembers(c *gin.Context) {
-	// Ini akan memuat semua anggota untuk setiap grup.
 	query := config.DB.Model(&models.Member{})
 
 	var total int64
@@ -177,6 +183,8 @@ func UpdateGroup(c *gin.Context) {
 		return
 	}
 
+	var updatedBy = int(req.UpdatedBy)
+
 	// Start a database transaction
 	tx := config.DB.Begin()
 	if tx.Error != nil {
@@ -208,7 +216,8 @@ func UpdateGroup(c *gin.Context) {
 	// Update group details
 	existingGroup.Name = req.GroupName
 	existingGroup.DomainStatus = req.DomainStatus
-	existingGroup.UpdatedAt = time.Now() // Manually update UpdatedAt if not using gorm.Model hooks
+	existingGroup.UpdatedAt = time.Now()
+	existingGroup.UpdatedBy = updatedBy
 
 	if err := tx.Save(&existingGroup).Error; err != nil {
 		tx.Rollback()
@@ -248,13 +257,13 @@ func UpdateGroup(c *gin.Context) {
 			}
 
 			newMembers[i] = models.Member{
-				GroupID:  uint(groupID), // Assign the group ID to each member
-				Name:     m.Name,
-				Email:    m.Email,
-				Position: m.Position,
-				Company:  m.Company,
-				Country:  m.Country,
-				// GORM will automatically set CreatedAt/UpdatedAt if using gorm.Model
+				GroupID:   uint(groupID),
+				Name:      m.Name,
+				Email:     m.Email,
+				Position:  m.Position,
+				Company:   m.Company,
+				Country:   m.Country,
+				UpdatedBy: updatedBy,
 			}
 		}
 
@@ -293,7 +302,7 @@ func RegisterGroup(c *gin.Context) {
 	tx := config.DB.Begin()
 	if tx.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Database error",
+			"error":   "Database error: ",
 			"message": "Failed to start transaction",
 		})
 		return
@@ -306,6 +315,16 @@ func RegisterGroup(c *gin.Context) {
 		CreatedBy:    input.CreatedBy,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
+	}
+
+	var existingGroup models.Group
+	if err := tx.Where("name = ?", input.Name).First(&existingGroup).Error; err == nil {
+		tx.Rollback()
+		c.JSON(http.StatusConflict, gin.H{
+			"error":   "Group Name already exists",
+			"message": "Group Name already exists",
+		})
+		return
 	}
 
 	if err := tx.Create(&newGroup).Error; err != nil {

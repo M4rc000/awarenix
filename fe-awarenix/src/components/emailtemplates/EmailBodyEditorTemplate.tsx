@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Swal from "../utils/AlertContainer";
 import { useRef } from "react";
+import Checkbox from "../form/input/Checkbox";
 
 const TEMPLATE_WELCOME = `<html>
     <head>
@@ -423,7 +424,9 @@ type EmailBodyEditorTemplateProps = {
   envelopeSender?: string;
   subject?: string;
   initialContent?: string;
+  initialTrackerValue?: number;
   onBodyChange?: (body: string) => void;
+  onTrackerChange?: (trackerValue: number) => void;
 };
 
 const EmailBodyEditorTemplate = ({
@@ -432,6 +435,8 @@ const EmailBodyEditorTemplate = ({
   subject,
   onBodyChange,
   initialContent = "",
+  onTrackerChange,
+  initialTrackerValue = 0,
 }: EmailBodyEditorTemplateProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -444,6 +449,13 @@ const EmailBodyEditorTemplate = ({
     const matchedTemplate = EMAIL_TEMPLATES.find(template => template.content === initialContent);
     return matchedTemplate ? matchedTemplate.name : "Custom";
   });
+  const [trackerImage, setTrackerImage] = useState(initialTrackerValue);
+
+  useEffect(() => {
+    if (onTrackerChange) {
+      onTrackerChange(trackerImage);
+    }
+  }, [trackerImage, onTrackerChange]);
 
   // HANYA ketika `htmlContent` berubah
   useEffect(() => {
@@ -463,7 +475,14 @@ const EmailBodyEditorTemplate = ({
       const matchedTemplate = EMAIL_TEMPLATES.find(template => template.content === initialContent);
       setSelectedTemplate(matchedTemplate ? matchedTemplate.name : "Custom");
     }
-  }, [initialContent]); // Dependensi hanya initialContent
+  }, [initialContent]);
+
+  // Effect untuk mengirim nilai tracker image ke parent component
+  useEffect(() => {
+    if (onTrackerChange) {
+      onTrackerChange(trackerImage);
+    }
+  }, [trackerImage, onTrackerChange]);
 
   const handleTemplateChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newTemplateName = event.target.value;
@@ -538,7 +557,7 @@ const EmailBodyEditorTemplate = ({
         fileInputRef.current.value = '';
       }
     };
-    reader.readAsText(file); // Read the file as text
+    reader.readAsText(file);
   };
 
   // Simple EML parser to extract HTML part
@@ -581,7 +600,7 @@ const EmailBodyEditorTemplate = ({
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Template Selector */}
         <div className="p-4">
           <label htmlFor="email-template-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -636,7 +655,7 @@ const EmailBodyEditorTemplate = ({
         </div>
 
         {/* Import Template Button and hidden file input */}
-        <div className="p-4 flex items-end"> {/* Align button to the bottom if content above is taller */}
+        <div className="p-4 mx-5 flex items-end"> {/* Align button to the bottom if content above is taller */}
           <button
             onClick={handleImportButtonClick}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 w-full md:w-auto rounded-lg text-sm font-medium transition-colors duration-200 shadow-md flex items-center justify-center gap-2 h-12"
@@ -654,7 +673,19 @@ const EmailBodyEditorTemplate = ({
             className="hidden"
           />
         </div>
+
+        <div className="p-4 flex items-center mt-6">
+          <Checkbox
+            id="tracker-image"
+            label="Tracker Image?"
+            onChange={(isChecked: boolean) => {
+              setTrackerImage(isChecked ? 1 : 0);
+            }}
+            checked={trackerImage === 1}
+          />
+        </div>
       </div>
+
 
       {/* Tab Navigation */}
       <div className="flex space-x-1 mx-4 bg-gray-100 dark:bg-gray-800 p-1 mb-0 rounded-lg">

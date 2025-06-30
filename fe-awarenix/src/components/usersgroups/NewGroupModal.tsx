@@ -81,7 +81,7 @@ export default function NewGroupModal({
           >
             <DialogPanel
               className="w-full max-w-4xl box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-hidden dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5"
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the panel
+              onClick={(e) => e.stopPropagation()}
             >
               {/* HEADER */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-300 dark:border-b-gray-600 flex-shrink-0">

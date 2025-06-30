@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Badge from "../ui/badge/Badge";
 import { MdGroups } from "react-icons/md";
 import { CgArrowsExchange } from "react-icons/cg";
@@ -21,81 +21,96 @@ export default function CardHeader({ reloadTrigger }: CardHeaderProps) {
   const [growthDataMember, setGrowthDataMember] = useState<GrowthData | null>(null);
   const [totalMembers, setTotalMembers] = useState(0);
 
-  useEffect(() => {
+  const fetchTotalGroups = useCallback(async () => {
     const API_URL = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem("token");
-
-    const fetchCardDataGroup = async () => {
-      try {
-        const [groupsRes, growthRes] = await Promise.all([
-          fetch(`${API_URL}/groups/all`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_URL}/analytics/growth-percentage?type=groups`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-
-        if (!groupsRes.ok) throw new Error(`Failed to fetch groups: ${groupsRes.status}`);
-        if (!growthRes.ok) throw new Error(`Failed to fetch growth data: ${growthRes.status}`);
-
-        const groupsData = await groupsRes.json();
-        const growthData = await growthRes.json();
-
-        // Update states after both fetches are successful
-        if (groupsData.Success && typeof groupsData.Total === "number") {
-          setTotalGroups(groupsData.Total);
-        }
-
-        if (growthData.success && growthData.data) {
-          setGrowthDataGroup(growthData.data);
-        }
-
-      } catch (err) {
-        console.error("Failed to fetch card data:", err);
+    try {
+      const res = await fetch(`${API_URL}/groups/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.Success && typeof data.Total === "number") {
+        setTotalGroups(data.Total);
       }
-    };
-    
-    fetchCardDataGroup();
-  }, [reloadTrigger]);
+    } catch (err) {
+      console.error("Failed to fetch total groups:", err);
+    }
+  }, []);
   
-  useEffect(() => {
+  const fetchTotalMembers = useCallback(async () => {
     const API_URL = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem("token");
-
-    const fetchCardDataMember = async () => {
-      try {
-        const [memberRes, growthRes] = await Promise.all([
-          fetch(`${API_URL}/groups/members/all`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_URL}/analytics/growth-percentage?type=members`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-  
-        if (!memberRes.ok) throw new Error(`Failed to fetch members: ${memberRes.status}`);
-        if (!growthRes.ok) throw new Error(`Failed to fetch growth data: ${growthRes.status}`);
-  
-        const groupsData = await memberRes.json();
-        const growthData = await growthRes.json();
-  
-        // Update states after both fetches are successful
-        if (groupsData.Success && typeof groupsData.Total === "number") {
-          setTotalMembers(groupsData.Total);
-        }
-  
-        if (growthData.success && growthData.data) {
-          setGrowthDataMember(growthData.data);
-        }
-  
-      } catch (err) {
-        console.error("Failed to fetch card data:", err);
+    try {
+      const res = await fetch(`${API_URL}/groups/members/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.Success && typeof data.Total === "number") {
+        setTotalMembers(data.Total);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch total groups:", err);
+    }
+  }, []);
+
+  const fetchGrowthDataGroups = useCallback(async () => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/analytics/growth-percentage?type=groups`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setGrowthDataGroup(data.data);
+      }
+    } catch (error) {
+      console.error("❌ Fetch error:", error);
+    }
+  }, []);
   
-    fetchCardDataMember();
-  }, [reloadTrigger]);
+  const fetchGrowthDataMembers = useCallback(async () => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/analytics/growth-percentage?type=members`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setGrowthDataMember(data.data);
+      }
+    } catch (error) {
+      console.error("❌ Fetch error:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTotalGroups();
+    fetchTotalMembers();
+    fetchGrowthDataGroups();
+    fetchGrowthDataMembers();
+
+    const intervalId = setInterval(() => {
+      fetchTotalGroups();
+      fetchTotalMembers();
+      fetchGrowthDataGroups();
+      fetchGrowthDataMembers();
+    }, 5000); 
+
+    return () => clearInterval(intervalId);
+
+  }, [reloadTrigger, fetchTotalGroups, fetchTotalMembers, fetchGrowthDataGroups, fetchGrowthDataMembers]); 
   
   const renderBadge = (growth: GrowthData | null) => {
     if (!growth) return null;

@@ -50,8 +50,8 @@ func SetupRoutes(router *gin.Engine) {
 		{
 			landingPage.POST("/create", controllers.RegisterLandingPage) // CREATE
 			landingPage.GET("/all", controllers.GetLandingPages)         // READ
-			landingPage.PUT("/:id", controllers.UpdateEmailTemplate)     // UPDATE
-			landingPage.DELETE("/:id", controllers.DeleteEmailTemplate)  // DELETE
+			landingPage.PUT("/:id", controllers.UpdateLandingPage)       // UPDATE
+			landingPage.DELETE("/:id", controllers.DeleteLandingPage)    // DELETE
 			landingPage.POST("/clone-site", controllers.CloneSite)       // CLONE SITE
 		}
 

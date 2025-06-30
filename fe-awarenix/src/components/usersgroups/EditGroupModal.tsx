@@ -9,13 +9,13 @@ import { Fragment, useRef, useState } from 'react'
 import EditGroupModalForm, { EditGroupModalFormRef } from './EditGroupModalForm'
 import Swal from '../utils/AlertContainer'
 
-interface Group {
+export type Group =  {
   id: number;
   name: string;
   domainStatus: string;
   memberCount: number; 
   createdAt: string;
-  UpdatedAt: string;
+  updatedAt: string;
   members?: Member[];
 }
 
@@ -26,8 +26,10 @@ interface Member {
   position: string;
   company: string;
   country: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string; 
+  createdBy: number; 
+  updatedAt: string; 
+  updatedBy: number;
 }
 
 export type EditGroupModalProps = {

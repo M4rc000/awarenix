@@ -5,7 +5,6 @@ import (
 	"be-awarenix/models"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -14,43 +13,19 @@ import (
 
 // GET ALL DATA EMAIL TEMPLATE
 func GetEmailTemplates(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
-	search := c.Query("search")
-	sortBy := c.DefaultQuery("sortBy", "id")
-	sortOrder := c.DefaultQuery("sortOrder", "asc")
-
-	offset := (page - 1) * pageSize
-
-	query := config.DB.Model(&models.EmailTemplate{})
-
-	if search != "" {
-		searchPattern := "%" + strings.ToLower(search) + "%"
-		query = query.Where(
-			"LOWER(name) LIKE ? OR LOWER(envelope_sender) LIKE ? OR LOWER(subject) LIKE ?",
-			searchPattern, searchPattern, searchPattern,
-		)
-	}
+	query := config.DB.Table("email_templates").
+		Select(`email_templates.*, 
+            created_by_user.name AS created_by_name, 
+            updated_by_user.name AS updated_by_name`).
+		Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = email_templates.created_by`).
+		Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = email_templates.updated_by`)
 
 	var total int64
-	if err := query.Count(&total).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Success": false,
-			"Message": "Failed to count email templates",
-			"Error":   err.Error(),
-		})
-		return
-	}
+	query.Count(&total)
 
-	orderClause := sortBy
-	if sortOrder == "desc" {
-		orderClause += " DESC"
-	} else {
-		orderClause += " ASC"
-	}
-
-	var templates []models.EmailTemplate
-	if err := query.Order(orderClause).Offset(offset).Limit(pageSize).Find(&templates).Error; err != nil {
+	var templates []models.EmailTemplateWithUsers
+	if err := query.
+		Scan(&templates).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Success": false,
 			"Message": "Failed to fetch email templates",
@@ -98,6 +73,7 @@ func RegisterEmailTemplate(c *gin.Context) {
 		EnvelopeSender: input.EnvelopeSender,
 		Subject:        input.Subject,
 		Body:           input.Body,
+		TrackerImage:   input.TrackerImage,
 		CreatedAt:      time.Now(),
 		CreatedBy:      input.CreatedBy,
 	}
@@ -132,14 +108,7 @@ func UpdateEmailTemplate(c *gin.Context) {
 		return
 	}
 
-	var updatedData struct {
-		Name          string `json:"templateName"`
-		EnvelopSender string `json:"envelopeSender"`
-		Subject       string `json:"subject"`
-		Body          string `json:"bodyEmail"`
-		UpdatedAt     string `json:"updatedAt"`
-		UpdatedBy     int8   `json:"updatedBy"`
-	}
+	var updatedData models.EmailTemplateUpdate
 
 	if err := c.ShouldBindJSON(&updatedData); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -154,6 +123,7 @@ func UpdateEmailTemplate(c *gin.Context) {
 	emailTemplate.EnvelopeSender = updatedData.EnvelopSender
 	emailTemplate.Subject = updatedData.Subject
 	emailTemplate.Body = updatedData.Body
+	emailTemplate.TrackerImage = updatedData.TrackerImage
 	emailTemplate.UpdatedBy = int(updatedData.UpdatedBy)
 	emailTemplate.UpdatedAt = time.Now()
 

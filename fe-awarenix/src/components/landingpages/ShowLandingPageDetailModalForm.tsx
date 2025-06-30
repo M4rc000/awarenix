@@ -9,6 +9,12 @@ type LandingPage = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
+  createdAt: string;
+  createdBy: number;
+  createdByName: string;
+  updatedAt: string;
+  updatedBy: number;
+  updatedByName: string;
 }
 
 export type ShowLandingPageDetailModalFormRef = {
@@ -21,8 +27,10 @@ type LandingPageData = {
   body: string;
   createdAt: string;
   createdBy: number;
+  createdByName: string;
   updatedAt: string;
   updatedBy: number;
+  updatedByName: string;
 };
 
 type ShowLandingPageDetailModalFormProps = {
@@ -31,7 +39,8 @@ type ShowLandingPageDetailModalFormProps = {
 
 const ShowLandingPageDetailModalForm = ({ landingPage }: ShowLandingPageDetailModalFormProps) => {
   if (!landingPage) return null;
-  
+
+  console.log('Landing Page: ', landingPage);  
 
   const landingPageTabs = [
     {
@@ -49,7 +58,7 @@ const ShowLandingPageDetailModalForm = ({ landingPage }: ShowLandingPageDetailMo
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
           📧 Landing Page Configuration
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <Label>Name</Label>
             <Input 
@@ -57,6 +66,80 @@ const ShowLandingPageDetailModalForm = ({ landingPage }: ShowLandingPageDetailMo
               type="text" 
               value={landingPage.name} 
               className={`w-full text-sm sm:text-base h-10 px-3`}
+              readonly
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mt-5">
+          <div>
+            <Label htmlFor="created-at" className="text-sm font-medium">
+                Created At
+            </Label>
+            <Input
+              id="created-at"
+              type="text"
+              value={
+                landingPage.createdAt
+                  ? new Date(landingPage.createdAt).toLocaleDateString('en-GB', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false,
+                    timeZoneName: 'short',  
+                    })
+                  : ''
+                }
+              className="w-full mt-1"
+              readonly
+            />
+          </div>
+          <div>
+            <Label htmlFor="created-by" className="text-sm font-medium">
+              Created By
+            </Label>
+            <Input
+              id="created-by"
+              type="text"
+              value={landingPage.createdByName}
+              className="w-full mt-1"
+              readonly
+            />
+          </div>
+          <div>
+            <Label htmlFor="updated-at" className="text-sm font-medium">
+              Updated At
+            </Label>
+            <Input
+              id="updated-at"
+              type="text"
+              value={
+                landingPage.updatedAt
+                  ? new Date(landingPage.updatedAt).toLocaleDateString('en-GB', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false,
+                    timeZoneName: 'short',  
+                    })
+                  : ''
+              }
+              className="w-full mt-1"
+              readonly
+            />
+          </div>
+          <div>
+            <Label htmlFor="updated-by" className="text-sm font-medium">
+              Updated By
+            </Label>
+            <Input
+              id="updated-by"
+              type="text"
+              value={landingPage.updatedByName}
+              className="w-full mt-1"
               readonly
             />
           </div>

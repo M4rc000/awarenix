@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FaUser } from "react-icons/fa";
 import Badge from "../ui/badge/Badge";
 import { CgArrowsExchange } from "react-icons/cg";
@@ -11,60 +11,56 @@ export type CardHeaderUserManagementProps = {
 export default function CardHeader({reloadTrigger}: CardHeaderUserManagementProps) {
   const [totalUsers, setTotalUsers] = useState(0);
   const [growthDataUser, setGrowthDataUser] = useState(null);
-
   
-  useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_URL;
-    const fetchTotalUsers = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(`${API_URL}/users/all`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await res.json();
-        if (data.Success && typeof data.Total === "number") {
-          setTotalUsers(data.Total);
-        }
-      } catch (err) {
-        console.error("Failed to fetch total users:", err);
-      }
-    };
-
-    fetchTotalUsers();
-  }, [reloadTrigger]);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const API_URL = import.meta.env.VITE_API_URL;
-    fetch(`${API_URL}/analytics/growth-percentage?type=users`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-    })
-      .then(res => {
-        // Check if response is ok
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        
-        return res.json();
-      })
-      .then(data => {
-        if (data.success && data.data) {
-          setGrowthDataUser(data.data);
-        } else {
-          console.warn("⚠️ No data received or success = false");
-        }
-      })
-      .catch(error => {
-        console.error("❌ Fetch error:", error);
-        console.error("🔍 Error details:", error.message);
+  const fetchTotalUsers = useCallback(async () => {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/users/all`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
+      const data = await res.json();
+      if (data.Success && typeof data.Total === "number") {
+        setTotalUsers(data.Total);
+      }
+    } catch (err) {
+      console.error("Failed to fetch total user:", err);
+    }
   }, []);
+  
+  const fetchGrowthData = useCallback(async () => {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/analytics/growth-percentage?type=users`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setGrowthDataUser(data.data);
+      }
+    } catch (error) {
+      console.error("❌ Fetch error:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTotalUsers();
+    fetchGrowthData();
+
+    const intervalId = setInterval(() => {
+      fetchTotalUsers();
+      fetchGrowthData();
+    }, 5000); 
+
+    return () => clearInterval(intervalId);
+
+  }, [reloadTrigger, fetchTotalUsers, fetchGrowthData]); 
 
   const renderBadge = (growth: { growth_type: string; growth_percentage: number } | null) => {
     if (!growth) return null;

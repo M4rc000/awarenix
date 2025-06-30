@@ -13,6 +13,9 @@ interface User {
   id: number;
   name: string;
   email: string;
+  company: string;
+  role: string;
+  isActive: string;
   position: string;
   updatedAt: string;
 }
@@ -122,6 +125,7 @@ export default function EditUserModal({
                         })
                       }
                     } catch (error) {
+                      console.log(error);
                       Swal.fire({
                         text: 'An error occurred while updating user!',
                         icon: "error",

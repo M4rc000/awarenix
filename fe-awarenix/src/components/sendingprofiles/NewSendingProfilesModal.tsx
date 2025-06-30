@@ -5,21 +5,45 @@ import {
   DialogTitle,
   Transition,
 } from '@headlessui/react'
-import { Fragment } from 'react'
-import NewSendingProfilesModalForm from './NewSendingProfilesModalForm'
+import { Fragment, useState, useRef } from 'react'
+import NewSendingProfilesModalForm, {NewSendingProfileModalFormRef} from './NewSendingProfilesModalForm'
 
-export type NewGroupModalProps = {
+export type NewSendingProfileProps = {
   isOpen: boolean
   onClose: () => void
+  onSendingProfileAdded: () => void
 }
 
-export default function NewEmailTemplatesModal({
+export default function NewSendingProfileModal({
   isOpen,
   onClose,
-}: NewGroupModalProps) {
+  onSendingProfileAdded,
+}: NewSendingProfileProps) {
+  const formRef = useRef<NewSendingProfileModalFormRef>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSave = async () => {
+    if (!formRef.current) return;
+    
+    try {
+      setIsSubmitting(true);
+      const success = await formRef.current.submitSendingProfile();
+      console.log('Success: ', success);
+      
+      
+      if (success) {
+        onSendingProfileAdded(); 
+        onClose();
+      }
+    } catch (error) {
+      console.error('Failed to save landing page template:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <Transition show={isOpen} as={Fragment}>
-      <Dialog open={isOpen} onClose={onClose} className="relative z-[999]">
+      <Dialog open={isOpen} onClose={()=>{}} className="relative z-[999]">
         {/* Backdrop with fade animation */}
         <Transition.Child
           as={Fragment}
@@ -62,7 +86,7 @@ export default function NewEmailTemplatesModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <NewSendingProfilesModalForm />
+                <NewSendingProfilesModalForm ref={formRef}/>
               </div>
 
               {/* FOOTER */}
@@ -74,12 +98,29 @@ export default function NewEmailTemplatesModal({
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    onClose()
-                  }}
+                  onClick={handleSave}
+                  disabled={isSubmitting}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
-                  Save
+                  {isSubmitting && (
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                  )}
+                  {isSubmitting ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </DialogPanel>

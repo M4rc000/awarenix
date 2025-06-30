@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // IMPORT SITE
@@ -95,7 +95,7 @@ func CloneSite(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"html": finalHTML})
 }
 
-// SAVE NEW DATA EMAIL TEMPLATE
+// SAVE NEW DATA LANDING PAGE
 func RegisterLandingPage(c *gin.Context) {
 	var input models.LandingPageInput
 
@@ -108,7 +108,7 @@ func RegisterLandingPage(c *gin.Context) {
 		return
 	}
 
-	// CEK DUPLIKASI EMAIL TEMPLATE
+	// CEK DUPLIKASI LANDING PAGE
 	var existingLandingPage models.LandingPage
 	if err := config.DB.
 		Where("name = ? ", input.Name).
@@ -146,46 +146,22 @@ func RegisterLandingPage(c *gin.Context) {
 
 // READ
 func GetLandingPages(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
-	search := c.Query("search")
-	sortBy := c.DefaultQuery("sortBy", "id")
-	sortOrder := c.DefaultQuery("sortOrder", "asc")
-
-	offset := (page - 1) * pageSize
-
-	query := config.DB.Model(&models.LandingPage{})
-
-	if search != "" {
-		searchPattern := "%" + strings.ToLower(search) + "%"
-		query = query.Where(
-			"LOWER(name) LIKE ?",
-			searchPattern, searchPattern, searchPattern,
-		)
-	}
+	query := config.DB.Table("landing_pages").
+		Select(`landing_pages.*, 
+            created_by_user.name AS created_by_name, 
+            updated_by_user.name AS updated_by_name`).
+		Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = landing_pages.created_by`).
+		Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = landing_pages.updated_by`)
 
 	var total int64
-	if err := query.Count(&total).Error; err != nil {
+	query.Count(&total)
+
+	var data []models.GetLandingPage
+	if err := query.
+		Scan(&data).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Success": false,
-			"Message": "Failed to count landing page",
-			"Error":   err.Error(),
-		})
-		return
-	}
-
-	orderClause := sortBy
-	if sortOrder == "desc" {
-		orderClause += " DESC"
-	} else {
-		orderClause += " ASC"
-	}
-
-	var templates []models.LandingPage
-	if err := query.Order(orderClause).Offset(offset).Limit(pageSize).Find(&templates).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Success": false,
-			"Message": "Failed to fetch landing page",
+			"Message": "Failed to fetch landing page data",
 			"Error":   err.Error(),
 		})
 		return
@@ -193,8 +169,132 @@ func GetLandingPages(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"Success": true,
-		"Message": "Landing pages retrieved successfully",
-		"Data":    templates,
+		"Message": "Landing page data retrieved successfully",
+		"Data":    data,
 		"Total":   total,
+	})
+}
+
+// EDIT DATA LANDING
+func UpdateLandingPage(c *gin.Context) {
+	id := c.Param("id")
+
+	var landingPage models.LandingPage
+	if err := config.DB.First(&landingPage, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"Success": false,
+			"Message": "Landing Page not found",
+			"Error":   err.Error(),
+		})
+		return
+	}
+
+	var updatedData models.UpdateLandingPage
+
+	if err := c.ShouldBindJSON(&updatedData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Success": false,
+			"Message": "Invalid request",
+			"Error":   err.Error(),
+		})
+		return
+	}
+
+	landingPage.Name = updatedData.Name
+	landingPage.Body = updatedData.Body
+	landingPage.UpdatedBy = int(updatedData.UpdatedBy)
+	landingPage.UpdatedAt = time.Now()
+
+	if err := config.DB.Save(&landingPage).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Success": false,
+			"Message": "Failed to update landing page",
+			"Error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Success": true,
+		"Message": "Landing Page updated successfully",
+		"Data":    landingPage,
+	})
+}
+
+// DELETE DATA LANDING PAGE
+func DeleteLandingPage(c *gin.Context) {
+	landingPageID := c.Param("id")
+
+	// VALIDATE LANDING PAGE ID
+	id, err := strconv.ParseUint(landingPageID, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid Landing Page ID format",
+			"error":   "Landing Page ID must be a valid number",
+		})
+		return
+	}
+
+	// CHECK IF LANDING PAGE THAT WANT TO BE DELETE EXIST
+	var landingPageDelete models.LandingPage
+	if err := config.DB.First(&landingPageDelete, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"message": "Landing Page not found",
+				"error":   "The specified landing page does not exist",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Database error",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// START DB TRANSACTION FOR SAFE DELETION
+	tx := config.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to start transaction",
+			"error":   tx.Error.Error(),
+		})
+		return
+	}
+
+	// Hard Delete Landing Page (permanently remove from database)
+	if err := tx.Unscoped().Delete(&landingPageDelete).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to delete landing page template",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to commit transaction",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Landing Page deleted successfully",
+		"data": gin.H{
+			"delete_landingPage": gin.H{
+				"id":   landingPageDelete.ID,
+				"name": landingPageDelete.Name,
+			},
+		},
 	})
 }

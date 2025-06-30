@@ -104,24 +104,22 @@ func RegisterUser(c *gin.Context) {
 
 // READ
 func GetUsers(c *gin.Context) {
-	// COUNT TOTAL USER
-	var total int64
-	if err := config.DB.Model(models.User{}).Count(&total).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Success": false,
-			"Message": "Failed to count users",
-			"Error":   err.Error(),
-		})
-		return
-	}
+	query := config.DB.Table("users").
+		Select(`users.*, 
+            created_by_user.name AS created_by_name, 
+            updated_by_user.name AS updated_by_name`).
+		Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = users.created_by`).
+		Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = users.updated_by`)
 
-	var users []models.GetUserTable
-	if err := config.DB.
-		Model(&models.User{}).
-		Scan(&users).Error; err != nil {
+	var total int64
+	query.Count(&total)
+
+	var data []models.GetUserTable
+	if err := query.
+		Scan(&data).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Success": false,
-			"Message": "Failed to fetch users",
+			"Message": "Failed to fetch user data",
 			"Error":   err.Error(),
 		})
 		return
@@ -129,8 +127,8 @@ func GetUsers(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"Success": true,
-		"Message": "Users retrieved successfully",
-		"Data":    users,
+		"Message": "User data retrieved successfully",
+		"Data":    data,
 		"Total":   total,
 	})
 }

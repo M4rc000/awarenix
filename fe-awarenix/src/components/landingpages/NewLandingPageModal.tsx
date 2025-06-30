@@ -43,7 +43,7 @@ export default function NewLandingPageModal({
   };
   return (
     <Transition show={isOpen} as={Fragment}>
-      <Dialog open={isOpen} onClose={onClose} className="relative z-[999]">
+      <Dialog open={isOpen} onClose={() => {}} className="relative z-[999]">
         <Transition.Child
           as={Fragment}
           enter="transition-opacity duration-300"
@@ -66,7 +66,7 @@ export default function NewLandingPageModal({
             leaveFrom="translate-y-0 opacity-100 scale-100"
             leaveTo="translate-y-4 opacity-0 scale-95"
           >
-            <DialogPanel className="w-full xl:max-w-fit box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-hidden dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5 z-[9999999999999]">
+            <DialogPanel className="w-full xl:max-w-full box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-hidden dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5 z-[9999999999999]">
               
               {/* HEADER */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-300 dark:border-b-gray-600 flex-shrink-0">
@@ -83,7 +83,7 @@ export default function NewLandingPageModal({
               </div>
 
               {/* BODY */}
-              <div className="px-6 py-4 overflow-y-auto flex-1">
+              <div className="overflow-y-auto flex-1">
                 {/* The onSuccess prop is no longer needed here */}
                 <NewLandingPageModalForm ref={formRef} />
               </div>

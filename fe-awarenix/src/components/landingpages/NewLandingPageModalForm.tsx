@@ -22,16 +22,11 @@ type LandingPageFormData = {
   body: string;
 };
 
-// The type for the ref exposed to the parent component.
-// It returns the created LandingPage object or null.
 export type NewLandingPageModalFormRef = {
   submitLandingPage: () => Promise<LandingPage | null>;
 };
 
-// The component's props. The `onSuccess` prop has been removed.
-type NewLandingPageModalFormProps = {};
-
-const NewLandingPageModalForm = forwardRef<NewLandingPageModalFormRef, NewLandingPageModalFormProps>(
+const NewLandingPageModalForm = forwardRef<NewLandingPageModalFormRef>(
   (_props, ref) => {
     const [formData, setFormData] = useState<LandingPageFormData>({
       name: "",
@@ -85,6 +80,13 @@ const NewLandingPageModalForm = forwardRef<NewLandingPageModalFormRef, NewLandin
             createdBy: createdBy,
           }),
         });
+
+        console.log('Body: ', {
+          name: formData.name,
+          body: formData.body,
+          createdBy: createdBy
+        });
+        
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ message: `Server error: ${response.status}` }));

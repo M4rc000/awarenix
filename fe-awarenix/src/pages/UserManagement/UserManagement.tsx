@@ -27,7 +27,6 @@ export default function UserManagement() { // Sekarang UserManagement tidak mene
       <Button
         className="text-md mt-2 mb-4 px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 ease-in-out bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800"
         onClick={() => {
-          console.log("UserManagement: 'New User' button clicked. Opening modal.");
           setModalOpen(true);
         }}
       >

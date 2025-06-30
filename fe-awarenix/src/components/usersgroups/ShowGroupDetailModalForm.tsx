@@ -24,8 +24,12 @@ type Group = {
   name: string;
   domainStatus: string;
   memberCount: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string; 
+  createdBy: number; 
+  createdByName: string; 
+  updatedAt: string; 
+  updatedBy: number; 
+  updatedByName: string; 
 };
 
 type Member = {
@@ -48,9 +52,7 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
   const [groupName, setGroupName] = useState("");
   const [domainStatus, setDomainStatus] = useState("");
   const [createdAt, setCreatedAt] = useState("");
-  const [createdBy, setCreatedBy] = useState("");
   const [updatedAt, setUpdatedAt] = useState("");
-  const [updatedBy, setUpdatedBy] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
@@ -108,17 +110,13 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
         setGroupName(result.Data.name || '');
         setDomainStatus(result.Data.domainStatus || '');
         setCreatedAt(result.Data.createdAt || '');
-        setCreatedBy(result.Data.createdBy || '');
         setUpdatedAt(result.Data.updatedAt || '');
-        setUpdatedBy(result.Data.updatedBy || '');
         setMembers(result.Data.members || []); 
       } else {
         setGroupName("");
         setDomainStatus("");
         setCreatedAt("");
-        setCreatedBy("");
         setUpdatedAt("");
-        setUpdatedBy("");
         setMembers([]);
 
         Swal.fire({
@@ -149,9 +147,7 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
       setGroupName("");
       setDomainStatus("");
       setCreatedAt("");
-      setCreatedBy("");
       setUpdatedAt("");
-      setUpdatedBy("");
       setMembers([]);
       setPagination({ pageIndex: 0, pageSize: 10 });
       setSearchTerm("");
@@ -267,7 +263,7 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
           <Input
             id="created-by"
             type="text"
-            value={createdBy}
+            value={group?.createdByName || ''}
             className="w-full mt-1"
             readonly
           />
@@ -303,7 +299,7 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
           <Input
             id="updated-by"
             type="text"
-            value={updatedBy}
+            value={group?.updatedByName || ''}
             className="w-full mt-1"
             readonly
           />

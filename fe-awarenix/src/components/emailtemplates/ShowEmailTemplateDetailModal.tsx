@@ -6,8 +6,7 @@ import {
   Transition,
 } from '@headlessui/react'
 import { Fragment } from 'react'
-import ShowEmailTemplateDetailModalForm, {ShowEmailTemplateDetailModalFormRef} from './ShowEmailTemplateDetailModalForm'
-import { useRef } from 'react'
+import ShowEmailTemplateDetailModalForm from './ShowEmailTemplateDetailModalForm'
 
 type EmailTemplate = {
   id: number;
@@ -15,6 +14,13 @@ type EmailTemplate = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
+  trackerImage: number;
+  createdAt: string;
+  createdBy: number;
+  createdByName: string;
+  updatedAt: string;
+  updatedBy: number;
+  updatedByName: string;
 }
 
 export type ShowEmailTemplateDetailModalProps = {
@@ -28,7 +34,6 @@ export default function ShowEmailTemplateDetailModal({
   onClose,
   emailTemplate,
 }: ShowEmailTemplateDetailModalProps) {
-  const formRef = useRef<ShowEmailTemplateDetailModalFormRef>(null);
   return (
     <Transition show={isOpen} as={Fragment}>
       <Dialog open={isOpen} onClose={onClose} className="relative z-[999]">
@@ -74,7 +79,7 @@ export default function ShowEmailTemplateDetailModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <ShowEmailTemplateDetailModalForm ref={formRef} emailTemplate={emailTemplate!}/>
+                <ShowEmailTemplateDetailModalForm emailTemplate={emailTemplate!}/>
               </div>
 
               {/* FOOTER */}

@@ -17,3 +17,16 @@ type LandingPageInput struct {
 	CreatedBy int       `gorm:"null" json:"createdBy"`
 	CreatedAt time.Time `gorm:"null" json:"createdAt"`
 }
+
+type GetLandingPage struct {
+	LandingPage
+	CreatedByName string `json:"createdByName"`
+	UpdatedByName string `json:"updatedByName"`
+}
+
+type UpdateLandingPage struct {
+	Name      string `json:"name"`
+	Body      string `json:"body"`
+	UpdatedAt string `json:"updatedAt"`
+	UpdatedBy int8   `json:"updatedBy"`
+}

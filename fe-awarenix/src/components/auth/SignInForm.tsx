@@ -6,6 +6,7 @@ import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
 import { useUserSession } from "../context/UserSessionContext";
+import Swal from "../utils/AlertContainer";
 
 type LoginErrors = {
   email?: string;
@@ -44,12 +45,20 @@ export default function SignInForm() {
       // validation / credentials error
       if (res.status === 400 || res.status === 401 || res.status == 500) {
         const body = await res.json();
+        
         // backend returns { error: "Invalid ..."} or { errors: { field: msg } }
         if (body.errors) {
+          console.log('Body Errors');
           setErrors(body.errors);
         } else if (body.error) {
-          setErrors({ general: body.error });
+          Swal.fire({
+            text: 'Username or Password invalid',
+            icon: 'error',
+            duration: 2000
+          })
+          // setErrors({ general: body.error });
         } else {
+          console.log('Login Gagal');
           setErrors({ general: "Login gagal" });
         }
         return;
@@ -66,9 +75,13 @@ export default function SignInForm() {
       localStorage.setItem("user", JSON.stringify(body.user));
       setUser(body.user);
       navigate('/dashboard');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setErrors({ general: err.message || "Login gagal" });
+      let errorMessage = "Login gagal";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setErrors({ general: errorMessage });
     } finally {
       setLoading(false);
     }

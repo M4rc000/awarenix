@@ -1,117 +1,32 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
+import Label from "../form/Label";
+import Input from "../form/input/InputField";
+import Button from "../ui/button/Button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import { FaRegTrashAlt } from "react-icons/fa";
 
-// Mock components to match your existing structure
-interface LabelProps {
-  children: React.ReactNode;
+
+type SendingProfile = {
+  id: number,
+  name: string,
+  senderAddress: string,
+  subject: string,
+  body: string,
+  lastModified: string,
 }
 
-const Label = ({ children }: LabelProps) => (
-  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{children}</label>
-);
-
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  className?: string; // Meskipun sudah ada di InputHTMLAttributes, bisa dideklarasikan ulang untuk kejelasan
-}
-
-const Input = ({ className, ...props }: InputProps) => (
-  <input 
-    className={`border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 ${className}`}
-    {...props}
-  />
-);
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  children: React.ReactNode;
-  variant?: "default" | "destructive" | "outline" | "ghost";
-  size?: "default" | "sm" | "lg";
-  className?: string;
-}
-
-const Button = ({ children, variant = "default", size = "default", className = "", ...props }: ButtonProps) => {
-  const baseClasses = "font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2";
-  const variantClasses = {
-    default: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-    destructive: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
-    outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500",
-    ghost: "text-gray-700 hover:bg-gray-100 focus:ring-gray-500"
-  };
-  const sizeClasses = {
-    default: "px-4 py-2 text-sm",
-    sm: "px-3 py-1.5 text-xs",
-    lg: "px-6 py-3 text-base"
-  };
-  
-  return (
-    <button 
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
+export type NewSendingProfileModalFormRef = {
+  submitSendingProfile: () => Promise<SendingProfile | null>;
 };
 
-interface TableProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const Table = ({ children, className = "" }: TableProps) => (
-  <div className={`overflow-x-auto ${className}`}>
-    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-      {children}
-    </table>
-  </div>
-);
-
-interface TableHeaderProps {
-  children: React.ReactNode;
-}
-
-const TableHeader = ({ children }: TableHeaderProps) => (
-  <thead className="bg-gray-50 dark:bg-gray-800">
-    {children}
-  </thead>
-);
-
-interface TableBodyProps {
-  children: React.ReactNode;
-}
-
-const TableBody = ({ children }: TableBodyProps) => (
-  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-    {children}
-  </tbody>
-);
-
-interface TableRowProps {
-  children: React.ReactNode;
-}
-
-const TableRow = ({ children }: TableRowProps) => (
-  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800">
-    {children}
-  </tr>
-);
-
-interface TableCellProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const TableCell = ({ children, className = "" }: TableCellProps) => (
-  <td className={`px-6 py-4 whitespace-nowrap text-sm ${className}`}>
-    {children}
-  </td>
-);
-
-const FaRegTrashAlt = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-  </svg>
-);
-
-export default function NewSendingProfilesModalForm() {
+const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
+  () => {
   type EmailHeader = { header: string; value: string };
 
   const [emailHeaders, setEmailHeaders] = useState<EmailHeader[]>([]);
@@ -321,7 +236,7 @@ export default function NewSendingProfilesModalForm() {
                       </TableCell>
                       <TableCell>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => removeEmailHeader(originalIndex)}
                           className="text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 p-1"
@@ -384,4 +299,6 @@ export default function NewSendingProfilesModalForm() {
       </div>
     </div>
   );
-}
+});
+
+export default NewSendingProfileModalForm;

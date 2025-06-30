@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
@@ -12,6 +12,7 @@ type EmailTemplate = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
+  trackerImage: number;
 }
 
 export type EditEmailTemplateModalFormRef = {
@@ -20,7 +21,7 @@ export type EditEmailTemplateModalFormRef = {
 
 type EditEmailTemplateModalFormProps = {
   onSuccess?: () => void;
-  emailTemplate: EmailTemplate;
+  emailTemplate?: EmailTemplate | null;
 };
 
 type EmailTemplateData = {
@@ -28,31 +29,22 @@ type EmailTemplateData = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
+  trackerImage: number;
 };
 
 const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, EditEmailTemplateModalFormProps>(
   ({ emailTemplate, onSuccess }, ref) => {
     if (!emailTemplate) return false;
-     const [formData, setFormData] = useState<EmailTemplateData>({
-        templateName: emailTemplate.name || "",
-        envelopeSender: emailTemplate.envelopeSender || "",
-        subject: emailTemplate.subject || "",
-        bodyEmail: emailTemplate.bodyEmail || "",
+
+    const [formData, setFormData] = useState<EmailTemplateData>({
+      templateName: emailTemplate.name || "",
+      envelopeSender: emailTemplate.envelopeSender || "",
+      subject: emailTemplate.subject || "",
+      bodyEmail: emailTemplate.bodyEmail || "",
+      trackerImage: emailTemplate.trackerImage,
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Partial<EmailTemplateData>>({});
-
-    // Initialize form data when emailTemplate prop changes
-    // useEffect(() => {
-    //   if (emailTemplate) {
-    //     setFormData({
-    //       templateName: emailTemplate.name || "",
-    //       envelopeSender: emailTemplate.envelopeSender || "",
-    //       subject: emailTemplate.subject || "",
-    //       bodyEmail: emailTemplate.bodyEmail || "",
-    //     });
-    //   }
-    // }, [emailTemplate]);
 
     // VALIDATION FUNCTION
     const validateForm = (): boolean => {
@@ -97,10 +89,10 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
             envelopeSender: formData.envelopeSender,
             subject: formData.subject,
             bodyEmail: formData .bodyEmail || "",
+            trackerImage: formData.trackerImage,
             updatedBy: updatedBy,
           }),
         });
-
 
         if (!response.ok) {
           let errorMessage = `Failed to update email template`;
@@ -133,6 +125,7 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
             envelopeSender: "",
             subject: "",
             bodyEmail: "",
+            trackerImage: 0,
           });
         }
         setErrors({});
@@ -173,17 +166,26 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
     // Expose methods to parent component
     useImperativeHandle(ref, () => ({ submitEmailTemplate }));
 
+    const handleTrackerChange = (trackerValue: number) => {
+      handleInputChange("trackerImage", trackerValue);
+    };
+
     // Handle input changes - dengan safety check
-    const handleInputChange = (field: keyof EmailTemplateData, value: string) => {
-      // Prevent submit trigger dari input change
+    const handleInputChange = (field: keyof EmailTemplateData, value: string | number) => {
       if (isSubmitting) {
         return;
       }
-      
-      setFormData(prev => ({
-        ...prev,
-        [field]: value
-      }));
+
+      // AKAN UPDATE SAAT VALUE NYA BERUBAH SAJA
+      setFormData(prev => {
+        if (prev[field] === value) {
+          return prev; // No change, return previous state to prevent re-render loop
+        }
+        return {
+          ...prev,
+          [field]: value
+        };
+      });
 
       // Clear error when user starts typing
       if (errors[field]) {
@@ -206,6 +208,8 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
             templateName={formData.templateName}
             envelopeSender={formData.envelopeSender}
             subject={formData.subject}
+            onTrackerChange={handleTrackerChange}
+            initialTrackerValue={formData.trackerImage}
             initialContent={formData.bodyEmail}
             onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
           />,
