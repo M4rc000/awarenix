@@ -52,7 +52,7 @@ export default function NewGroupModal({
     <Transition show={isOpen} as={Fragment}>
       <Dialog
         open={isOpen}
-        onClose={onClose} // Allow closing via backdrop click or escape key
+        onClose={()=>{}} // Allow closing via backdrop click or escape key
         className="relative z-[999]"
       >
         {/* Backdrop with fade animation */}
@@ -65,7 +65,7 @@ export default function NewGroupModal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <DialogBackdrop className="fixed inset-0 bg-black/40" />
+          <DialogBackdrop className="fixed inset-0 bg-black/40 backdrop-filter backdrop-blur-xs"/>
         </Transition.Child>
 
         <div className="fixed inset-0 flex items-center justify-center p-4">

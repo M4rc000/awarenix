@@ -40,7 +40,7 @@ export default function ShowUserModal({
     <Transition show={isOpen} as={Fragment}>
       <Dialog 
         open={isOpen} 
-        onClose={onClose} // Allow closing via backdrop/escape key
+        onClose={()=>{}}
         className="relative z-[999]"
       >
         {/* Backdrop with fade animation */}
@@ -53,7 +53,7 @@ export default function ShowUserModal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <DialogBackdrop className="fixed inset-0 bg-black/40" />
+          <DialogBackdrop className="fixed inset-0 bg-black/40 backdrop-filter backdrop-blur-xs"/>
         </Transition.Child>
 
         <div className="fixed inset-0 flex items-center justify-center p-4">
