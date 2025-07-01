@@ -18,6 +18,8 @@ import {
 } from "../ui/table";
 import Button from "../ui/button/Button";
 import Swal from '../utils/AlertContainer';
+import { GrFormPrevious } from "react-icons/gr";
+import { MdOutlineNavigateNext } from "react-icons/md";
 
 type Group = {
   id: number;
@@ -440,7 +442,7 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
                 disabled={!table.getCanPreviousPage()}
                 className="disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Previous
+                <GrFormPrevious/>
               </Button>
               <Button
                 variant="outline"
@@ -449,7 +451,7 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
                 disabled={!table.getCanNextPage()}
                 className="disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Next
+                <MdOutlineNavigateNext/>
               </Button>
             </div>
           </div>

@@ -23,8 +23,8 @@ export default function ProtectedRoute() {
     const token = localStorage.getItem("token");
     const user = localStorage.getItem('user');
 
-    // if (isTokenValid(token)) {
-    if (isTokenValid(token) && user !== null && user !== '') {
+    if (isTokenValid(token)) {
+    // if (isTokenValid(token) && user !== null && user !== '') {
       setAuthorized(true);
     } else {
       localStorage.removeItem("token");

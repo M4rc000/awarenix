@@ -22,7 +22,7 @@ interface User {
   updatedAt: string;
   updatedBy: number;
   updatedByName: string;
-  lastLogin: Date;
+  lastLogin: string;
 }
 
 export type ShowUserModalProps = {

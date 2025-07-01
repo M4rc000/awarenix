@@ -1,4 +1,4 @@
-import { forwardRef, useState, useImperativeHandle } from "react";
+import { forwardRef, useState, useImperativeHandle, useEffect } from "react";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import Swal from "../utils/AlertContainer";
@@ -41,10 +41,10 @@ const statusOption = [
   { value: "1", label: "Active"}
 ];
 
-const roleOption = [
-  { value: "Admin", label: "Admin"},
-  { value: "Member", label: "Member"}
-];
+type RoleData = {
+  id: number;
+  name: string;
+};
 
 const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(({ onSuccess }, ref) => {
   const [user, setUser] = useState<UserData>({
@@ -58,6 +58,59 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
   });
   const [errors, setErrors] = useState<Partial<Record<keyof UserData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [roleOptions, setRoleOptions] = useState<{ value: string; label: string }[]>([]);
+
+  // Fetch Roles
+  const fetchRoles = async () => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL;
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${API_URL}/user-roles/all`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch roles: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.Success && result.Data) {
+        // Transform API data to select options format
+        const options = result.Data.map((role: RoleData) => ({
+          value: role.name, // or role.id.toString() if you prefer using ID
+          label: role.name,
+        }));
+        
+        setRoleOptions(options);
+      } else {
+        console.error('Failed to fetch roles:', result.Message);
+        // Fallback to default options if API fails
+        setRoleOptions([
+          { value: "Admin", label: "Admin"},
+          { value: "Member", label: "Member"}
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      // Fallback to default options if API fails
+      setRoleOptions([
+        { value: "Admin", label: "Admin"},
+        { value: "Member", label: "Member"}
+      ]);
+    }
+  };
+
+  // Fetch roles on component mount
+  useEffect(() => {
+    fetchRoles();
+  }, []);
+
 
   // Validation function
   const validateForm = (): boolean => {
@@ -287,9 +340,11 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
               <LabelWithTooltip tooltip="Role on this system" required>Role</LabelWithTooltip>
               <Select
                 value={user.role}
-                  options={roleOption}
-                  onChange={(val) => handleInputChange('role', val)} 
-                  required
+                options={roleOptions}
+                onChange={(val) => handleInputChange('role', val)} 
+                // disabled={isSubmitting}
+                placeholder={"Select role"}
+                required
               />
               {errors.role && (
                 <p className="text-red-500 text-sm mt-1">{errors.role}</p>

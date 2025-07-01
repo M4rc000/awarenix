@@ -7,6 +7,10 @@ import TableSendingProfiles from "../../components/sendingprofiles/TableSendingP
 export default function SendingProfiles() {
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const [newModalOpen, setNewModalOpen] = useState(false);
+
+  const fetchData = () => {
+    setReloadTrigger(prev => prev + 1);
+  };
   return (
     <>
       <div className="grid grid-cols-12 gap-4 md:gap-6 mt-10">
@@ -16,9 +20,10 @@ export default function SendingProfiles() {
       </div>
       <Button className="text-md mt-5 mb-3" onClick={()=> setNewModalOpen(true)}>New Sending Profile</Button>
 
-      <TableSendingProfiles/>
+      <TableSendingProfiles reloadTrigger={reloadTrigger} onReload={fetchData}/>
 
       <NewSendingProfilesModal
+        onSendingProfileAdded={fetchData}
         isOpen={newModalOpen}
         onClose={() => setNewModalOpen(false)}
       />

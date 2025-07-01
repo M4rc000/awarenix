@@ -81,7 +81,7 @@ const ModernAlert = ({
       flex 
       items-center 
       justify-between 
-      rounded-md
+      rounded-sm
       overflow-hidden
       fixed
       top-4

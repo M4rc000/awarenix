@@ -5,22 +5,62 @@ import {
   DialogTitle,
   Transition,
 } from '@headlessui/react'
-import { Fragment } from 'react'
-import UpdateSendingProfilesModalForm from './UpdateSendingProfilesModalForm'
+import { Fragment, useState, useRef } from 'react'
+import UpdateSendingProfilesModalForm, {UpdateSendingProfileModalFormRef} from './UpdateSendingProfilesModalForm'
 
-export type NewGroupModalProps = {
-  isOpen: boolean
-  onClose: () => void
+type SendingProfile = {
+  id: number;
+  name: string;
+	interfaceType: string;
+	smtpFrom     : string;
+	username     : string;
+	password     : string;
+	host         : string;
+	CreatedAt    : string;
+	CreatedBy    : number;
+	CreatedByName    : string;
+	UpdatedAt    : string;
+	UpdatedBy    : number; 
+	UpdatedByName    : string; 
+  senderAddress: string;
+	EmailHeaders : string;
 }
 
-export default function UpdateSendingProfilesModal({
-  isOpen,
-  onClose,
-}: NewGroupModalProps) {
+export type UpdateSendingProfilesModalFormProps = {
+  isOpen: boolean
+  onClose: () => void
+  onSendingProfileUpdated: () => void
+  sendingProfile: SendingProfile
+}
+
+const UpdateSendingProfilesModal = (props: UpdateSendingProfilesModalFormProps) => {
+  const formRef = useRef<UpdateSendingProfileModalFormRef>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fungsi untuk menangani penyimpanan (update) data
+  const handleSave = async () => {
+    if (!formRef.current) return;
+    
+    try {
+      setIsSubmitting(true);
+      const success = await formRef.current.submitSendingProfile();
+      console.log('Success: ', success);
+      
+      if (success) {
+        props.onSendingProfileUpdated(); 
+        props.onClose();
+      }
+    } catch (error) {
+      console.error('Failed to update sending profile template:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <Transition show={isOpen} as={Fragment}>
-      <Dialog open={isOpen} onClose={onClose} className="relative z-[999]">
-        {/* Backdrop with fade animation */}
+    <Transition show={props.isOpen} as={Fragment}>
+      <Dialog open={props.isOpen} onClose={()=>{}} className="relative z-[999]">
+        {/* Backdrop dengan animasi fade */}
         <Transition.Child
           as={Fragment}
           enter="transition-opacity duration-300"
@@ -34,7 +74,7 @@ export default function UpdateSendingProfilesModal({
         </Transition.Child>
 
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          {/* Panel with scale & slide-up animation */}
+          {/* Panel dengan animasi scale & slide-up */}
           <Transition.Child
             as={Fragment}
             enter="transition-transform duration-300 ease-out"
@@ -52,7 +92,7 @@ export default function UpdateSendingProfilesModal({
                   Update Sending Profiles
                 </DialogTitle>
                 <button
-                  onClick={onClose}
+                  onClick={props.onClose}
                   aria-label="Close modal"
                   className="text-gray-400 hover:text-gray-600"
                 >
@@ -62,24 +102,41 @@ export default function UpdateSendingProfilesModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <UpdateSendingProfilesModalForm />
+                <UpdateSendingProfilesModalForm ref={formRef} sendingProfile={props.sendingProfile}/>
               </div>
 
               {/* FOOTER */}
               <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 dark:bg-gray-900 flex-shrink-0">
                 <button
-                  onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-400 rounded dark:hover:bg-gray-600  dark:bg-gray-400"
+                  onClick={props.onClose}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-200 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    onClose()
-                  }}
+                  onClick={handleSave}
+                  disabled={isSubmitting}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
-                  Save
+                  {isSubmitting && (
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                  )}
+                  {isSubmitting ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </DialogPanel>
@@ -90,3 +147,5 @@ export default function UpdateSendingProfilesModal({
     </Transition>
   )
 }
+
+export default UpdateSendingProfilesModal;

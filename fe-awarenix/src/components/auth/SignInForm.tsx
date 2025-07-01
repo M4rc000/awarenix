@@ -46,7 +46,6 @@ export default function SignInForm() {
       if (res.status === 400 || res.status === 401 || res.status == 500) {
         const body = await res.json();
         
-        // backend returns { error: "Invalid ..."} or { errors: { field: msg } }
         if (body.errors) {
           console.log('Body Errors');
           setErrors(body.errors);
@@ -114,6 +113,7 @@ export default function SignInForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1"
+                autoComplete="true"
               />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-500">{errors.email}</p>
@@ -131,6 +131,7 @@ export default function SignInForm() {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="true"
                 />
                 <span
                   onClick={() => setShowPassword((s) => !s)}

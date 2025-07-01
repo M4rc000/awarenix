@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react'
 import {
   Dialog,
   DialogBackdrop,
@@ -6,21 +7,94 @@ import {
   Transition,
 } from '@headlessui/react'
 import { Fragment } from 'react'
-import DeleteSendingProfilesModalForm from './DeleteSendingProfilesModalForm'
+import DeleteSendingProfileModalForm, {DeleteSendingProfileModalFormRef} from './DeleteSendingProfilesModalForm'
+import Swal from '../utils/AlertContainer'
 
-export type DeleteSendingProfilesProps = {
-  isOpen: boolean
-  onClose: () => void
+type SendingProfile = {
+  id: number;
+  name: string;
+	interfaceType: string;
+	smtpFrom     : string;
+	username     : string;
+	password     : string;
+	host         : string;
+	CreatedAt    : string;
+	CreatedBy    : number;
+	CreatedByName    : string;
+	UpdatedAt    : string;
+	UpdatedBy    : number; 
+	UpdatedByName    : string; 
+  senderAddress: string;
+	EmailHeaders : string;
 }
 
-export default function DeleteSendingProfiles({
+export type DeleteSendingProfileModalProps = {
+  isOpen: boolean
+  onClose: () => void
+  sendingProfile: SendingProfile | null
+  onSuccess?: () => void
+  onSendingProfileDeleted?: () => void
+}
+
+export default function DeleteSendingProfileModal({
   isOpen,
   onClose,
-}: DeleteSendingProfilesProps) {
+  sendingProfile,
+  onSendingProfileDeleted,
+}: DeleteSendingProfileModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string>('');
+  const formRef = useRef<DeleteSendingProfileModalFormRef>(null);
+
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem('token');
+  const handleDelete = async () => {
+    if (!sendingProfile) return;
+    
+    setIsDeleting(true);
+    setError('');
+
+    try {
+      const res = await fetch(`${API_URL}/sending-profile/${sendingProfile.id}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.status == 'error') {
+        setError(data.message || 'Failed to delete sending profile');
+        Swal.fire({
+          text: 'Failed to delete sending profile',
+          icon: 'error',
+          duration: 2000
+        });
+        return;
+      }
+      onSendingProfileDeleted?.(); 
+      onClose();         
+
+    } catch (err) {
+      setError('Unexpected error occurred');
+      console.log('Error: ', err);
+      
+      Swal.fire({
+        text: `Unexpected error occurred while deleting sending profile`,
+        icon: 'error',
+        duration: 2000,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <Transition show={isOpen} as={Fragment}>
       <Dialog open={isOpen} onClose={()=>{}} className="relative z-[999]">
-        {/* Backdrop with fade animation */}
         <Transition.Child
           as={Fragment}
           enter="transition-opacity duration-300"
@@ -46,7 +120,7 @@ export default function DeleteSendingProfiles({
           >
             <DialogPanel className="w-full max-w-fit box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-hidden dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5 z-[9999999999999]" onClick={(e) => e.stopPropagation()}>
               {/* HEADER */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-700 flex-shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-300 dark:border-b-gray-600 flex-shrink-0">
                     <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Confirmation Delete Sending Profile ?
                     </DialogTitle>
@@ -54,24 +128,61 @@ export default function DeleteSendingProfiles({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <DeleteSendingProfilesModalForm />
+                <DeleteSendingProfileModalForm
+                  sendingProfile={sendingProfile!}
+                  ref={formRef}
+                  onDelete={handleDelete}
+                  error={error}
+                  isDeleting={isDeleting}
+                />
               </div>
 
               {/* FOOTER */}
               <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 dark:bg-gray-900 flex-shrink-0">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-400 rounded dark:hover:bg-gray-600  dark:bg-gray-400"
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-200 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isDeleting}
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    onClose()
+                  disabled={isDeleting}
+                  onClick={async () => {
+                    try {
+                      const success = await formRef.current?.submitDelete();
+                      
+                      if (success) {
+                        onClose();
+                        Swal.fire({
+                          text: 'Sending Profile deleted successfully',
+                          icon: "success",
+                          duration: 2000
+                        });
+                        
+                        // Panggil callback untuk refresh data
+                        if (onSendingProfileDeleted) {
+                          onSendingProfileDeleted();
+                        }
+                      } else {
+                        Swal.fire({
+                          text: 'Failed to delete sending profile. Please try again!',
+                          icon: "error",
+                          duration: 2000
+                        })
+                      }
+                    } catch (error) {
+                      console.log('Error: ', error);
+                      Swal.fire({
+                        text: `An error occurred while updating sending profile!`,
+                        icon: "error",
+                        duration: 2000
+                      })
+                    }
                   }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Confirm
+                  {isDeleting ? 'Deleting...' : 'Confirm'}
                 </button>
               </div>
             </DialogPanel>

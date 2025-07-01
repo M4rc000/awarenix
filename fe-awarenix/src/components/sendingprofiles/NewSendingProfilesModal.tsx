@@ -28,8 +28,6 @@ export default function NewSendingProfileModal({
     try {
       setIsSubmitting(true);
       const success = await formRef.current.submitSendingProfile();
-      console.log('Success: ', success);
-      
       
       if (success) {
         onSendingProfileAdded(); 

@@ -38,6 +38,11 @@ func SetupRoutes(router *gin.Engine) {
 			users.DELETE("/:id", controllers.DeleteUser)      // DELETE
 		}
 
+		roles := api.Group("/user-roles")
+		{
+			roles.GET("/all", controllers.GetRoles) // READ
+		}
+
 		emailTemplate := api.Group("/email-template")
 		{
 			emailTemplate.POST("/create", controllers.RegisterEmailTemplate) // CREATE
@@ -57,7 +62,13 @@ func SetupRoutes(router *gin.Engine) {
 
 		sendingprofiles := api.Group("/sending-profile")
 		{
-			sendingprofiles.GET("/all", controllers.GetSendingProfiles)
+			sendingprofiles.POST("/create", controllers.RegisterSendingProfile)                // CREATE
+			sendingprofiles.GET("/all", controllers.GetSendingProfiles)                        // READ
+			sendingprofiles.PUT("/:id", controllers.UpdateSendingProfile)                      // UPDATE
+			sendingprofiles.PUT("/email-header/:id", controllers.UpdateEmailHeadersForProfile) // UPDATE
+			sendingprofiles.GET("/email-header/:id", controllers.GetEmailHeaderDetail)         // DETAIL
+			sendingprofiles.DELETE("/:id", controllers.DeleteSendingProfile)                   // DELETE
+
 		}
 
 		analytics := api.Group("/analytics")

@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import {
   Dialog,
   DialogBackdrop,
@@ -5,21 +6,40 @@ import {
   DialogTitle,
   Transition,
 } from '@headlessui/react'
-import { Fragment } from 'react'
-import NewSendingProfilesModalForm from './NewSendingProfilesModalForm'
+import ShowSendingProfileModalForm from './ShowSendingProfilesModalForm'
 
-export type NewGroupModalProps = {
-  isOpen: boolean
-  onClose: () => void
+type SendingProfile = {
+  id: number;
+  name: string;
+	interfaceType: string;
+	smtpFrom     : string;
+	username     : string;
+	password     : string;
+	host         : string;
+	CreatedAt    : string;
+	CreatedBy    : number;
+	CreatedByName    : string;
+	UpdatedAt    : string;
+	UpdatedBy    : number; 
+	UpdatedByName    : string; 
+  senderAddress: string;
+	EmailHeaders : string;
 }
 
-export default function ShowSendingProfilesModal({
+export type ShowEmailTemplateDetailModalProps = {
+  isOpen: boolean
+  onClose: () => void
+  sendingProfile: SendingProfile | null;
+}
+
+export default function ShowSendingProfileDetailModal({
   isOpen,
   onClose,
-}: NewGroupModalProps) {
+  sendingProfile,
+}: ShowEmailTemplateDetailModalProps) {
   return (
     <Transition show={isOpen} as={Fragment}>
-      <Dialog open={isOpen} onClose={onClose} className="relative z-[999]">
+      <Dialog open={isOpen} onClose={()=>{}} className="relative z-[999]">
         {/* Backdrop with fade animation */}
         <Transition.Child
           as={Fragment}
@@ -62,24 +82,16 @@ export default function ShowSendingProfilesModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <NewSendingProfilesModalForm />
+                <ShowSendingProfileModalForm sendingProfile={sendingProfile!}/>
               </div>
 
               {/* FOOTER */}
               <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 dark:bg-gray-900 flex-shrink-0">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-400 rounded dark:hover:bg-gray-600  dark:bg-gray-400"
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-200 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    onClose()
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Save
+                  Close
                 </button>
               </div>
             </DialogPanel>
