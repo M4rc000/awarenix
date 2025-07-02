@@ -59,6 +59,8 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
     }
     if (!emailtemplate.envelopeSender.trim()) {
       newErrors.envelopeSender = "Envelope Sender is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailtemplate.envelopeSender)) {
+      newErrors.envelopeSender = "Please enter a valid email";
     }
     if (!emailtemplate.subject.trim()) {
       newErrors.subject = "Subject Email is required";
@@ -99,7 +101,6 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         body: JSON.stringify(payload),
       });
 
-      console.log('Body: ', payload);
       
       if (!response.ok) {
         let errorMessage = 'Failed to create email template';

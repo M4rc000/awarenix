@@ -1,5 +1,4 @@
 import { useState, forwardRef, useImperativeHandle } from "react";
-import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Button from "../ui/button/Button";
 import {
@@ -14,7 +13,13 @@ import Swal from "../utils/AlertContainer";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdOutlineNavigateNext } from "react-icons/md";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
+import SendTestEmailModal from "./SendTestEmailModal";
 
+interface TestRecipient {
+  name: string;
+  email: string;
+  position: string;
+}
 
 export type NewSendingProfileModalFormRef = {
   submitSendingProfile: () => Promise<{
@@ -29,7 +34,7 @@ export type NewSendingProfileModalFormRef = {
 };
 
 const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
-  (props, ref) => { 
+  (_, ref) => { 
     type EmailHeader = { header: string; value: string };
 
     // State untuk input form
@@ -45,6 +50,10 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
     const [newValue, setNewValue] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
     const [entriesPerPage, setEntriesPerPage] = useState(10);
+
+    // State untuk modal email tes
+    const [showTestEmailModal, setShowTestEmailModal] = useState(false);
+    const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
 
     const addEmailHeader = () => {
       if (newHeader.trim() && newValue.trim()) {
@@ -70,6 +79,99 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
 
     // Calculate pagination
     const displayedHeaders = filteredHeaders.slice(0, entriesPerPage);
+
+    // SEND TEST EMAIL HANDLE
+    const handleOpenTestEmailModal = () => {
+      // Sebelum membuka modal, lakukan validasi dasar pada profil pengiriman
+      if (!profileName || !smtpFrom || !host || !username || !password) {
+        Swal.fire({
+          text: 'Harap lengkapi semua bidang profil pengiriman yang wajib diisi terlebih dahulu!',
+          icon: 'warning',
+          duration: 3000,
+        });
+        return;
+      }
+      setShowTestEmailModal(true);
+    };
+
+    const handleCloseTestEmailModal = () => {
+      setShowTestEmailModal(false);
+    };
+
+    // --- Fungsi untuk mengirim email tes ---
+    const handleSendTestEmail = async (recipient: TestRecipient) => {
+      setIsSendingTestEmail(true);
+      const API_URL = import.meta.env.VITE_API_URL;
+      const token = localStorage.getItem('token');
+
+      // Body email sederhana untuk tes
+      const testEmailBody = `<html><body>
+        <h1>Halo ${recipient.name},</h1>
+        <p>Ini adalah email tes dari sistem pengiriman kami.</p>
+        <p>Detail penerima:</p>
+        <ul>
+          <li>Nama: ${recipient.name}</li>
+          <li>Email: ${recipient.email}</li>
+          <li>Posisi: ${recipient.position}</li>
+        </ul>
+        <p>Profil pengiriman yang digunakan: ${profileName}</p>
+        <p>Terima kasih!</p>
+        <p><a href="{{.URL}}">Klik di sini untuk melacak</a></p>
+      </body></html>`;
+
+      const dataToSend = {
+        sendingProfile: {
+          name: profileName,
+          interfaceType: interfaceType,
+          smtpFrom: smtpFrom,
+          host: host,
+          username: username,
+          password: password,
+          emailHeaders: emailHeaders,
+        },
+        recipient: recipient,
+        emailBody: testEmailBody, 
+      };
+
+      try {
+        // Asumsi endpoint API untuk mengirim email tes
+        const response = await fetch(`${API_URL}/sending-profile/send-test-email`, {
+          method: "POST",
+          credentials: 'include',
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(dataToSend),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          Swal.fire({
+            icon: 'error',
+            text: errorData.message || 'Gagal mengirim email tes.',
+            duration: 3000,
+          });
+          return;
+        }
+
+        Swal.fire({
+          icon: 'success',
+          text: 'Email tes berhasil dikirim!',
+          duration: 3000,
+        });
+        handleCloseTestEmailModal(); // Tutup modal setelah berhasil
+      } catch (error: unknown) {
+        console.error("Terjadi kesalahan saat mengirim email tes: ", error);
+        Swal.fire({
+          icon: 'error',
+          text: 'Terjadi kesalahan jaringan atau server saat mengirim email tes.',
+          duration: 3000,
+        });
+      } finally {
+        setIsSendingTestEmail(false);
+      }
+    };
 
     // SEND DATA CREATE
     useImperativeHandle(ref, () => ({
@@ -436,7 +538,10 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
 
           {/* Send Test Email Button */}
           <div className="mt-6">
-            <Button className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 flex items-center gap-2">
+            <Button
+              className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 flex items-center gap-2"
+              onClick={handleOpenTestEmailModal} 
+            >
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -454,6 +559,14 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
             </Button>
           </div>
         </div>
+
+        {/* Render SendTestEmailModal */}
+        <SendTestEmailModal
+          isOpen={showTestEmailModal}
+          onClose={handleCloseTestEmailModal}
+          onSendTestEmail={handleSendTestEmail}
+          isLoading={isSendingTestEmail}
+        />
       </div>
     );
   }

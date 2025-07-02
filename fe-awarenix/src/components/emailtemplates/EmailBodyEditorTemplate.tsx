@@ -429,6 +429,12 @@ type EmailBodyEditorTemplateProps = {
   onTrackerChange?: (trackerValue: number) => void;
 };
 
+// MENGGANTI TAG A HREF TO {{ .URL }}
+const replaceLinksWithUrlPlaceholder = (htmlString: string): string => {
+  const linkRegex = /(<a\s+(?:[^>]*?\s+)?href=["']?)([^"'>]+)(["']?[^>]*>)/gi;
+  return htmlString.replace(linkRegex, `$1{{.URL}}$3`);
+};
+
 const EmailBodyEditorTemplate = ({
   templateName,
   envelopeSender,
@@ -441,41 +447,20 @@ const EmailBodyEditorTemplate = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeTab, setActiveTab] = useState(0);
-  const [htmlContent, setHtmlContent] = useState(() => {
-    const matchedTemplate = EMAIL_TEMPLATES.find(template => template.content === initialContent);
-    return matchedTemplate ? initialContent : (initialContent === "" ? TEMPLATE_WELCOME : initialContent);
+  const [htmlContent, setHtmlContent] = useState<string>(() => {
+    // Inisialisasi awal htmlContent dengan memproses initialContent dari props
+    let contentToUse = initialContent;
+    if (initialContent === "") {
+      contentToUse = TEMPLATE_WELCOME; // Default ke Welcome Template jika initialContent kosong
+    }
+    return replaceLinksWithUrlPlaceholder(contentToUse);
   });
   const [selectedTemplate, setSelectedTemplate] = useState(() => {
+    // Menentukan selectedTemplate berdasarkan initialContent
     const matchedTemplate = EMAIL_TEMPLATES.find(template => template.content === initialContent);
     return matchedTemplate ? matchedTemplate.name : "Custom";
   });
   const [trackerImage, setTrackerImage] = useState(initialTrackerValue);
-
-  useEffect(() => {
-    if (onTrackerChange) {
-      onTrackerChange(trackerImage);
-    }
-  }, [trackerImage, onTrackerChange]);
-
-  // HANYA ketika `htmlContent` berubah
-  useEffect(() => {
-    // Pastikan onBodyChange ada dan htmlContent berbeda dari initialContent yang mungkin sudah diset.
-    // Atau hanya panggil ketika htmlContent benar-benar berubah dari yang terakhir dikirim.
-    // Jika `onBodyChange` perlu dipanggil setiap kali `htmlContent` berubah,
-    // maka ini sudah benar, tetapi kita harus memastikan `htmlContent` sendiri
-    // tidak berubah kecuali oleh aksi pengguna atau pemilihan template.
-    if (onBodyChange && htmlContent !== initialContent) { // Tambahkan kondisi `htmlContent !== initialContent`
-        onBodyChange(htmlContent);
-    }
-  }, [htmlContent, onBodyChange, initialContent]); // Tambahkan initialContent ke dependencies
-
-  useEffect(() => {
-    if (htmlContent !== initialContent) { // Hanya update jika berbeda
-      setHtmlContent(initialContent);
-      const matchedTemplate = EMAIL_TEMPLATES.find(template => template.content === initialContent);
-      setSelectedTemplate(matchedTemplate ? matchedTemplate.name : "Custom");
-    }
-  }, [initialContent]);
 
   // Effect untuk mengirim nilai tracker image ke parent component
   useEffect(() => {
@@ -484,22 +469,48 @@ const EmailBodyEditorTemplate = ({
     }
   }, [trackerImage, onTrackerChange]);
 
+  // Effect untuk melakukan sinkronisasi htmlContent internal dengan initialContent dari parent
+  useEffect(() => {
+    // Proses initialContent dari parent, pastikan link sudah diganti
+    const processedInitialContent = replaceLinksWithUrlPlaceholder(initialContent === "" ? TEMPLATE_WELCOME : initialContent);
+
+    // Hanya update state internal jika ada perbedaan setelah pemrosesan
+    if (htmlContent !== processedInitialContent) {
+      setHtmlContent(processedInitialContent);
+      // Perbarui selectedTemplate juga saat initialContent berubah
+      const matchedTemplate = EMAIL_TEMPLATES.find(template => template.content === initialContent);
+      setSelectedTemplate(matchedTemplate ? matchedTemplate.name : "Custom");
+    }
+  }, [initialContent]); // Dependensi hanya pada initialContent
+
+  // Effect untuk memanggil onBodyChange setiap kali htmlContent (state internal) berubah
+  // Ini memastikan parent selalu mendapatkan versi terbaru dari body email yang sudah diproses link-nya
+  useEffect(() => {
+    if (onBodyChange) {
+      onBodyChange(htmlContent);
+    }
+  }, [htmlContent, onBodyChange]); // Bergantung pada htmlContent dan onBodyChange
+
   const handleTemplateChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newTemplateName = event.target.value;
     setSelectedTemplate(newTemplateName);
+
     if (newTemplateName === "Custom") {
-      // If "Custom" is selected, the user will type in the textarea
-      // We don't change htmlContent here, it's driven by the textarea's onChange
+      // Jika "Custom" dipilih, biarkan pengguna mengedit manual.
+      // Anda bisa setHtmlContent('') jika ingin mengosongkan editor saat memilih "Custom".
       return;
     }
+
     const template = EMAIL_TEMPLATES.find(t => t.name === newTemplateName);
     if (template) {
-      setHtmlContent(template.content);
+      // Terapkan penggantian link saat memilih template bawaan
+      const processedContent = replaceLinksWithUrlPlaceholder(template.content);
+      setHtmlContent(processedContent);
     }
   };
 
   const handleImportButtonClick = () => {
-    fileInputRef.current?.click(); // Trigger click on hidden file input
+    fileInputRef.current?.click(); // Memicu klik pada input file yang tersembunyi
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -508,13 +519,14 @@ const EmailBodyEditorTemplate = ({
       return;
     }
 
+    // Validasi tipe file .eml
     if (file.type !== "message/rfc822" && !file.name.toLowerCase().endsWith(".eml")) {
       Swal.fire({
         text: "Please select a valid EML file (.eml).",
         icon: 'error',
         duration: 3000,
       });
-      // Clear the file input to allow re-selection of the same file if user picks wrong one
+      // Bersihkan input file agar pengguna bisa memilih ulang file yang sama jika salah
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -524,10 +536,10 @@ const EmailBodyEditorTemplate = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       const emlContent = e.target?.result as string;
-      const extractedHtml = extractHtmlFromEml(emlContent);
+      const extractedHtml = extractHtmlFromEml(emlContent); // Fungsi ini sudah memanggil replaceLinksWithUrlPlaceholder
 
       if (extractedHtml) {
-        setHtmlContent(extractedHtml);
+        setHtmlContent(extractedHtml); // Langsung set, karena sudah diproses di extractHtmlFromEml
         setSelectedTemplate("Custom");
         Swal.fire({
           text: "EML file imported successfully!",
@@ -541,8 +553,8 @@ const EmailBodyEditorTemplate = ({
           duration: 4000,
         });
       }
-       // Clear the file input value after processing
-       if (fileInputRef.current) {
+      // Bersihkan input file setelah pemrosesan
+      if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     };
@@ -552,45 +564,49 @@ const EmailBodyEditorTemplate = ({
         icon: 'error',
         duration: 3000,
       });
-       // Clear the file input value after error
-       if (fileInputRef.current) {
+      // Bersihkan input file setelah error
+      if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     };
     reader.readAsText(file);
   };
 
-  // Simple EML parser to extract HTML part
-  // This is a basic implementation and might not cover all complex EML structures (e.g., multipart/alternative with nested parts)
+  // Fungsi sederhana untuk mengekstrak bagian HTML dari file EML
+  // Catatan: Ini adalah implementasi dasar dan mungkin tidak mencakup semua struktur EML yang kompleks
   const extractHtmlFromEml = (emlString: string): string | null => {
+    // Mencari bagian Content-Type: text/html
     const htmlPartRegex = /Content-Type: text\/html;(?:\s*charset=["']?utf-8["']?)?(?:;.*)?\s*\r?\n\r?\n([\s\S]*?)(?=\r?\n--|$)/i;
     const match = emlString.match(htmlPartRegex);
 
     if (match && match[1]) {
-      // Decode potential quoted-printable or base64 if Content-Transfer-Encoding is present
+      // Mengecek Content-Transfer-Encoding
       const encodingMatch = emlString.match(/Content-Transfer-Encoding: (\S+)/i);
       const encoding = encodingMatch ? encodingMatch[1].toLowerCase() : '';
 
-      let htmlContent = match[1].trim();
+      let htmlContentPart = match[1].trim();
 
+      // Decode berdasarkan encoding
       if (encoding === 'quoted-printable') {
-        htmlContent = htmlContent.replace(/=\r?\n/g, '').replace(/=([0-9A-Fa-f]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
+        htmlContentPart = htmlContentPart.replace(/=\r?\n/g, '').replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
       } else if (encoding === 'base64') {
         try {
-          htmlContent = atob(htmlContent);
+          htmlContentPart = atob(htmlContentPart);
         } catch (e) {
           console.error("Base64 decoding failed:", e);
           return null;
         }
       }
-      return htmlContent;
+      // Panggil fungsi untuk mengganti link setelah decoding
+      return replaceLinksWithUrlPlaceholder(htmlContentPart);
     }
 
-    // Fallback: If no explicit text/html part is found, try to find <html> tags as a last resort
+    // Fallback: Jika tidak ada header Content-Type: text/html yang spesifik, coba cari tag <html>
     const fallbackHtmlRegex = /(<html[\s\S]*<\/html>)/i;
     const fallbackMatch = emlString.match(fallbackHtmlRegex);
     if (fallbackMatch && fallbackMatch[1]) {
-        return fallbackMatch[1];
+      // Panggil juga untuk fallback HTML
+      return replaceLinksWithUrlPlaceholder(fallbackMatch[1]);
     }
 
     return null;

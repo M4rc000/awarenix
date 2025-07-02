@@ -23,9 +23,9 @@ func GenerateJWT(userID uint, email string, status string) (string, int64, error
 
 	var exp time.Duration
 	if status == "KeepMeLoggedIn" {
-		exp = 30 * 24 * time.Hour
+		exp = 24 * time.Hour
 	} else {
-		exp = 1 * time.Hour
+		exp = 3 * time.Hour
 	}
 
 	expTime := time.Now().Add(exp).Unix()

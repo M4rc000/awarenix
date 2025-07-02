@@ -104,6 +104,7 @@ export default function EditUserModal({
                       setIsLoading(true);
                       
                       const success = await formRef.current?.submitUsers();
+                      console.log('Success: ', success);
                       
                       if (success) {
                         onClose();

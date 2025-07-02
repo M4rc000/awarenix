@@ -5,7 +5,9 @@ import SignInForm from "../../components/auth/SignInForm";
 
 export default function SignIn() {
   const token = localStorage.getItem("token");
+  const user = localStorage.getItem("user");
   const nav = useNavigate();
+  console.log('User:', user);
 
   useEffect(() => {
     if (token) nav("/dashboard", { replace: true });

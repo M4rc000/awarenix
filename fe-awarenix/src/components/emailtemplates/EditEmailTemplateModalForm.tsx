@@ -55,6 +55,8 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
       }
       if (!formData.envelopeSender.trim()) {
         newErrors.envelopeSender = "Envelope Sender is required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.envelopeSender)) {
+        newErrors.envelopeSender = "Please enter a valid email";
       }
       if (!formData.subject.trim()) {
         newErrors.subject = "Subject Email is required";

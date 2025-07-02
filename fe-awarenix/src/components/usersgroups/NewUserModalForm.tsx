@@ -83,7 +83,7 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
       if (result.Success && result.Data) {
         // Transform API data to select options format
         const options = result.Data.map((role: RoleData) => ({
-          value: role.name, // or role.id.toString() if you prefer using ID
+          value: role.name, 
           label: role.name,
         }));
         
@@ -100,8 +100,9 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
       console.error('Error fetching roles:', error);
       // Fallback to default options if API fails
       setRoleOptions([
+        { value: "Super Admin", label: "Super Admin"},
         { value: "Admin", label: "Admin"},
-        { value: "Member", label: "Member"}
+        { value: "Engineer", label: "Engineer"}
       ]);
     }
   };

@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, useEffect } from "react";
 import Swal from "../utils/AlertContainer";
 import { useUserSession } from "../context/UserSessionContext";
 import Label from "../form/Label";
@@ -14,11 +14,6 @@ export type EditUserModalFormRef = {
 const statusOption = [
   { value: "0", label: "Not Active" },
   { value: "1", label: "Active" },
-];
-
-const roleOption = [
-  { value: "Admin", label: "Admin" },
-  { value: "User", label: "User" },
 ];
 
 type UserData = {
@@ -38,9 +33,14 @@ type UserFormData = {
   email: string;
   position: string;
   password: string;
-  role: string; 
+  role: string;
   company: string;
-  isActive: string; 
+  isActive: string;
+};
+
+type RoleData = {
+  id: number;
+  name: string;
 };
 
 type EditUserModalFormProps = {
@@ -52,8 +52,9 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
   const [formData, setFormData] = useState<UserFormData>(user ? {
     ...user,
     isActive: user.isActive ? "1" : "0",
-    role: user.role === "Admin" ? "Admin" : "User",
-    password: "", 
+    // Inisialisasi role awal, akan diperbarui di useEffect setelah roleOptions dimuat
+    role: user.role || "", // Pastikan role tidak null/undefined
+    password: "",
   } : {
     id: 0,
     name: "",
@@ -68,6 +69,80 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { setUser } = useUserSession();
   const [errors, setErrors] = useState<Partial<Record<keyof UserFormData, string>>>({});
+  const [roleOptions, setRoleOptions] = useState<{ value: string; label: string }[]>([]);
+
+  // Fetch Roles
+  const fetchRoles = async () => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL;
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`${API_URL}/user-roles/all`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch roles: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.status === 'success' && result.data) { 
+        // Transform API data to select options format
+        const options = result.data.map((role: RoleData) => ({
+          value: role.name,
+          label: role.name,
+        }));
+
+        setRoleOptions(options);
+      } else {
+        console.error('Failed to fetch roles:', result.message || 'Unknown error'); 
+        // Fallback to default options if API fails or response format is unexpected
+        setRoleOptions([
+          { value: "Super Admin", label: "Super Admin" },
+          { value: "Admin", label: "Admin" },
+          { value: "Engineer", label: "Engineer" }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      // Fallback to default options if API fails
+      setRoleOptions([
+        { value: "Super Admin", label: "Super Admin" },
+        { value: "Admin", label: "Admin" },
+        { value: "Engineer", label: "Engineer" }
+      ]);
+    }
+  };
+
+  // Fetch roles on component mount
+  useEffect(() => {
+    fetchRoles();
+  }, []);
+
+  // Effect to update formData.role once roleOptions are loaded or user prop changes
+  useEffect(() => {
+    if (roleOptions.length > 0 && user) {
+      // Check if the user's current role exists in the fetched options
+      const userRoleExists = roleOptions.some(option => option.value === user.role);
+      
+      setFormData(prev => ({
+        ...prev,
+        // If user's role exists in options, use it. Otherwise, default to the first option.
+        role: userRoleExists ? user.role : (roleOptions[0]?.value || ""),
+      }));
+    } else if (roleOptions.length > 0 && !user) {
+      // If no user is provided (e.g., for add user form), default to the first role option
+      setFormData(prev => ({
+        ...prev,
+        role: roleOptions[0]?.value || "",
+      }));
+    }
+  }, [roleOptions, user]); // Depend on roleOptions and user prop
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof UserFormData, string>> = {};
@@ -86,8 +161,9 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
       newErrors.position = "Position is required";
     }
 
-    if (!formData.role.trim() || !["Admin", "Member"].includes(formData.role)) {
-      newErrors.role = "Role is required";
+    // Validasi role: pastikan role tidak kosong dan ada di dalam roleOptions yang tersedia
+    if (!formData.role.trim() || !roleOptions.some(option => option.value === formData.role)) {
+      newErrors.role = "Role is required and must be a valid option";
     }
 
     if (!formData.isActive.trim() || !["0", "1"].includes(formData.isActive)) {
@@ -95,7 +171,7 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
     }
 
     // Validasi password hanya jika diisi (tidak kosong)
-    if (formData.password && formData.password.length < 6) {
+    if (formData.password && formData.password.length > 0 && formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
 
@@ -108,7 +184,6 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
       ...prev,
       [field]: value,
     }));
-    
 
     if (errors[field]) {
       setErrors((prev) => ({
@@ -169,19 +244,10 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
 
         const data = await res.json();
 
-        if (!res.ok) { 
-          Swal.fire({
-            icon: 'error',
-            text: data.message || data.error || 'Failed to update user.',
-          });
-          return false;
-        }
-
         if (updatedBy === formData.id) {
-          localStorage.setItem('user', JSON.stringify(data.Data));
-          setUser(data.Data);
+          localStorage.setItem('user', JSON.stringify(data.data));
+          setUser(data.data); 
         }
-
         return true;
       } catch (err: unknown) {
         const errorMessage =
@@ -198,7 +264,12 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
   }));
 
   // --- Render Form ---
-  if (!user) return null;
+  // Tampilkan form hanya jika roleOptions sudah dimuat
+  if (!user) return null; // Tetap cek user prop
+  if (roleOptions.length === 0 && !isSubmitting) { // Tambahkan kondisi loading untuk roleOptions
+    return <div className="text-center py-4">Loading roles...</div>;
+  }
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl">
@@ -260,7 +331,7 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
             <LabelWithTooltip tooltip="Role in this system" required>Role</LabelWithTooltip>
             <Select
               value={formData.role}
-              options={roleOption}
+              options={roleOptions}
               onChange={(val) => handleInputChange('role', val)}
               required
               className={errors.role ? 'border-red-500' : ''}
@@ -287,7 +358,7 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
             <Input
               type="password"
               placeholder="Leave blank if you do not want to change the password."
-              value={formData.password} 
+              value={formData.password}
               onChange={(e) => handleInputChange('password', e.target.value)}
               disabled={isSubmitting}
               className={errors.password ? 'border-red-500' : ''}

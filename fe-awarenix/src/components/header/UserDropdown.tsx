@@ -52,16 +52,19 @@ export default function UserDropdown() {
         onClose={closeDropdown}
         className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
       >
-        <div>
-          <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
+        <div className="text-center border-b border-gray-300 dark:border-gray-700 pb-3">
+          <span className="block font-medium text-gray-700 text-theme-lg dark:text-gray-400">
             {user?.name ?? "-"}
           </span>
-          <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
+          <span className="mt-0.5 block text-theme-sm text-gray-500 dark:text-gray-500">
+            {user?.role ?? "-"}
+          </span>
+          <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-500">
             {user?.email ?? "-"}
           </span>
         </div>
 
-        <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
+        <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-300 dark:border-gray-700">
           <li>
             <DropdownItem
               onItemClick={closeDropdown}
@@ -120,6 +123,7 @@ export default function UserDropdown() {
               method: "POST",
               headers: { Authorization: `Bearer ${token}` },
             });
+            localStorage.removeItem("token_expired");
             localStorage.removeItem("token");
             localStorage.removeItem("user");
             navigate("/login", { replace: true });
