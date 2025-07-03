@@ -25,8 +25,15 @@ func AuthLogin(c *gin.Context) {
 	}
 
 	var user models.User
+	// Check if the user exists with email
 	if err := config.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Account haven't registered yet"})
+		return
+	}
+
+	// Check if the user is active
+	if err := config.DB.Where("is_active = ?", true).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Account is not active"})
 		return
 	}
 
@@ -42,17 +49,19 @@ func AuthLogin(c *gin.Context) {
 		return
 	}
 
-	user.LastLogin = time.Now().In(services.JakartaLocation)
+	user.LastLogin = time.Now()
+	log.Printf("User %s logged in at %s", user.Email, user.LastLogin)
 	if err := config.DB.Save(&user).Error; err != nil {
 		log.Printf("Failed to update last_login: %v", err)
 	}
 
 	userdata := map[string]interface{}{
-		"id":       user.ID,
-		"name":     user.Name,
-		"email":    user.Email,
-		"position": user.Position,
-		"role":     user.Role,
+		"id":         user.ID,
+		"name":       user.Name,
+		"email":      user.Email,
+		"position":   user.Position,
+		"role":       user.Role,
+		"last_login": user.LastLogin,
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": token, "user": userdata, "expires_at": exp})

@@ -12,8 +12,26 @@ type Role struct {
 	UpdatedAt time.Time `gorm:"type:datetime;null" json:"updatedAt"`
 }
 
+type RoleResponse struct {
+	ID        uint      `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	CreatedBy uint      `json:"created_by"`
+}
+
+type CreateRoleInput struct {
+	Name      string    `json:"name"     binding:"required"`
+	CreatedAt time.Time `gorm:"null" json:"createdAt"`
+	CreatedBy uint      `gorm:"null" json:"createdBy"`
+}
 type GetRoleTable struct {
 	Role
 	CreatedByName string `json:"createdByName"`
 	UpdatedByName string `json:"updatedByName"`
+}
+
+type UpdateRoleInput struct {
+	Name      string    `json:"name"     binding:"required"`
+	UpdatedAt time.Time `gorm:"null"`
+	UpdatedBy int       `gorm:"null" json:"updatedBy"`
 }

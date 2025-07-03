@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Button from "../../components/ui/button/Button";
 import NewUserModal from "../../components/usersgroups/NewUserModal";
-import TableUsers from "../../components/usersgroups/TableUsers";
+import TableUsers from "../../components/usermanagement/TableUsers";
 
 type Props = {
   reloadTrigger: number;

@@ -109,6 +109,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
     if (!res.ok) throw new Error('Failed to fetch data');
 
     const result = await res.json();
+    
     setData(result.Data || result.data || result);
     } catch (err) {
       console.log('Error: ', err);

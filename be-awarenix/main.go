@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"be-awarenix/config"
 	"be-awarenix/middlewares"
@@ -19,10 +20,17 @@ func main() {
 		log.Fatalf("Error loading .env: %v", err)
 	}
 
-	err = os.Setenv("TZ", "Asia/Jakarta")
+	// Set timezone to Jakarta
+	// Jakarta is UTC+7
+	timezone := os.Getenv("APP_TIMEZONE")
+	if timezone == "" {
+		timezone = "Asia/Jakarta"
+	}
+	loc, err := time.LoadLocation(timezone)
 	if err != nil {
 		log.Fatalf("Failed to set timezone: %v", err)
 	}
+	time.Local = loc
 
 	// Init DB
 	config.InitDatabase()
@@ -40,7 +48,6 @@ func main() {
 	if port == "" {
 		port = "3000"
 	}
-
-	// app.Run(fmt.Sprintf(":%s", port))
+	log.Printf("Starting server on port %s...", port)
 	app.Run(fmt.Sprintf("0.0.0.0:%s", port))
 }

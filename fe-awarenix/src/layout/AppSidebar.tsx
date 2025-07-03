@@ -6,6 +6,7 @@ import { IoIosBookmarks } from "react-icons/io";
 import { IoSettingsOutline } from "react-icons/io5";
 import { FaMoneyCheckAlt } from "react-icons/fa";
 import { DiEnvato } from "react-icons/di";
+import { FaUserCog } from "react-icons/fa";
 import {
   CalenderIcon,
   ChevronDownIcon,
@@ -57,6 +58,11 @@ const navGroups: NavGroup[] = [
         path: "/campaigns",
       },
       {
+        icon: <FaUserCog size={5}/>,
+        name: "Role Management",
+        path: "/role-management",
+      },
+      {
         icon: <User />,
         name: "User Management",
         path: "/user-management",
@@ -84,18 +90,18 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    title: "Phising & Simulation",
-    key: "phising-simulation",
+    title: "Phishing & Simulation",
+    key: "phishing-simulation",
     items: [
       {
         icon: <MdOutlineAttachEmail />,
-        name: "Phising Emails",
-        path: "/phising-emails",
+        name: "Phishing Emails",
+        path: "/phishing-emails",
       },
       {
         icon: <CgWebsite />,
-        name: "Phising Websites",
-        path: "/phising-websites",
+        name: "Phishing Websites",
+        path: "/phishing-websites",
       }, 
       {
         name: "Training Modules",
@@ -111,7 +117,7 @@ const navGroups: NavGroup[] = [
       {
         icon: <IoSettingsOutline />,
         name: "Account Settings",
-        path: "/account-settings",
+        path: "/profile",
       },
       {
         icon: <FaMoneyCheckAlt />,

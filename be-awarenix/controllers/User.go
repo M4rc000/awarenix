@@ -13,16 +13,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// UserResponse untuk response ke frontend (tanpa password)
-type UserResponse struct {
-	ID        uint      `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Position  string    `json:"position"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
 // CREATE
 func RegisterUser(c *gin.Context) {
 	var input models.CreateUserInput
@@ -85,7 +75,7 @@ func RegisterUser(c *gin.Context) {
 	}
 
 	// RESPONSE DATA
-	userResponse := UserResponse{
+	userResponse := models.UserResponse{
 		ID:        newUser.ID,
 		Name:      newUser.Name,
 		Email:     newUser.Email,

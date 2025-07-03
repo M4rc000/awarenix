@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "../ui/table";
 import Swal from "../utils/AlertContainer";
+import { formatUserDate } from "../utils/DateFormatter";
 
 type EmailHeader = {
   id: number;
@@ -161,7 +162,7 @@ const ShowSendingProfileModalForm = ({
           />
         </div>
       </div>
-
+      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         {/* SMTP FROM */}
         <div>
@@ -193,6 +194,45 @@ const ShowSendingProfileModalForm = ({
             type="text"
             className="w-full text-sm sm:text-base h-10 px-3"
             value={sendingProfile.username}
+            readonly
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
+        <div>
+          <Label>Created At</Label>
+          <Input
+            type="text"
+            className="w-full text-sm sm:text-base h-10 px-3"
+            value={formatUserDate(sendingProfile.CreatedAt)}
+            readonly
+          />
+        </div>
+        <div>
+          <Label>Created By</Label>
+          <Input
+            type="text"
+            className="w-full text-sm sm:text-base h-10 px-3"
+            value={sendingProfile.CreatedByName}
+            readonly
+          />
+        </div>
+        <div>
+          <Label>Updated At</Label>
+          <Input
+            type="text"
+            className="w-full text-sm sm:text-base h-10 px-3"
+            value={formatUserDate(sendingProfile.UpdatedAt)}
+            readonly
+          />
+        </div>
+        <div>
+          <Label>Updated By</Label>
+          <Input
+            type="text"
+            className="w-full text-sm sm:text-base h-10 px-3"
+            value={sendingProfile.UpdatedByName}
             readonly
           />
         </div>

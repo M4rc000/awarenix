@@ -40,7 +40,10 @@ func SetupRoutes(router *gin.Engine) {
 
 		roles := api.Group("/user-roles")
 		{
-			roles.GET("/all", controllers.GetRoles) // READ
+			roles.GET("/all", controllers.GetRoles)         // READ
+			roles.POST("/create", controllers.RegisterRole) // CREATE
+			roles.PUT("/:id", controllers.UpdateRole)       // UPDATE
+			roles.DELETE("/:id", controllers.DeleteRole)    // DELETE
 		}
 
 		emailTemplate := api.Group("/email-template")

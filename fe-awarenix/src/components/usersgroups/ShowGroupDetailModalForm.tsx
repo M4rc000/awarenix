@@ -20,6 +20,7 @@ import Button from "../ui/button/Button";
 import Swal from '../utils/AlertContainer';
 import { GrFormPrevious } from "react-icons/gr";
 import { MdOutlineNavigateNext } from "react-icons/md";
+import {formatUserDate} from "../utils/DateFormatter";
 
 type Group = {
   id: number;
@@ -242,17 +243,7 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
             id="created-at"
             type="text"
             value={
-              createdAt
-                ? new Date(createdAt).toLocaleDateString('en-GB', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false,
-                  timeZoneName: 'short',  
-                  })
-                : ''
+              formatUserDate(createdAt)
             }
             className="w-full mt-1"
             readonly
@@ -278,17 +269,7 @@ export default function ShowGroupDetailModalForm({ group }: ShowGroupDetailModal
             id="updated-at"
             type="text"
             value={
-              updatedAt
-                ? new Date(updatedAt).toLocaleDateString('en-GB', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false,
-                  timeZoneName: 'short',  
-                  })
-                : ''
+              formatUserDate(updatedAt)
             }
             className="w-full mt-1"
             readonly

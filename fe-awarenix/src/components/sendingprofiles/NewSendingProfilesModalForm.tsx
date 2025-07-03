@@ -21,6 +21,16 @@ interface TestRecipient {
   position: string;
 }
 
+type SendingProfile = {
+  id: number;
+  name: string;
+  interfaceType: string;
+  smtpFrom: string;
+  host: string;
+  username: string;
+  password: string;
+}
+
 export type NewSendingProfileModalFormRef = {
   submitSendingProfile: () => Promise<{
     name: string;
@@ -50,6 +60,8 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
     const [newValue, setNewValue] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
     const [entriesPerPage, setEntriesPerPage] = useState(10);
+    const [errors, setErrors] = useState<Partial<SendingProfile>>({});
+    
 
     // State untuk modal email tes
     const [showTestEmailModal, setShowTestEmailModal] = useState(false);
@@ -80,15 +92,82 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
     // Calculate pagination
     const displayedHeaders = filteredHeaders.slice(0, entriesPerPage);
 
+    // VALIDATION FUNCTION
+    const validateForm = (): boolean => {
+      const newErrors: Partial<SendingProfile> = {};
+
+      if (!profileName.trim()) {
+        newErrors.name = "Name is required";
+      }
+      if (!interfaceType.trim()) {
+        newErrors.interfaceType = "Interface Type is required";
+      }
+      if (!smtpFrom.trim()) {
+        newErrors.smtpFrom = "SMTP From is required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(smtpFrom)) {
+        newErrors.smtpFrom = "Please enter a valid email";
+      }
+      if (!host.trim()) {
+        newErrors.host = "Host is required";
+      }
+      if (!username.trim()) {
+        newErrors.username = "Username is required";
+      }
+      if (!password.trim()) {
+        newErrors.password = "Password is required";
+      }
+
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    };
+
     // SEND TEST EMAIL HANDLE
     const handleOpenTestEmailModal = () => {
-      // Sebelum membuka modal, lakukan validasi dasar pada profil pengiriman
-      if (!profileName || !smtpFrom || !host || !username || !password) {
-        Swal.fire({
-          text: 'Harap lengkapi semua bidang profil pengiriman yang wajib diisi terlebih dahulu!',
-          icon: 'warning',
-          duration: 3000,
-        });
+      // Validasi sebelum membuka modal
+
+      if (!validateForm()) {
+        if(errors.name) {
+          Swal.fire({
+            icon: 'error',
+            text: errors.name,
+            duration: 3000,
+          });
+        }
+        if(errors.interfaceType) {
+          Swal.fire({
+            icon: 'error',
+            text: errors.interfaceType,
+            duration: 3000,
+          });
+        }
+        if(errors.smtpFrom) {
+          Swal.fire({
+            icon: 'error',
+            text: errors.smtpFrom,
+            duration: 3000,
+          });
+        }
+        if(errors.host) {
+          Swal.fire({
+            icon: 'error',
+            text: errors.host,
+            duration: 3000,
+          });
+        }
+        if(errors.username) {
+          Swal.fire({
+            icon: 'error',
+            text: errors.username,
+            duration: 3000,
+          });
+        }
+        if(errors.password) {
+          Swal.fire({
+            icon: 'error',
+            text: errors.password,
+            duration: 3000,
+          });
+        }
         return;
       }
       setShowTestEmailModal(true);
@@ -176,13 +255,7 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
     // SEND DATA CREATE
     useImperativeHandle(ref, () => ({
       submitSendingProfile: async () => {
-        // Validasi sederhana
-        if (!profileName || !smtpFrom || !host || !username || !password) {
-          Swal.fire({
-            text:'Please complete all required fields!',
-            icon: 'warning',
-            duration: 3000,
-          })
+        if (!validateForm()) {
           return null;
         }
 
@@ -241,12 +314,15 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
           <Input
             placeholder="Team A"
             type="text"
-            className="w-full text-sm sm:text-base h-10 px-3"
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.name ? 'border-red-500' : ''}`}
             value={profileName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setProfileName(e.target.value)
             }
           />
+          {errors.name && (
+            <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+          )}
         </div>
 
         {/* Interface Type */}
@@ -255,26 +331,32 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
           <Input
             placeholder="SMTP"
             type="text"
-            className="w-full text-sm sm:text-base h-10 px-3"
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.interfaceType ? 'border-red-500' : ''}`}
             value={interfaceType}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setInterfaceType(e.target.value)
             }
           />
+          {errors.interfaceType && (
+            <p className="text-red-500 text-sm mt-1">{errors.interfaceType}</p>
+          )}
         </div>
 
         {/* SMTP FROM */}
         <div>
           <LabelWithTooltip required>SMTP From</LabelWithTooltip>
           <Input
-            placeholder="First Last example@gmail.com"
+            placeholder="example@gmail.com"
             type="text"
-            className="w-full text-sm sm:text-base h-10 px-3"
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.smtpFrom ? 'border-red-500' : ''}`}
             value={smtpFrom}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setSmtpFrom(e.target.value)
             }
           />
+          {errors.smtpFrom && (
+            <p className="text-red-500 text-sm mt-1">{errors.smtpFrom}</p>
+          )}
         </div>
 
         {/* Host */}
@@ -283,12 +365,15 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
           <Input
             placeholder="smtp.example.com"
             type="text"
-            className="w-full text-sm sm:text-base h-10 px-3"
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.host ? 'border-red-500' : ''}`}
             value={host}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setHost(e.target.value)
             }
           />
+          {errors.host && (
+            <p className="text-red-500 text-sm mt-1">{errors.host}</p>
+          )}
         </div>
 
         {/* Username */}
@@ -297,12 +382,15 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
           <Input
             placeholder="username"
             type="text"
-            className="w-full text-sm sm:text-base h-10 px-3"
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.username ? 'border-red-500' : ''}`}
             value={username}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setUsername(e.target.value)
             }
           />
+          {errors.username && (
+            <p className="text-red-500 text-sm mt-1">{errors.username}</p>
+          )}
         </div>
 
         {/* Password */}
@@ -311,12 +399,15 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
           <Input
             placeholder="******"
             type="password"
-            className="w-full text-sm sm:text-base h-10 px-3"
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.password ? 'border-red-500' : ''}`}
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setPassword(e.target.value)
             }
           />
+          {errors.password && (
+            <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+          )}
         </div>
 
         {/* Email Headers Section */}

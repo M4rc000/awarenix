@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Button from "../../components/ui/button/Button";
-import NewUserModal from "../../components/usersgroups/NewUserModal";
-import TableUsers from "../../components/usersgroups/TableUsers";
+import NewUserModal from "../../components/usermanagement/NewUserModal";
+import TableUsers from "../../components/usermanagement/TableUsers";
 import CardHeader from "../../components/usermanagement/CardHeader";
 
 export default function UserManagement() { // Sekarang UserManagement tidak menerima props lagi

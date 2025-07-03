@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { FaUser } from "react-icons/fa";
-import Badge from "../ui/badge/Badge";
-import { CgArrowsExchange } from "react-icons/cg";
-import { TbArrowBigUpLine, TbArrowBigDownLine } from "react-icons/tb";
+// import Badge from "../ui/badge/Badge";
+// import { CgArrowsExchange } from "react-icons/cg";
+// import { TbArrowBigUpLine, TbArrowBigDownLine } from "react-icons/tb";
 
 export type CardHeaderUserManagementProps = {
   reloadTrigger: number
@@ -10,7 +10,7 @@ export type CardHeaderUserManagementProps = {
 
 export default function CardHeader({reloadTrigger}: CardHeaderUserManagementProps) {
   const [totalUsers, setTotalUsers] = useState(0);
-  const [growthDataUser, setGrowthDataUser] = useState(null);
+  // const [growthDataUser, setGrowthDataUser] = useState(null);
   
   const fetchTotalUsers = useCallback(async () => {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -28,66 +28,67 @@ export default function CardHeader({reloadTrigger}: CardHeaderUserManagementProp
     }
   }, []);
   
-  const fetchGrowthData = useCallback(async () => {
-  const API_URL = import.meta.env.VITE_API_URL;
-  const token = localStorage.getItem("token");
-    try {
-      const res = await fetch(`${API_URL}/analytics/growth-percentage?type=users`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-      });
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
-      if (data.success && data.data) {
-        setGrowthDataUser(data.data);
-      }
-    } catch (error) {
-      console.error("❌ Fetch error:", error);
-    }
-  }, []);
+  // const fetchGrowthData = useCallback(async () => {
+  // const API_URL = import.meta.env.VITE_API_URL;
+  // const token = localStorage.getItem("token");
+  //   try {
+  //     const res = await fetch(`${API_URL}/analytics/growth-percentage?type=users`, {
+  //       method: 'GET',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${token}`
+  //       },
+  //     });
+  //     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+  //     const data = await res.json();
+  //     if (data.success && data.data) {
+  //       setGrowthDataUser(data.data);
+  //     }
+  //   } catch (error) {
+  //     console.error("❌ Fetch error:", error);
+  //   }
+  // }, []);
 
   useEffect(() => {
     fetchTotalUsers();
-    fetchGrowthData();
+    // fetchGrowthData();
 
     const intervalId = setInterval(() => {
       fetchTotalUsers();
-      fetchGrowthData();
+      // fetchGrowthData();
     }, 5000); 
 
     return () => clearInterval(intervalId);
 
-  }, [reloadTrigger, fetchTotalUsers, fetchGrowthData]); 
+  }, [reloadTrigger, fetchTotalUsers]); 
+  // }, [reloadTrigger, fetchTotalUsers, fetchGrowthData]); 
 
-  const renderBadge = (growth: { growth_type: string; growth_percentage: number } | null) => {
-    if (!growth) return null;
+  // const renderBadge = (growth: { growth_type: string; growth_percentage: number } | null) => {
+  //   if (!growth) return null;
 
-    const icon =
-      growth.growth_type === "increase" ? (
-        <TbArrowBigUpLine className="mr-1" />
-      ) : growth.growth_type === "decrease" ? (
-        <TbArrowBigDownLine className="mr-1" />
-      ) : (
-        <CgArrowsExchange className="mr-1 rotate-180" />
-      );
+  //   const icon =
+  //     growth.growth_type === "increase" ? (
+  //       <TbArrowBigUpLine className="mr-1" />
+  //     ) : growth.growth_type === "decrease" ? (
+  //       <TbArrowBigDownLine className="mr-1" />
+  //     ) : (
+  //       <CgArrowsExchange className="mr-1 rotate-180" />
+  //     );
 
-    const color =
-      growth.growth_type === "increase"
-        ? "success"
-        : growth.growth_type === "decrease"
-        ? "error"
-        : "warning";
+  //   const color =
+  //     growth.growth_type === "increase"
+  //       ? "success"
+  //       : growth.growth_type === "decrease"
+  //       ? "error"
+  //       : "warning";
 
-    return (
-      <Badge color={color} className="dark:text-gray-400">
-        {icon}
-        {growth.growth_percentage.toFixed(2)}%
-      </Badge>
-    );
-  };
+  //   return (
+  //     <Badge color={color} className="dark:text-gray-400">
+  //       {icon}
+  //       {growth.growth_percentage.toFixed(2)}%
+  //     </Badge>
+  //   );
+  // };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 w-full">
@@ -106,7 +107,7 @@ export default function CardHeader({reloadTrigger}: CardHeaderUserManagementProp
             {totalUsers}
           </h4>
         </div>
-        <div className="mt-2 flex justify-end">{renderBadge(growthDataUser)}</div>
+        {/* <div className="mt-2 flex justify-end">{renderBadge(growthDataUser)}</div> */}
       </div>
     </div>
   );

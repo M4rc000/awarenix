@@ -2,21 +2,27 @@ import { useLocation } from "react-router";
 import { Outlet } from "react-router";
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
 import { GridIcon, UserIcon, MailIcon, CalenderIcon } from "../icons";
+import { FaUserCog } from "react-icons/fa";
 import AppHeader from "./AppHeader";
 import AppSidebar from "./AppSidebar";
 import Backdrop from "./Backdrop";
 import { useSidebar, SidebarProvider } from "../context/SidebarContext";
+import { CgWebsite } from "react-icons/cg";
+import { IoIosBookmarks } from "react-icons/io";
 import { JSX } from "react";
 
 const breadcrumbMap: Record<string, { menu: string; title: string; icon: JSX.Element }> = {
   "/dashboard": { menu: "Admin", title: "Dashboard", icon: <GridIcon /> },
   "/campaigns": { menu: "Admin", title: "Campaigns", icon: <CalenderIcon /> },
+  "/role-management": { menu: "Admin", title: "Role Management", icon: <FaUserCog size={20}/> },
   "/user-management": { menu: "Admin", title: "User Management", icon: <UserIcon /> },
   "/groups-members": { menu: "Admin", title: "Groups and Members", icon: <UserIcon /> },
   "/email-templates": { menu: "Admin", title: "Email Templates", icon: <MailIcon /> },
   "/sending-profiles": { menu: "Admin", title: "Sending Profiles", icon: <MailIcon /> },
   "/landing-pages": { menu: "Admin", title: "Landing Pages", icon: <GridIcon /> },
-  "/phising-emails": { menu: "Phising Simulation & Training Modules", title: "Phishing Emails", icon: <MailIcon /> },
+  "/phishing-emails": { menu: "Phishing Simulation & Training Modules", title: "Phishing Emails", icon: <MailIcon /> },
+  "/phishing-websites": { menu: "Phishing Simulation & Training Modules", title: "Phishing Websites", icon: <CgWebsite /> },
+  "/training-modules": { menu: "Phishing Simulation & Training Modules", title: "Training Modules", icon: <IoIosBookmarks /> },
 };
 
 const LayoutContent: React.FC = () => {

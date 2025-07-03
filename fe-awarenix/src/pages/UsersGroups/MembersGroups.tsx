@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import CardHeader from "../../components/usersgroups/CardHeader";
 import Button from "../../components/ui/button/Button";
 import NewGroupModal from "../../components/usersgroups/NewGroupModal";
 import TableGroups from "../../components/usersgroups/TableGroups";
+import CardHeader from "../../components/usersgroups/CardHeader";
 
 export default function MembersGroups() {
   const [reloadTrigger, setReloadTrigger] = useState(0);

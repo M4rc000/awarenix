@@ -2,6 +2,7 @@ import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
 import ShowEmailBodyEditor from "./ShowEmailBodyEditorTemplate";
+import { formatUserDate } from "../utils/DateFormatter";
 
 type EmailTemplate = {
   id: number;
@@ -108,17 +109,7 @@ const ShowEmailTemplateDetailModalForm = ({ emailTemplate }: ShowEmailTemplateDe
             <Input 
               type="text" 
               value={
-                emailTemplate.createdAt
-                  ? new Date(emailTemplate.createdAt).toLocaleDateString('en-GB', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false,
-                    timeZoneName: 'short',  
-                    })
-                  : ''
+                formatUserDate(emailTemplate.createdAt)
               }
               className={`w-full text-sm sm:text-base h-10 px-3`}
               readonly
@@ -137,19 +128,7 @@ const ShowEmailTemplateDetailModalForm = ({ emailTemplate }: ShowEmailTemplateDe
             <Label>Updated At</Label>
             <Input 
               type="text" 
-              value={
-                emailTemplate.updatedAt
-                  ? new Date(emailTemplate.updatedAt).toLocaleDateString('en-GB', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: false,
-                    timeZoneName: 'short',  
-                    })
-                  : ''
-              }
+              value={formatUserDate(emailTemplate.updatedAt)}
               className={`w-full text-sm sm:text-base h-10 px-3`}
               readonly
               />

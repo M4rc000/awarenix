@@ -19,6 +19,15 @@ type User struct {
 	UpdatedBy    int       `gorm:"type:tinyint(3);null" json:"updatedBy"`
 }
 
+type UserResponse struct {
+	ID        uint      `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	Position  string    `json:"position"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type GetUserTable struct {
 	ID            uint      `json:"id"`
 	Name          string    `json:"name"`
@@ -47,6 +56,7 @@ type CreateUserInput struct {
 	CreatedAt time.Time `gorm:"null" json:"createdAt"`
 	CreatedBy int       `gorm:"null" json:"createdBy"`
 }
+
 type UpdateUserInput struct {
 	Name      string    `json:"name"     binding:"required"`
 	Email     string    `json:"email"    binding:"required,email"`
