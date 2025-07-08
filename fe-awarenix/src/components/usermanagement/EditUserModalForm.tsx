@@ -22,7 +22,7 @@ type UserData = {
   email: string;
   position: string;
   password?: string;
-  role: string;
+  role: number;
   company: string;
   isActive: string;
 };
@@ -52,8 +52,7 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
   const [formData, setFormData] = useState<UserFormData>(user ? {
     ...user,
     isActive: user.isActive ? "1" : "0",
-    // Inisialisasi role awal, akan diperbarui di useEffect setelah roleOptions dimuat
-    role: user.role || "", // Pastikan role tidak null/undefined
+    role: String(user.role || ""),
     password: "",
   } : {
     id: 0,
@@ -94,7 +93,7 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
       if (result.status === 'success' && result.data) { 
         // Transform API data to select options format
         const options = result.data.map((role: RoleData) => ({
-          value: role.name,
+          value: role.id,
           label: role.name,
         }));
 
@@ -103,18 +102,18 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
         console.error('Failed to fetch roles:', result.message || 'Unknown error'); 
         // Fallback to default options if API fails or response format is unexpected
         setRoleOptions([
-          { value: "Super Admin", label: "Super Admin" },
-          { value: "Admin", label: "Admin" },
-          { value: "Engineer", label: "Engineer" }
+          { value: "1", label: "Super Admin" },
+          { value: "2", label: "Admin" },
+          { value: "3", label: "Engineer" }
         ]);
       }
     } catch (error) {
       console.error('Error fetching roles:', error);
       // Fallback to default options if API fails
       setRoleOptions([
-        { value: "Super Admin", label: "Super Admin" },
-        { value: "Admin", label: "Admin" },
-        { value: "Engineer", label: "Engineer" }
+        { value: "1", label: "Super Admin" },
+        { value: "2", label: "Admin" },
+        { value: "3", label: "Engineer" }
       ]);
     }
   };
@@ -128,12 +127,12 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
   useEffect(() => {
     if (roleOptions.length > 0 && user) {
       // Check if the user's current role exists in the fetched options
-      const userRoleExists = roleOptions.some(option => option.value === user.role);
+      const userRoleExists = roleOptions.some(option => option.value === String(user.role));
       
       setFormData(prev => ({
         ...prev,
         // If user's role exists in options, use it. Otherwise, default to the first option.
-        role: userRoleExists ? user.role : (roleOptions[0]?.value || ""),
+        role: userRoleExists ? String(user.role) : (roleOptions[0]?.value || ""),
       }));
     } else if (roleOptions.length > 0 && !user) {
       // If no user is provided (e.g., for add user form), default to the first role option
@@ -213,7 +212,7 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
           name: string;
           email: string;
           position: string;
-          role: string;
+          role: number;
           company: string;
           isActive: number;
           updatedBy: number;
@@ -222,7 +221,7 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
           name: formData.name,
           email: formData.email,
           position: formData.position,
-          role: formData.role,
+          role: parseInt(formData.role),
           company: formData.company,
           isActive: parseInt(formData.isActive),
           updatedBy: updatedBy,

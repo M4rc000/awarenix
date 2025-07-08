@@ -76,11 +76,16 @@ export default function SignInForm() {
       navigate('/dashboard');
     } catch (err: unknown) {
       console.error(err);
-      let errorMessage = "Login gagal";
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      setErrors({ general: errorMessage });
+      // let errorMessage = "Login gagal";
+      // if (err instanceof Error) {
+      //   errorMessage = err.message;
+      // }
+      // setErrors({ general: errorMessage });
+      Swal.fire({
+        text: 'Login failed',
+        icon: 'error',
+        duration: 2000
+      });
     } finally {
       setLoading(false);
     }

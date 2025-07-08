@@ -41,8 +41,6 @@ type ShowLandingPageDetailModalFormProps = {
 const ShowLandingPageDetailModalForm = ({ landingPage }: ShowLandingPageDetailModalFormProps) => {
   if (!landingPage) return null;
 
-  console.log('Landing Page: ', landingPage);  
-
   const landingPageTabs = [
     {
       label: "📝 Email Body",

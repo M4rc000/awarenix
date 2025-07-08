@@ -37,6 +37,7 @@ interface User {
   position: string;
   company: string;
   role: string;
+  roleName: string;
   isActive: string;
   createdAt: string;
   createdBy: number;
@@ -146,7 +147,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         header: 'Email',
       },
       {
-        accessorKey: 'role',
+        accessorKey: 'roleName',
         header: 'Role',
         cell:({getValue})=>{
           const raw = getValue();
@@ -271,6 +272,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
 
     fetchData();
   }, [reloadTrigger]);
+
   return (
     <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] border border-1-gray-500 dark:border-gray-700">
       <div className="p-4 rounded-lg bg-white dark:bg-white/[0.03]">

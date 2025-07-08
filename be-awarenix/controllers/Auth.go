@@ -50,7 +50,6 @@ func AuthLogin(c *gin.Context) {
 	}
 
 	user.LastLogin = time.Now()
-	log.Printf("User %s logged in at %s", user.Email, user.LastLogin)
 	if err := config.DB.Save(&user).Error; err != nil {
 		log.Printf("Failed to update last_login: %v", err)
 	}
@@ -61,6 +60,8 @@ func AuthLogin(c *gin.Context) {
 		"email":      user.Email,
 		"position":   user.Position,
 		"role":       user.Role,
+		"company":    user.Company,
+		"country":    user.Country,
 		"last_login": user.LastLogin,
 	}
 

@@ -32,12 +32,12 @@ type SendingProfile = {
   smtpFrom: string;
   username: string;
   host: string;
-  CreatedAt    : string;
-	CreatedBy    : number;
-	CreatedByName    : string;
-	UpdatedAt    : string;
-	UpdatedBy    : number; 
-	UpdatedByName    : string; 
+  createdAt    : string;
+	createdBy    : number;
+	createdByName    : string;
+	updatedAt    : string;
+	updatedBy    : number; 
+	updatedByName    : string; 
   senderAddress: string;
 	EmailHeaders : string;
 };
@@ -53,7 +53,7 @@ const ShowSendingProfileModalForm = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [isLoadingHeaders, setIsLoadingHeaders] = useState(false); // State untuk loading
+  const [isLoadingHeaders, setIsLoadingHeaders] = useState(false);
 
   // Fungsi untuk mengambil email headers
   const fetchEmailHeaders = async (profileId: number) => {
@@ -69,7 +69,6 @@ const ShowSendingProfileModalForm = ({
           Authorization: `Bearer ${token}`,
         },
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Failed to fetch email headers:", errorData);
@@ -205,7 +204,7 @@ const ShowSendingProfileModalForm = ({
           <Input
             type="text"
             className="w-full text-sm sm:text-base h-10 px-3"
-            value={formatUserDate(sendingProfile.CreatedAt)}
+            value={formatUserDate(sendingProfile.createdAt)}
             readonly
           />
         </div>
@@ -214,7 +213,7 @@ const ShowSendingProfileModalForm = ({
           <Input
             type="text"
             className="w-full text-sm sm:text-base h-10 px-3"
-            value={sendingProfile.CreatedByName}
+            value={sendingProfile.createdByName}
             readonly
           />
         </div>
@@ -223,7 +222,7 @@ const ShowSendingProfileModalForm = ({
           <Input
             type="text"
             className="w-full text-sm sm:text-base h-10 px-3"
-            value={formatUserDate(sendingProfile.UpdatedAt)}
+            value={formatUserDate(sendingProfile.updatedAt)}
             readonly
           />
         </div>
@@ -232,7 +231,7 @@ const ShowSendingProfileModalForm = ({
           <Input
             type="text"
             className="w-full text-sm sm:text-base h-10 px-3"
-            value={sendingProfile.UpdatedByName}
+            value={sendingProfile.updatedByName}
             readonly
           />
         </div>

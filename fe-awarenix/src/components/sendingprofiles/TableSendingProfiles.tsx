@@ -155,10 +155,6 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         header: 'Profile Name',
       },
       {
-        accessorKey: 'interfaceType',
-        header: 'Interface Type',
-      },
-      {
         accessorKey: 'smtpFrom',
         header: 'SMTP From',
       },

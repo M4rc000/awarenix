@@ -1,8 +1,8 @@
 import MonthlySalesChart from "../../components/campaigns/MonthlySalesChart";
 import StatisticsChart from "../../components/campaigns/StatisticsChart";
 import MonthlyTarget from "../../components/campaigns/MonthlyTarget";
-import RecentOrders from "../../components/campaigns/RecentOrders";
-import DemographicCard from "../../components/campaigns/DemographicCard";
+// import RecentOrders from "../../components/campaigns/RecentOrders";
+// import DemographicCard from "../../components/campaigns/DemographicCard";
 
 export default function Dashboard() {
   return (
@@ -20,13 +20,13 @@ export default function Dashboard() {
           <StatisticsChart />
         </div>
 
-        <div className="col-span-12 xl:col-span-5">
+        {/* <div className="col-span-12 xl:col-span-5">
           <DemographicCard />
         </div>
 
         <div className="col-span-12 xl:col-span-7">
           <RecentOrders />
-        </div>
+        </div> */}
       </div>
     </>
   );

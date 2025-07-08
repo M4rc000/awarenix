@@ -261,6 +261,8 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
 
         const API_URL = import.meta.env.VITE_API_URL;
         const token = localStorage.getItem('token');
+        const userData = JSON.parse(localStorage.getItem("user") || "{}");
+        const createdBy = userData?.id || 0; 
         const dataToSend = {
           name: profileName,
           interfaceType: interfaceType,
@@ -269,6 +271,7 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
           username: username,
           password: password,
           emailHeaders: emailHeaders, 
+          createdBy: createdBy, 
         };
 
         try {
@@ -282,6 +285,7 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
             body: JSON.stringify(dataToSend),
           });
 
+          
           if (!response.ok) {
             const errorData = await response.json();
             console.log(errorData);
@@ -291,8 +295,10 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
               duration: 3000,
             });
           }
-
+          
+          
           const result = await response.json();
+          
           Swal.fire({
             icon: 'success',
             text: 'Sending Profile successfully added!',

@@ -9,7 +9,7 @@ type User struct {
 	Position     string    `gorm:"type:varchar(50);not null" json:"position"`
 	PasswordHash string    `gorm:"type:varchar(255);not null" json:"password"`
 	IsActive     int       `gorm:"type:tinyint(1);default:1" json:"isActive"`
-	Role         string    `gorm:"type:varchar(15);default:'Member'" json:"role"`
+	Role         int       `gorm:"type:tinyint(3);default:3" json:"role"`
 	Company      string    `gorm:"type:varchar(50);null" json:"company"`
 	Country      string    `gorm:"type:varchar(50);null" json:"country"`
 	LastLogin    time.Time `gorm:"type:datetime;null" json:"lastLogin"`
@@ -34,7 +34,8 @@ type GetUserTable struct {
 	Email         string    `json:"email"`
 	Position      string    `json:"position"`
 	IsActive      bool      `json:"isActive"`
-	Role          string    `json:"role"`
+	Role          int       `json:"role"`
+	RoleName      string    `json:"roleName"`
 	Company       string    `json:"company"`
 	Country       string    `json:"country"`
 	LastLogin     time.Time `json:"lastLogin"`
@@ -51,7 +52,7 @@ type CreateUserInput struct {
 	Email     string    `json:"email"    binding:"required,email"`
 	Position  string    `json:"position" binding:"required"`
 	Company   string    `json:"company"`
-	Role      string    `json:"role"`
+	Role      int       `json:"role"`
 	Password  string    `json:"password" binding:"required,min=6"`
 	CreatedAt time.Time `gorm:"null" json:"createdAt"`
 	CreatedBy int       `gorm:"null" json:"createdBy"`
@@ -61,7 +62,7 @@ type UpdateUserInput struct {
 	Name      string    `json:"name"     binding:"required"`
 	Email     string    `json:"email"    binding:"required,email"`
 	Position  string    `json:"position" binding:"required"`
-	Role      string    `json:"role"`
+	Role      int       `json:"role"`
 	Company   string    `json:"company"`
 	IsActive  int       `json:"isActive"`
 	Password  string    `json:"password"`

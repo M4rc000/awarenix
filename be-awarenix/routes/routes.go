@@ -65,6 +65,7 @@ func SetupRoutes(router *gin.Engine) {
 
 		sendingprofiles := api.Group("/sending-profile")
 		{
+			sendingprofiles.POST("/send-test-email", controllers.SendTestEmail)                // SEND TEST EMAIL
 			sendingprofiles.POST("/create", controllers.RegisterSendingProfile)                // CREATE
 			sendingprofiles.GET("/all", controllers.GetSendingProfiles)                        // READ
 			sendingprofiles.PUT("/:id", controllers.UpdateSendingProfile)                      // UPDATE
@@ -72,6 +73,11 @@ func SetupRoutes(router *gin.Engine) {
 			sendingprofiles.GET("/email-header/:id", controllers.GetEmailHeaderDetail)         // DETAIL
 			sendingprofiles.DELETE("/:id", controllers.DeleteSendingProfile)                   // DELETE
 
+		}
+
+		profiles := api.Group("/profiles")
+		{
+			profiles.POST("/update", controllers.UpdateProfile) // UPDATE
 		}
 
 		analytics := api.Group("/analytics")

@@ -10,6 +10,7 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import { AlertContainer } from "./components/utils/AlertContainer";
 import AuthWatcher from "./components/utils/AuthWatcher";
 import { UserSessionProvider } from "./components/context/UserSessionContext";
+import { AccountSettings } from "./pages/AccountSettings/AccountSettings";
 
 // Lazy-load komponen halaman
 const SignIn = lazy(() => import("./pages/AuthPages/SignIn"));
@@ -58,8 +59,7 @@ export default function App() {
                   <Route path="/phishing-websites" element={<PhishingWebsite />} />
                   <Route path="/training-modules" element={<TrainingModules />} />
                   <Route path="/subscription-billing" element={<CommingSoon />} />
-                  <Route path="/subscription-billing" element={<CommingSoon />} />
-                  <Route path="/subscription-billing" element={<CommingSoon />} />
+                  <Route path="/account-settings" element={<AccountSettings />} />
                   <Route path="/logging-activity" element={<CommingSoon />} />
                   <Route path="/environtment-check" element={<CommingSoon />} />
                 </Route>

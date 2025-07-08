@@ -7,6 +7,8 @@ export type SessionUser = {
   email: string;
   role: string;
   position: string;
+  company: string;
+  country: string;
 };
 
 // 2. Tipe context

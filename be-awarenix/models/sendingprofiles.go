@@ -19,7 +19,7 @@ type SendingProfiles struct {
 	InterfaceType string        `gorm:"type:varchar(30);null" json:"interfaceType"`
 	SmtpFrom      string        `gorm:"type:varchar(50);null" json:"smtpFrom"`
 	Username      string        `gorm:"type:varchar(50);null" json:"username"`
-	Password      string        `gorm:"type:varchar(128);null" json:"password"`
+	Password      string        `gorm:"type:varchar(128);null" json:"-"`
 	Host          string        `gorm:"type:varchar(50);null" json:"host"`
 	EmailHeaders  []EmailHeader `gorm:"foreignKey:SendingProfileID;references:ID" json:"emailHeaders"`
 	CreatedAt     time.Time     `gorm:"type:datetime;null" json:"createdAt"`
@@ -52,4 +52,25 @@ type GetSendingProfile struct {
 	SendingProfiles
 	CreatedByName string `json:"createdByName"`
 	UpdatedByName string `json:"updatedByName"`
+}
+
+type TestRecipient struct {
+	Name     string `json:"name" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Position string `json:"position"`
+}
+
+type SendTestEmailRequest struct {
+	SendingProfile struct {
+		ID            uint          `json:"id" binding:"required"`
+		Name          string        `json:"name" binding:"required"`
+		InterfaceType string        `json:"interfaceType" binding:"required"`
+		SmtpFrom      string        `json:"smtpFrom" binding:"required,email"`
+		Username      string        `json:"username"` // Optional, tergantung interfaceType
+		Password      string        `json:"password"` // Optional
+		Host          string        `json:"host"`     // Optional, tergantung interfaceType
+		EmailHeaders  []EmailHeader `json:"emailHeaders"`
+	} `json:"sendingProfile" binding:"required"`
+	Recipient TestRecipient `json:"recipient" binding:"required"`
+	EmailBody string        `json:"emailBody" binding:"required"`
 }

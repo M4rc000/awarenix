@@ -18,7 +18,7 @@ func SeedUsers(db *gorm.DB) {
 			PasswordHash: "123456",
 			Position:     "Security Consultant",
 			IsActive:     1,
-			Role:         "Admin",
+			Role:         2,
 		},
 		{
 			Name:         "Jane Doe",
@@ -26,7 +26,7 @@ func SeedUsers(db *gorm.DB) {
 			PasswordHash: "password_jane",
 			Position:     "Developer",
 			IsActive:     1,
-			Role:         "User",
+			Role:         3,
 		},
 	}
 

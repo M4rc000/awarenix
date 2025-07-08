@@ -83,26 +83,25 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
       if (result.Success && result.Data) {
         // Transform API data to select options format
         const options = result.Data.map((role: RoleData) => ({
-          value: role.name, 
+          value: String(role.id), 
           label: role.name,
         }));
         
         setRoleOptions(options);
       } else {
         console.error('Failed to fetch roles:', result.Message);
-        // Fallback to default options if API fails
         setRoleOptions([
-          { value: "Admin", label: "Admin"},
-          { value: "Member", label: "Member"}
+          { value: "1", label: "Super Admin"},
+          { value: "2", label: "Admin"},
+          { value: "3", label: "Engineer"}
         ]);
       }
     } catch (error) {
       console.error('Error fetching roles:', error);
-      // Fallback to default options if API fails
       setRoleOptions([
-        { value: "Super Admin", label: "Super Admin"},
-        { value: "Admin", label: "Admin"},
-        { value: "Engineer", label: "Engineer"}
+        { value: "1", label: "Super Admin"},
+        { value: "2", label: "Admin"},
+        { value: "3", label: "Engineer"}
       ]);
     }
   };
@@ -343,7 +342,6 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
                 value={user.role}
                 options={roleOptions}
                 onChange={(val) => handleInputChange('role', val)} 
-                // disabled={isSubmitting}
                 placeholder={"Select role"}
                 required
               />

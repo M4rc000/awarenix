@@ -10,6 +10,7 @@ type User = {
   company: string;
   isActive: string;
   role: string;
+  roleName: string;
   lastLogin: string;
   createdAt: string;
   createdBy: number;
@@ -72,7 +73,7 @@ const ShowUserDetailModalForm = ({ user }: ShowUserDetailModalFormProps) => {
               <Label>Role</Label>
               <Input
                 placeholder="Role"
-                value={user.role}
+                value={user.roleName}
                 readonly
               />
             </div>      

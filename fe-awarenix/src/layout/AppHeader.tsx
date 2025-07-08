@@ -86,12 +86,12 @@ const AppHeader: React.FC = () => {
           <Link to="/" className="lg:hidden w-12 h-12">
             <img
               className="dark:hidden"
-              src="/images/logo/auth-logo-light.png"
+              src={`${import.meta.env.VITE_BASE_URL}/images/logo/auth-logo-light.png`}
               alt="Logo"
             />
             <img
               className="hidden dark:block w-12 h-12"
-              src="/images/logo/auth-logo.png"
+              src={`${import.meta.env.VITE_BASE_URL}/images/logo/auth-logo.png`}
               alt="Logo"
             />
           </Link>

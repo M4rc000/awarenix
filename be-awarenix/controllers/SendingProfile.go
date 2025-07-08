@@ -37,24 +37,13 @@ func RegisterSendingProfile(c *gin.Context) {
 
 	}
 
-	// HASH PASSWORD
-	passwordHash, errHash := services.HashPassword(input.Password)
-	if errHash != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Status":  "error",
-			"Message": "Failed to hash password: " + errHash.Error(),
-			"Data":    nil,
-		})
-		return
-	}
-
 	sendingProfile := models.SendingProfiles{
 		Name:          input.Name,
 		InterfaceType: input.InterfaceType,
 		SmtpFrom:      input.SmtpFrom,
 		Host:          input.Host,
 		Username:      input.Username,
-		Password:      passwordHash,
+		Password:      input.Password,
 		CreatedAt:     time.Now(),
 		CreatedBy:     input.CreatedBy,
 	}
@@ -227,8 +216,7 @@ func UpdateSendingProfile(c *gin.Context) {
 
 	// Logika update password: hanya update jika password baru diberikan
 	if requestBody.Password != "" {
-		newPassword, _ := services.HashPassword(requestBody.Password)
-		updates["password"] = newPassword
+		updates["password"] = requestBody.Password
 	}
 
 	// Lakukan update di database
@@ -270,12 +258,16 @@ func UpdateEmailHeadersForProfile(c *gin.Context) {
 	}
 
 	// Tambahkan header baru
-	for i := range newHeaders {
-		newHeaders[i].SendingProfileID = uint(profileID)
-	}
-	if err := config.DB.Create(&newHeaders).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to add new headers", "data": nil})
-		return
+	if len(newHeaders) > 0 { // <-- Tambahkan cek ini
+		for i := range newHeaders {
+			newHeaders[i].SendingProfileID = uint(profileID)
+			newHeaders[i].CreatedAt = time.Now()
+			newHeaders[i].UpdatedAt = time.Now()
+		}
+		if err := config.DB.Create(&newHeaders).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to add new headers: " + err.Error(), "data": nil})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Email headers updated successfully", "data": newHeaders})
@@ -339,5 +331,65 @@ func DeleteSendingProfile(c *gin.Context) {
 		"data": gin.H{
 			"deleted_id": sendingProfileID,
 		},
+	})
+}
+
+// SEND TEST EMAIL
+func SendTestEmail(c *gin.Context) {
+	var req models.SendTestEmailRequest
+	var existingSendingProfiles models.SendingProfiles
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": err.Error(),
+			"data":    nil,
+		})
+		return
+	}
+
+	if req.SendingProfile.Password == "" {
+		result := config.DB.Where("id = ?", req.SendingProfile.ID).First(&existingSendingProfiles)
+		if result.Error != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"status":  "error",
+				"message": "Sending profile not found",
+				"data":    nil,
+			})
+			return
+		}
+
+		req.SendingProfile.Password = existingSendingProfiles.Password
+	}
+
+	sendingProfile := models.SendingProfiles{
+		Name:          req.SendingProfile.Name,
+		InterfaceType: req.SendingProfile.InterfaceType,
+		SmtpFrom:      req.SendingProfile.SmtpFrom,
+		Username:      req.SendingProfile.Username,
+		Password:      req.SendingProfile.Password,
+		Host:          req.SendingProfile.Host,
+		EmailHeaders:  req.SendingProfile.EmailHeaders,
+	}
+
+	err := services.SendTestEmail(
+		&sendingProfile,
+		req.Recipient.Email,
+		req.EmailBody,
+		"Test Email from Awakenix",
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to send test email: " + err.Error(),
+			"data":    nil,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Test email sent successfully!",
+		"data":    nil,
 	})
 }

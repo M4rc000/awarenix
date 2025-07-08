@@ -117,7 +117,7 @@ const navGroups: NavGroup[] = [
       {
         icon: <IoSettingsOutline />,
         name: "Account Settings",
-        path: "/profile",
+        path: "/account-settings",
       },
       {
         icon: <FaMoneyCheckAlt />,
@@ -344,14 +344,14 @@ const AppSidebar: React.FC = () => {
             <>
               <img
                 className="dark:hidden"
-                src="/images/logo/auth-logo-light.png"
+                src={`${import.meta.env.VITE_BASE_URL}/images/logo/auth-logo-light.png`}
                 alt="Logo"
                 width={70}
                 height={50}
               />
               <img
                 className="hidden dark:block"
-                src="/images/logo/auth-logo.png"
+                src={`${import.meta.env.VITE_BASE_URL}/images/logo/auth-logo.png`}
                 alt="Logo"
                 width={70}
                 height={50}
@@ -359,7 +359,7 @@ const AppSidebar: React.FC = () => {
             </>
           ) : (
             <img
-              src="/images/logo/auth-logo.png"
+              src={`${import.meta.env.VITE_BASE_URL}/images/logo/auth-logo.png`}
               alt="Logo"
               width={32}
               height={32}

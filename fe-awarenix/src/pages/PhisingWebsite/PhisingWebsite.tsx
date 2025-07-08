@@ -58,7 +58,7 @@ const PhisingWebsite = () => {
         </div>
         
         {/* Action Buttons */}
-        <div className="bg-gray-50 dark:bg-gray-900 px-1 py-3 gap-2 border-t border-gray-200 dark:border-gray-700 flex justify-between">
+        <div className="bg-gray-50 dark:bg-gray-900 px-1 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-center gap-4">
           <button 
             onClick={() => handleCardSelection(card.id, 'update')}
             className={`text-sm transition-colors rounded-lg bg-yellow-600 px-4 py-2 text-white dark:hover:bg-yellow-900 ${

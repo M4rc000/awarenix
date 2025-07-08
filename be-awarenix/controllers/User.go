@@ -95,11 +95,10 @@ func RegisterUser(c *gin.Context) {
 // READ
 func GetUsers(c *gin.Context) {
 	query := config.DB.Table("users").
-		Select(`users.*, 
-            created_by_user.name AS created_by_name, 
-            updated_by_user.name AS updated_by_name`).
+		Select(`users.*,  created_by_user.name AS created_by_name,  updated_by_user.name AS updated_by_name, roles_user.name AS role_name`).
 		Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = users.created_by`).
-		Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = users.updated_by`)
+		Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = users.updated_by`).
+		Joins(`LEFT JOIN roles AS roles_user ON roles_user.id = users.role`)
 
 	var total int64
 	query.Count(&total)
@@ -152,7 +151,7 @@ func UpdateUser(c *gin.Context) {
 	user.Email = updatedData.Email
 	user.Position = updatedData.Position
 	user.Company = updatedData.Company
-	user.Role = updatedData.Role
+	user.Role = int(updatedData.Role)
 	user.IsActive = updatedData.IsActive
 	user.UpdatedAt = time.Now()
 	user.UpdatedBy = updatedData.UpdatedBy
