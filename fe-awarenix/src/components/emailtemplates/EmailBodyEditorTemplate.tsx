@@ -3,421 +3,8 @@ import Swal from "../utils/AlertContainer";
 import { useRef } from "react";
 import Checkbox from "../form/input/Checkbox";
 
-const TEMPLATE_WELCOME = `<html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Email Template</title>
-    </head>
-    <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
-            <tr>
-                <td align="center" style="padding: 20px 0;">
-                    <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <tr>
-                            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-                                <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">
-                                    Welcome to Our Platform!
-                                </h1>
-                            </td>
-                        </tr>
-                        
-                        <tr>
-                            <td style="padding: 40px 30px;">
-                                <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 24px;">
-                                    Hello There! 👋
-                                </h2>
-                                
-                                <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0; font-size: 16px;">
-                                    Thank you for joining our community. We're excited to have you on board and can't wait for you to explore all the amazing features we have prepared for you.
-                                </p>
-                                
-                                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-radius: 6px; margin: 25px 0;">
-                                    <tr>
-                                        <td style="padding: 20px;">
-                                            <h3 style="color: #333333; margin: 0 0 10px 0; font-size: 18px;">
-                                                🚀 What's Next?
-                                            </h3>
-                                            <ul style="color: #666666; margin: 0; padding-left: 20px; line-height: 1.8;">
-                                                <li>Complete your profile setup</li>
-                                                <li>Explore our dashboard</li>
-                                                <li>Connect with other users</li>
-                                                <li>Start your first project</li>
-                                            </ul>
-                                        </td>
-                                    </tr>
-                                </table>
-                                
-                                <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
-                                    <tr>
-                                        <td align="center">
-                                            <a href="#" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 15px 30px; border-radius: 6px; font-weight: bold; font-size: 16px; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
-                                                Get Started Now
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </table>
-                                
-                                <p style="color: #666666; line-height: 1.6; margin: 20px 0 0 0; font-size: 14px;">
-                                    If you have any questions, our support team is here to help. Just reply to this email or visit our help center.
-                                </p>
-                            </td>
-                        </tr>
-                        
-                        <tr>
-                            <td style="background-color: #f8f9fa; padding: 20px 30px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e9ecef;">
-                                <p style="color: #999999; margin: 0; font-size: 12px; line-height: 1.4;">
-                                    © 2025 Your Company Name. All rights reserved.<br>
-                                    123 Business Street, City, State 12345<br>
-                                    <a href="#" style="color: #667eea; text-decoration: none;">Unsubscribe</a> | 
-                                    <a href="#" style="color: #667eea; text-decoration: none;">Privacy Policy</a>
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
-    </body>
-</html>`;
 
-const TEMPLATE_LOGIN_VERIFICATION = `<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Verification - YourAppName</title>
-    <style type="text/css">
-        body { margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-        table { border-spacing: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
-        a { text-decoration: none; color: #1a73e8; }
-        .button {
-            display: inline-block;
-            padding: 12px 25px;
-            background-color: #1a73e8;
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-    </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5;">
-        <tr>
-            <td align="center" style="padding: 30px 0;">
-                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
-                    <tr>
-                        <td align="center" style="padding: 25px 0;">
-                            <img src="https://via.placeholder.com/150x50/1a73e8/ffffff?text=YourAppLogo" alt="Your App Logo" style="display: block; border: 0; height: 50px;">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 0 40px 30px 40px; text-align: left;">
-                            <h1 style="color: #333333; font-size: 24px; margin: 0 0 20px 0;">Verify Your Login</h1>
-                            <p style="color: #555555; line-height: 1.6; font-size: 15px; margin: 0 0 15px 0;">
-                                We noticed a login attempt from a new device or location. To ensure your account security, please verify this activity.
-                            </p>
-                            <p style="color: #555555; line-height: 1.6; font-size: 15px; margin: 0 0 15px 0;">
-                                <strong>Device:</strong> Windows PC<br>
-                                <strong>Browser:</strong> Chrome<br>
-                                <strong>Location:</strong> Jakarta, Indonesia (approx.)<br>
-                                <strong>Time:</strong> June 20, 2025, 4:15 PM WIB
-                            </p>
-                            <p style="color: #555555; line-height: 1.6; font-size: 15px; margin: 0 0 25px 0;">
-                                If this was you, please click the button below to confirm.
-                            </p>
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                    <td align="center" style="padding-bottom: 20px;">
-                                        <a href="https://your-app.com/verify-login?token=YOUR_VERIFICATION_TOKEN" class="button">
-                                            Verify My Login
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
-                            <p style="color: #777777; line-height: 1.6; font-size: 13px; margin: 0;">
-                                If you did not attempt to log in, please secure your account immediately by changing your password.
-                                <a href="https://your-app.com/reset-password" style="color: #1a73e8;">Reset Password</a>.
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding: 25px 40px; border-top: 1px solid #eeeeee; background-color: #f9f9f9; border-radius: 0 0 8px 8px;">
-                            <p style="color: #999999; font-size: 12px; margin: 0;">
-                                &copy; 2025 YourAppName. All rights reserved.
-                            </p>
-                            <p style="color: #999999; font-size: 11px; margin: 10px 0 0 0;">
-                                You received this email because you recently attempted to log into your account.
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>`;
-
-const TEMPLATE_PASSWORD_RESET = `<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Reset - YourAppName</title>
-    <style type="text/css">
-        body { margin: 0; padding: 0; background-color: #f7f7f7; font-family: Arial, sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-        table { border-spacing: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
-        a { text-decoration: none; color: #007bff; }
-        .button {
-            display: inline-block;
-            padding: 12px 25px;
-            background-color: #007bff;
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f7f7f7;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f7f7f7;">
-        <tr>
-            <td align="center" style="padding: 30px 0;">
-                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                    <tr>
-                        <td align="center" style="padding: 25px 0;">
-                            <img src="https://via.placeholder.com/150x50/007bff/ffffff?text=YourAppLogo" alt="Your App Logo" style="display: block; border: 0; height: 50px;">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 0 40px 30px 40px; text-align: left;">
-                            <h1 style="color: #333333; font-size: 24px; margin: 0 0 20px 0;">Password Reset Request</h1>
-                            <p style="color: #555555; line-height: 1.6; font-size: 15px; margin: 0 0 15px 0;">
-                                We received a request to reset the password for your account.
-                            </p>
-                            <p style="color: #555555; line-height: 1.6; font-size: 15px; margin: 0 0 25px 0;">
-                                To reset your password, please click the button below:
-                            </p>
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                    <td align="center" style="padding-bottom: 20px;">
-                                        <a href="https://your-app.com/reset-password?token=YOUR_RESET_TOKEN" class="button">
-                                            Reset Your Password
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
-                            <p style="color: #777777; line-height: 1.6; font-size: 13px; margin: 0;">
-                                This link will expire in 24 hours. If you did not request a password reset, please ignore this email.
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding: 25px 40px; border-top: 1px solid #eeeeee; background-color: #f9f9f9; border-radius: 0 0 8px 8px;">
-                            <p style="color: #999999; font-size: 12px; margin: 0;">
-                                &copy; 2025 YourAppName. All rights reserved.
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>`;
-
-const TEMPLATE_ORDER_CONFIRMATION = `<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Confirmation - YourStore</title>
-    <style type="text/css">
-        body { margin: 0; padding: 0; background-color: #f8f8f8; font-family: Arial, sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-        table { border-spacing: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
-        a { text-decoration: none; color: #28a745; }
-        .button {
-            display: inline-block;
-            padding: 12px 25px;
-            background-color: #28a745;
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-    </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f8f8f8;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f8f8;">
-        <tr>
-            <td align="center" style="padding: 30px 0;">
-                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
-                    <tr>
-                        <td align="center" style="padding: 25px 0;">
-                            <h2 style="color: #28a745; font-size: 26px; margin: 0;">🎉 Order Confirmed!</h2>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 0 40px 30px 40px; text-align: left;">
-                            <h1 style="color: #333333; font-size: 22px; margin: 0 0 15px 0;">Hi [Customer Name],</h1>
-                            <p style="color: #555555; line-height: 1.6; font-size: 15px; margin: 0 0 15px 0;">
-                                Thank you for your order! Your order #<strong>123456789</strong> has been successfully placed and will be shipped soon.
-                            </p>
-                            <h3 style="color: #333333; font-size: 18px; margin: 25px 0 15px 0;">Order Summary:</h3>
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse; margin-bottom: 25px;">
-                                <tr style="background-color: #f2f2f2;">
-                                    <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Item</td>
-                                    <td style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight: bold;">Qty</td>
-                                    <td style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight: bold;">Price</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px; border: 1px solid #ddd;">Product A</td>
-                                    <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">1</td>
-                                    <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">$29.99</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px; border: 1px solid #ddd;">Product B</td>
-                                    <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">2</td>
-                                    <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">$15.00</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2" style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight: bold;">Total:</td>
-                                    <td style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight: bold;">$59.99</td>
-                                </tr>
-                            </table>
-                            <p style="color: #555555; line-height: 1.6; font-size: 15px; margin: 0 0 25px 0;">
-                                You can view your order status and tracking information here:
-                            </p>
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                    <td align="center" style="padding-bottom: 20px;">
-                                        <a href="https://your-app.com/order/123456789" class="button">
-                                            View Your Order
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding: 25px 40px; border-top: 1px solid #eeeeee; background-color: #f9f9f9; border-radius: 0 0 8px 8px;">
-                            <p style="color: #999999; font-size: 12px; margin: 0;">
-                                &copy; 2025 YourStore. All rights reserved.
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>`;
-
-const TEMPLATE_NEWSLETTER = `<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Latest News from YourBlog</title>
-    <style type="text/css">
-        body { margin: 0; padding: 0; background-color: #eef2f5; font-family: Arial, sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-        table { border-spacing: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
-        a { text-decoration: none; color: #3498db; }
-        .button {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #3498db;
-            color: #ffffff;
-            font-size: 14px;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 3px;
-        }
-    </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #eef2f5;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #eef2f5;">
-        <tr>
-            <td align="center" style="padding: 25px 0;">
-                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                    <tr>
-                        <td align="center">
-                            <img src="https://via.placeholder.com/600x200/3498db/ffffff?text=YourBlog+Banner" alt="Newsletter Banner" style="display: block; width: 100%; max-width: 600px; border-radius: 8px 8px 0 0;">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 30px 40px 20px 40px; text-align: center;">
-                            <h1 style="color: #333333; font-size: 28px; margin: 0 0 10px 0;">Your Latest News Update!</h1>
-                            <p style="color: #666666; font-size: 14px; margin: 0;">Stay informed with our newest articles and insights.</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 0 40px 30px 40px;">
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                    <td style="padding-bottom: 20px;">
-                                        <img src="https://via.placeholder.com/520x250/ccc/fff?text=Article+Image+1" alt="Article Image" style="display: block; width: 100%; max-width: 520px; border-radius: 4px; margin-bottom: 15px;">
-                                        <h3 style="color: #333333; font-size: 20px; margin: 0 0 10px 0;">Exciting New Feature Released!</h3>
-                                        <p style="color: #555555; line-height: 1.6; font-size: 15px; margin: 0 0 15px 0;">
-                                            Discover how our latest feature will revolutionize your workflow and boost productivity.
-                                        </p>
-                                        <a href="https://your-blog.com/article/new-feature" class="button">Read More</a>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 0 40px 30px 40px;">
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                    <td style="padding-bottom: 20px;">
-                                        <img src="https://via.placeholder.com/520x250/ccc/fff?text=Article+Image+2" alt="Article Image" style="display: block; width: 100%; max-width: 520px; border-radius: 4px; margin-bottom: 15px;">
-                                        <h3 style="color: #333333; font-size: 20px; margin: 0 0 10px 0;">Tips for Mastering [Topic]</h3>
-                                        <p style="color: #555555; line-height: 1.6; font-size: 15px; margin: 0 0 15px 0;">
-                                            Unlock the secrets to success with these actionable tips from industry experts.
-                                        </p>
-                                        <a href="https://your-blog.com/article/tips" class="button">Read More</a>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding: 20px 40px 30px 40px;">
-                            <h3 style="color: #333333; font-size: 20px; margin: 0 0 15px 0;">Don't miss out on more updates!</h3>
-                            <a href="https://your-blog.com/subscribe" class="button">Subscribe Now</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding: 25px 40px; border-top: 1px solid #eeeeee; background-color: #f9f9f9; border-radius: 0 0 8px 8px;">
-                            <p style="color: #999999; font-size: 12px; margin: 0 0 10px 0;">
-                                &copy; 2025 YourBlog. All rights reserved.
-                            </p>
-                            <p style="color: #999999; font-size: 11px; margin: 0;">
-                                <a href="https://your-blog.com/unsubscribe" style="color: #3498db;">Unsubscribe</a> | <a href="https://your-blog.com/privacy" style="color: #3498db;">Privacy Policy</a>
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>`;
-
-
-const EMAIL_TEMPLATES = [
-  { name: "Welcome Email", content: TEMPLATE_WELCOME },
-  { name: "Login Verification (Social Media/Software Popular)", content: TEMPLATE_LOGIN_VERIFICATION },
-  { name: "Password Reset Request", content: TEMPLATE_PASSWORD_RESET },
-  { name: "Order Confirmation", content: TEMPLATE_ORDER_CONFIRMATION },
-  { name: "Newsletter Update", content: TEMPLATE_NEWSLETTER },
-];
+const EMAIL_TEMPLATES_STATIC: { name: string; content: string }[] = [];
 
 type EmailBodyEditorTemplateProps = {
   templateName?: string;
@@ -435,6 +22,11 @@ const replaceLinksWithUrlPlaceholder = (htmlString: string): string => {
   return htmlString.replace(linkRegex, `$1{{.URL}}$3`);
 };
 
+interface FetchedEmailTemplate {
+  name: string;
+  body: string;
+}
+
 const EmailBodyEditorTemplate = ({
   templateName,
   envelopeSender,
@@ -447,49 +39,135 @@ const EmailBodyEditorTemplate = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeTab, setActiveTab] = useState(0);
+  const [availableTemplates, setAvailableTemplates] = useState(EMAIL_TEMPLATES_STATIC);
+
   const [htmlContent, setHtmlContent] = useState<string>(() => {
     // Inisialisasi awal htmlContent dengan memproses initialContent dari props
     let contentToUse = initialContent;
     if (initialContent === "") {
-      contentToUse = TEMPLATE_WELCOME; // Default ke Welcome Template jika initialContent kosong
+      // Periksa apakah ada template default di antara EMAIL_TEMPLATES_STATIC
+      const defaultTemplate = EMAIL_TEMPLATES_STATIC.find(t => t.name === "Welcome Email");
+      contentToUse = defaultTemplate ? defaultTemplate.content : "";
     }
     return replaceLinksWithUrlPlaceholder(contentToUse);
   });
-  const [selectedTemplate, setSelectedTemplate] = useState(() => {
+
+  const [selectedTemplate, setSelectedTemplate] = useState<string>(() => {
     // Menentukan selectedTemplate berdasarkan initialContent
-    const matchedTemplate = EMAIL_TEMPLATES.find(template => template.content === initialContent);
+    const matchedTemplate = EMAIL_TEMPLATES_STATIC.find(template => template.content === initialContent);
     return matchedTemplate ? matchedTemplate.name : "Custom";
   });
   const [trackerImage, setTrackerImage] = useState(initialTrackerValue);
+
+  // GET DEFAULT TEMPLATE API
+  async function getEmailTemplates() {
+    const token = localStorage.getItem("token");
+    const API_URL = import.meta.env.VITE_API_URL;
+    try {
+      const response = await fetch(`${API_URL}/email-template/default`, {
+        credentials: 'include',
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({})); 
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const responseData = await response.json(); 
+
+      if (!Array.isArray(responseData.data)) {
+        throw new Error("API response data is not an array.");
+      }
+      
+      const fetchedTemplates: FetchedEmailTemplate[] = responseData.data.map((template: { name: string; body: string }) => ({
+        name: template.name,
+        body: template.body,
+      }));
+
+      return {
+        status: 'success',
+        message: responseData.message || 'Data template email berhasil diambil.',
+        data: fetchedTemplates,
+      };
+    } catch (error) {
+      console.error("Error fetching email templates:", error);
+      let errorMessage = "Unknown error";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      return {
+        status: 'error',
+        message: `Gagal mengambil data template email: ${errorMessage}`,
+        data: null,
+      };
+    }
+  }
+
+  // Effect untuk mengambil template dari API dan memperbarui availableTemplates
+  useEffect(() => {
+    getEmailTemplates().then((result) => {
+      if (result.status === 'success' && result.data) {
+        // Gabungkan template statis dengan template dari API
+        // Filter out existing static templates to avoid duplicates if names overlap
+        const newTemplates = result.data
+          .filter((apiT: { name: string; }) => !EMAIL_TEMPLATES_STATIC.some(staticT => staticT.name === apiT.name))
+          .map((apiT: FetchedEmailTemplate) => ({
+            name: apiT.name,
+            content: apiT.body,
+          }));
+        setAvailableTemplates([...EMAIL_TEMPLATES_STATIC, ...newTemplates]);
+      } else {
+        console.error('Failed to fetch email templates:', result.message);
+        Swal.fire({
+          text: result.message,
+          icon: 'error',
+          duration: 3000,
+        });
+      }
+    });
+  }, []); // [] agar hanya berjalan sekali saat komponen di-mount
 
   // Effect untuk mengirim nilai tracker image ke parent component
   useEffect(() => {
     if (onTrackerChange) {
       onTrackerChange(trackerImage);
     }
-  }, [trackerImage, onTrackerChange]);
+  }, [trackerImage, onTrackerChange]); // Dependensi trackerImage dan onTrackerChange
 
   // Effect untuk melakukan sinkronisasi htmlContent internal dengan initialContent dari parent
+  // Serta memperbarui selectedTemplate
   useEffect(() => {
     // Proses initialContent dari parent, pastikan link sudah diganti
-    const processedInitialContent = replaceLinksWithUrlPlaceholder(initialContent === "" ? TEMPLATE_WELCOME : initialContent);
+    // Gunakan availableTemplates yang sudah digabung
+    const contentToLoad = initialContent === "" 
+        ? (EMAIL_TEMPLATES_STATIC.find(t => t.name === "Welcome Email")?.content || "") // Default ke Welcome jika initialContent kosong
+        : initialContent;
+    
+    const processedInitialContent = replaceLinksWithUrlPlaceholder(contentToLoad);
 
     // Hanya update state internal jika ada perbedaan setelah pemrosesan
+    // Ini mencegah loop tak terbatas jika parent selalu mengirimkan initialContent yang sama
     if (htmlContent !== processedInitialContent) {
       setHtmlContent(processedInitialContent);
-      // Perbarui selectedTemplate juga saat initialContent berubah
-      const matchedTemplate = EMAIL_TEMPLATES.find(template => template.content === initialContent);
-      setSelectedTemplate(matchedTemplate ? matchedTemplate.name : "Custom");
     }
-  }, [initialContent]); // Dependensi hanya pada initialContent
+
+    // Perbarui selectedTemplate berdasarkan initialContent
+    const matchedTemplate = availableTemplates.find(template => template.content === initialContent); // Perbaikan: Gunakan .body
+    setSelectedTemplate(matchedTemplate ? matchedTemplate.name : "Custom");
+  }, [initialContent, availableTemplates]); // Dependensi pada initialContent dan availableTemplates
 
   // Effect untuk memanggil onBodyChange setiap kali htmlContent (state internal) berubah
-  // Ini memastikan parent selalu mendapatkan versi terbaru dari body email yang sudah diproses link-nya
   useEffect(() => {
     if (onBodyChange) {
       onBodyChange(htmlContent);
     }
   }, [htmlContent, onBodyChange]); // Bergantung pada htmlContent dan onBodyChange
+
 
   const handleTemplateChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newTemplateName = event.target.value;
@@ -498,10 +176,12 @@ const EmailBodyEditorTemplate = ({
     if (newTemplateName === "Custom") {
       // Jika "Custom" dipilih, biarkan pengguna mengedit manual.
       // Anda bisa setHtmlContent('') jika ingin mengosongkan editor saat memilih "Custom".
+      setHtmlContent(""); // Mengosongkan editor saat memilih "Custom"
       return;
     }
 
-    const template = EMAIL_TEMPLATES.find(t => t.name === newTemplateName);
+    // Cari di availableTemplates (yang sudah termasuk template API)
+    const template = availableTemplates.find(t => t.name === newTemplateName);
     if (template) {
       // Terapkan penggantian link saat memilih template bawaan
       const processedContent = replaceLinksWithUrlPlaceholder(template.content);
@@ -588,6 +268,7 @@ const EmailBodyEditorTemplate = ({
 
       // Decode berdasarkan encoding
       if (encoding === 'quoted-printable') {
+        // Pastikan ini di-encode dengan benar
         htmlContentPart = htmlContentPart.replace(/=\r?\n/g, '').replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
       } else if (encoding === 'base64') {
         try {
@@ -646,7 +327,7 @@ const EmailBodyEditorTemplate = ({
               "
             >
               <option value="Custom">Custom Template</option>
-              {EMAIL_TEMPLATES.map((template) => (
+              {availableTemplates.map((template) => (
                 <option key={template.name} value={template.name}>
                   {template.name}
                 </option>

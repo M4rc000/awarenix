@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { IoInformationCircleOutline } from "react-icons/io5";
 
-
 type TooltipProps = {
   children: React.ReactNode;
   content: React.ReactNode;
@@ -51,17 +50,18 @@ const Tooltip = ({ children, content, position = 'top' }: TooltipProps) => {
 type LabelWithTooltipProps = {
   children: React.ReactNode;
   tooltip?: React.ReactNode;
+  position?: 'top' | 'bottom' | 'left' | 'right'; // Prop 'position' ditambahkan di sini
   required?: boolean;
 };
 
-const LabelWithTooltip = ({ children, tooltip, required = false }: LabelWithTooltipProps) => (
+const LabelWithTooltip = ({ children, tooltip, position = 'left', required = false }: LabelWithTooltipProps) => ( // Default value 'top'
   <div className="flex items-center gap-2 mb-2">
     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
       {children}
       {required && <span className="text-red-400 ml-1">*</span>}
     </label>
     {tooltip && (
-      <Tooltip content={tooltip} position="right">
+      <Tooltip content={tooltip} position={position}> {/* Properti 'position' diteruskan ke komponen Tooltip */}
         <div className="cursor-help text-slate-700 dark:text-slate-400 hover:text-blue-400 transition-colors">
           <IoInformationCircleOutline className = "w-4 h-4 mt-[1px]"/>
         </div>

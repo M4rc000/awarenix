@@ -3,6 +3,7 @@ import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
 import ShowLandingPageBodyEditor from "./ShowLandingPageBodyEditor";
 import { formatUserDate } from "../utils/DateFormatter";
+import LabelWithTooltip from "../ui/tooltip/Tooltip";
 
 type LandingPage = {
   id: number;
@@ -10,6 +11,7 @@ type LandingPage = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
+  isSystemTemplate: number;
   createdAt: string;
   createdBy: number;
   createdByName: string;
@@ -26,6 +28,7 @@ export type ShowLandingPageDetailModalFormRef = {
 type LandingPageData = {
   name: string;
   body: string;
+  isSystemTemplate: number;
   createdAt: string;
   createdBy: number;
   createdByName: string;
@@ -57,7 +60,7 @@ const ShowLandingPageDetailModalForm = ({ landingPage }: ShowLandingPageDetailMo
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
           📧 Landing Page Configuration
         </h3>
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Name</Label>
             <Input 
@@ -66,6 +69,16 @@ const ShowLandingPageDetailModalForm = ({ landingPage }: ShowLandingPageDetailMo
               value={landingPage.name} 
               className={`w-full text-sm sm:text-base h-10 px-3`}
               readonly
+            />
+          </div>
+          <div>
+            <LabelWithTooltip tooltip="Templates status means is default template by system or created from user">Template Status</LabelWithTooltip>
+            <Input 
+              type="text"
+              required 
+              value={landingPage.isSystemTemplate == 1 ? 'Default' : 'Made in'} 
+              readonly
+              className={`w-full text-sm sm:text-base h-10 px-3`}
             />
           </div>
         </div>
@@ -89,10 +102,10 @@ const ShowLandingPageDetailModalForm = ({ landingPage }: ShowLandingPageDetailMo
             <Input
               id="created-by"
               type="text"
-              value={landingPage.createdByName}
+              value={landingPage.createdByName == "" ? 'System': landingPage.createdByName} 
               className="w-full mt-1"
               readonly
-            />
+              />
           </div>
           <div>
             <Label htmlFor="updated-at" className="text-sm font-medium">
@@ -104,7 +117,7 @@ const ShowLandingPageDetailModalForm = ({ landingPage }: ShowLandingPageDetailMo
               value={formatUserDate(landingPage.updatedAt)}
               className="w-full mt-1"
               readonly
-            />
+              />
           </div>
           <div>
             <Label htmlFor="updated-by" className="text-sm font-medium">
@@ -113,7 +126,7 @@ const ShowLandingPageDetailModalForm = ({ landingPage }: ShowLandingPageDetailMo
             <Input
               id="updated-by"
               type="text"
-              value={landingPage.updatedByName}
+              value={landingPage.updatedByName == "" ? 'System': landingPage.updatedByName} 
               className="w-full mt-1"
               readonly
             />

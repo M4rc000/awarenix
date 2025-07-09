@@ -5,6 +5,7 @@ import Tabs from "../common/Tabs";
 import { forwardRef, useImperativeHandle } from "react";
 import { LuLayoutTemplate } from "react-icons/lu";
 import EmailBodyEditorTemplate from "./EmailBodyEditorTemplate";
+import LabelWithTooltip from "../ui/tooltip/Tooltip";
 
 type EmailTemplate = {
   id: number;
@@ -13,6 +14,7 @@ type EmailTemplate = {
   subject: string;
   bodyEmail: string;
   trackerImage: number;
+  isSystemTemplate: number;
 }
 
 export type EditEmailTemplateModalFormRef = {
@@ -30,6 +32,7 @@ type EmailTemplateData = {
   subject: string;
   bodyEmail: string;
   trackerImage: number;
+  isSystemTemplate: number;
 };
 
 const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, EditEmailTemplateModalFormProps>(
@@ -42,6 +45,7 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
       subject: emailTemplate.subject || "",
       bodyEmail: emailTemplate.bodyEmail || "",
       trackerImage: emailTemplate.trackerImage,
+      isSystemTemplate: emailTemplate.isSystemTemplate,
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Partial<EmailTemplateData>>({});
@@ -92,9 +96,11 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
             subject: formData.subject,
             bodyEmail: formData .bodyEmail || "",
             trackerImage: formData.trackerImage,
+            isSystemTemplate: formData.isSystemTemplate || 0,
             updatedBy: updatedBy,
           }),
         });
+
 
         if (!response.ok) {
           let errorMessage = `Failed to update email template`;
@@ -128,6 +134,7 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
             subject: "",
             bodyEmail: "",
             trackerImage: 0,
+            isSystemTemplate: 0
           });
         }
         setErrors({});
@@ -223,7 +230,7 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
             📧 Email Configuration
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div>
               <Label>Template Name</Label>
               <Input 
@@ -267,6 +274,36 @@ const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, Edi
               />
               {errors.subject && (
                 <p className="text-red-500 text-sm mt-1">{errors.subject}</p>
+              )}
+            </div>
+            <div>
+              <LabelWithTooltip position="left" tooltip="Templates status means is default template by system or created from user">Template Status</LabelWithTooltip>
+              <select
+                id="email-template-select"
+                value={formData.isSystemTemplate ? "1" : "0"}
+                onChange={(e) => handleInputChange('isSystemTemplate', parseInt(e.target.value))}
+                className="
+                  appearance-none
+                  block w-full px-4 py-2
+                  text-base
+                  h-11
+                  border border-gray-300 dark:border-gray-700
+                  rounded-lg
+                  bg-white dark:bg-gray-900
+                  text-gray-900 dark:text-gray-100
+                  shadow-sm
+                  transition-all duration-200 ease-in-out
+                  focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                  dark:focus:ring-blue-400 dark:focus:border-blue-400
+                  cursor-pointer
+                  pr-10
+                "
+              >
+                <option value="0" >Made In</option>
+                <option value="1">Default</option>
+              </select>
+              {errors.subject && (
+                <p className="text-red-500 text-sm mt-1">{errors.isSystemTemplate}</p>
               )}
             </div>
           </div>

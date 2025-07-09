@@ -120,12 +120,22 @@ func RegisterLandingPage(c *gin.Context) {
 		return
 	}
 
+	isSystemTemplateInt, err := strconv.Atoi(input.IsSystemTemplate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid IsSystemTemplate value",
+			"message": "IsSystemTemplate must be a valid integer string",
+		})
+		return
+	}
+
 	// BUAT LANDING PAGE BARU
 	newLandingPage := models.LandingPage{
-		Name:      input.Name,
-		Body:      input.Body,
-		CreatedAt: time.Now(),
-		CreatedBy: input.CreatedBy,
+		Name:             input.Name,
+		Body:             input.Body,
+		IsSystemTemplate: isSystemTemplateInt,
+		CreatedAt:        time.Now(),
+		CreatedBy:        input.CreatedBy,
 	}
 
 	// SIMPAN KE DATABASE
@@ -175,6 +185,39 @@ func GetLandingPages(c *gin.Context) {
 	})
 }
 
+// GET ALL DEFAULT EMAIL TEMPLATES
+func GetDefaultLandingPages(c *gin.Context) {
+	var templates []models.DefaultLandingPage
+
+	// Membangun query: Select dulu, baru Where dan Find
+	if err := config.DB.Model(&models.LandingPage{}).
+		Select("name, body").
+		Where("is_system_template = ?", 1).
+		Find(&templates).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to fetch system default landing page template",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if len(templates) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"status":  "error",
+			"message": "No default landing page templates were found.",
+			"data":    []models.DefaultLandingPage{},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Default landing page template successfully fetched",
+		"data":    templates,
+	})
+}
+
 // EDIT DATA LANDING
 func UpdateLandingPage(c *gin.Context) {
 	id := c.Param("id")
@@ -202,6 +245,7 @@ func UpdateLandingPage(c *gin.Context) {
 
 	landingPage.Name = updatedData.Name
 	landingPage.Body = updatedData.Body
+	landingPage.IsSystemTemplate = int(updatedData.IsSystemTemplate)
 	landingPage.UpdatedBy = int(updatedData.UpdatedBy)
 	landingPage.UpdatedAt = time.Now()
 

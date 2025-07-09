@@ -4,11 +4,13 @@ import Swal from "../utils/AlertContainer";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import LandingPageBodyEditor from "./LandingPageBodyEditor";
+import LabelWithTooltip from "../ui/tooltip/Tooltip"; // Import yang benar, bukan '../ui/tooltip/Tooltip' saja jika itu file Anda
 
 interface LandingPage {
   id: number;
   name: string;
   body: string;
+  isSystemTemplate: number; // Ini adalah number di backend Go Anda
   createdAt: string;
   createdBy: number;
   updatedAt: string;
@@ -19,6 +21,7 @@ type LandingPageFormData = {
   id: number;
   name: string;
   body: string;
+  isSystemTemplate: number; // Tipe data ini penting!
 };
 
 export type EditLandingPageModalFormRef = {
@@ -26,7 +29,7 @@ export type EditLandingPageModalFormRef = {
 };
 
 type EditLandingPageModalFormProps = {
-    landingPage: LandingPage | null
+  landingPage: LandingPage | null
 };
 
 const EditLandingPageModalForm = forwardRef<EditLandingPageModalFormRef, EditLandingPageModalFormProps>(
@@ -36,6 +39,7 @@ const EditLandingPageModalForm = forwardRef<EditLandingPageModalFormRef, EditLan
       id: landingPage?.id ?? 0,
       name: landingPage?.name ?? "",
       body: landingPage?.body ?? "",
+      isSystemTemplate: landingPage?.isSystemTemplate ?? 0,
     });
 
     const [errors, setErrors] = useState<Partial<LandingPageFormData>>({});
@@ -62,7 +66,7 @@ const EditLandingPageModalForm = forwardRef<EditLandingPageModalFormRef, EditLan
     // The main submission function exposed to the parent modal
     const submitLandingPage = async (): Promise<LandingPage | null> => {
       if (!validateForm()) {
-        return null; 
+        return null;
       }
 
       setIsSubmitting(true);
@@ -71,7 +75,7 @@ const EditLandingPageModalForm = forwardRef<EditLandingPageModalFormRef, EditLan
         const API_URL = import.meta.env.VITE_API_URL;
         const token = localStorage.getItem("token");
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
-        const createdBy = userData?.id || 0;
+        const updatedBy = userData?.id || 0; 
 
         const response = await fetch(`${API_URL}/landing-page/${formData.id}`, {
           method: 'PUT',
@@ -82,33 +86,31 @@ const EditLandingPageModalForm = forwardRef<EditLandingPageModalFormRef, EditLan
           body: JSON.stringify({
             name: formData.name,
             body: formData.body,
-            updatedBy: createdBy,
+            isSystemTemplate: formData.isSystemTemplate,
+            updatedBy: updatedBy,
           }),
         });
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ message: `Server error: ${response.status}` }));
-          throw new Error(errorData.message || 'Failed to create landing page');
+          throw new Error(errorData.message || 'Failed to update landing page'); // Ubah pesan
+          
         }
 
-        const createdLandingPage: LandingPage = await response.json();
+        const updatedLandingPage: LandingPage = await response.json(); // Gunakan 'updatedLandingPage'
 
         Swal.fire({
-          text: "Landing Page successfully added!",
+          text: "Landing Page successfully updated!",
           icon: "success",
           duration: 2500,
         });
         
-        // Reset form state after successful submission
-        setFormData({ id: 0, name: "", body: "" });
-        setErrors({});
-
-        // Return the successfully created object
-        return createdLandingPage;
+        return updatedLandingPage;
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        setErrors({ name: errorMessage }); // Display error message near the relevant field
+        console.error("Error updating landing page:", error); // Log error
+        console.error("Error updating landing page:", errorMessage); // Log error
         return null; // Return null on failure
       } finally {
         setIsSubmitting(false);
@@ -119,10 +121,12 @@ const EditLandingPageModalForm = forwardRef<EditLandingPageModalFormRef, EditLan
     useImperativeHandle(ref, () => ({ submitLandingPage }));
 
     // Handler for form input changes
-    const handleInputChange = (field: keyof LandingPageFormData, value: string) => {
+    // PERBAIKAN: value: string | number
+    const handleInputChange = (field: keyof LandingPageFormData, value: string | number) => {
       setFormData(prev => ({
         ...prev,
-        [field]: value,
+        // Konversi nilai hanya jika field adalah 'isSystemTemplate'
+        [field]: field === 'isSystemTemplate' ? parseInt(value as string, 10) : value,
       }));
 
       // Clear errors for the field being edited
@@ -141,7 +145,7 @@ const EditLandingPageModalForm = forwardRef<EditLandingPageModalFormRef, EditLan
           <h3 className="flex items-center text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
             <FaPager className="mr-2"/> Landing Page Configuration
           </h3>
-          <div className="grid grid-cols-1">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="page-name">Name</Label>
               <Input
@@ -155,6 +159,37 @@ const EditLandingPageModalForm = forwardRef<EditLandingPageModalFormRef, EditLan
                 required
               />
               {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+            </div>
+            <div>
+              <LabelWithTooltip position="left" tooltip="Templates status means is default template by system or created from user">Template Status</LabelWithTooltip>
+              <select
+                id="is-system-template-select" // Ganti ID agar lebih spesifik
+                value={String(formData.isSystemTemplate)} // Pastikan value select adalah string
+                onChange={(e) => handleInputChange('isSystemTemplate', e.target.value)} // Meneruskan string dari select
+                className="
+                  appearance-none
+                  block w-full px-4 py-2
+                  text-base
+                  h-11
+                  border border-gray-300 dark:border-gray-700
+                  rounded-lg
+                  bg-white dark:bg-gray-900
+                  text-gray-900 dark:text-gray-100
+                  shadow-sm
+                  transition-all duration-200 ease-in-out
+                  focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                  dark:focus:ring-blue-400 dark:focus:border-blue-400
+                  cursor-pointer
+                  pr-10
+                "
+              >
+                <option value="0">Made In</option>
+                <option value="1">Default</option>
+              </select>
+              {/* Errors untuk isSystemTemplate tidak diperlukan karena ini adalah select 2 pilihan */}
+              {errors.isSystemTemplate && (
+                <p className="text-red-500 text-sm mt-1">{errors.isSystemTemplate}</p>
+              )}
             </div>
           </div>
         </div>

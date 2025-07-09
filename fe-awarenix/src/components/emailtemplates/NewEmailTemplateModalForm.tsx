@@ -6,6 +6,7 @@ import EmailBodyEditorTemplate from "./EmailBodyEditorTemplate";
 import { forwardRef, useImperativeHandle } from "react";
 import Swal from "../utils/AlertContainer";
 import { LuLayoutTemplate } from "react-icons/lu";
+import LabelWithTooltip from "../ui/tooltip/Tooltip";
 
 interface EmailTemplate{
   id: number;
@@ -32,6 +33,7 @@ type EmailTemplateData = {
   templateName: string;
   envelopeSender: string;
   subject: string;
+  isSystemTemplate: number;
   bodyEmail: string;
   trackerImage: number;
 };
@@ -41,6 +43,7 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
     templateName: "",
     envelopeSender: "",
     subject: "",
+    isSystemTemplate: 0,
     bodyEmail: "",
     trackerImage: 1,
   });
@@ -49,7 +52,7 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
   const [subject, setSubject] = useState("Welcome to Our Platform!");
   const [errors, setErrors] = useState<Partial<EmailTemplateData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  
   // VALIDATION FUNCTION
   const validateForm = (): boolean => {
     const newErrors: Partial<EmailTemplateData> = {};
@@ -88,6 +91,7 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         envelopeSender: emailtemplate.envelopeSender,
         subject: emailtemplate.subject, 
         bodyEmail: emailtemplate.bodyEmail || "",
+        isSystemTemplate: emailtemplate.isSystemTemplate,
         trackerImage: emailtemplate.trackerImage,
         createdAt: new Date().toISOString(),
         createdBy: createdBy,
@@ -101,6 +105,7 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         body: JSON.stringify(payload),
       });
 
+      console.log('Payload: ', payload);
       
       if (!response.ok) {
         let errorMessage = 'Failed to create email template';
@@ -140,6 +145,7 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         templateName: "",
         envelopeSender: "",
         subject: "",
+        isSystemTemplate: 0,
         bodyEmail: "",
         trackerImage: 1,
       });
@@ -188,7 +194,6 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
   const handleInputChange = (field: keyof EmailTemplateData, value: string | number) => {
     // Prevent submit trigger dari input change
     if (isSubmitting) {
-      // console.log('Ignoring input change during submission');
       return;
     }
     
@@ -233,7 +238,7 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
           📧 Email Configuration
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div>
             <Label>Template Name</Label>
             <Input 
@@ -284,6 +289,40 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
             />
             {errors.subject && (
               <p className="text-red-500 text-sm mt-1">{errors.subject}</p>
+            )}
+          </div>
+          <div>
+            <LabelWithTooltip position="left" tooltip="Templates status means is default template by system or created from user">Template Status</LabelWithTooltip>
+            <select
+              id="email-template-select"
+              value={emailtemplate.isSystemTemplate}
+              onChange={(e) => {
+                setSubject(e.target.value)
+                handleInputChange('isSystemTemplate', e.target.value)
+              }}
+              className="
+                appearance-none
+                block w-full px-4 py-2
+                text-base
+                h-11
+                border border-gray-300 dark:border-gray-700
+                rounded-lg
+                bg-white dark:bg-gray-900
+                text-gray-900 dark:text-gray-100
+                shadow-sm
+                transition-all duration-200 ease-in-out
+                focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                dark:focus:ring-blue-400 dark:focus:border-blue-400
+                cursor-pointer
+                pr-10
+              "
+            >
+              <option value="" selected>Choose Template Type</option>
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+            {errors.subject && (
+              <p className="text-red-500 text-sm mt-1">{errors.isSystemTemplate}</p>
             )}
           </div>
         </div>

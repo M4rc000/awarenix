@@ -42,6 +42,39 @@ func GetEmailTemplates(c *gin.Context) {
 	})
 }
 
+// GET ALL DEFAULT EMAIL TEMPLATES
+func GetDefaultEmailTemplates(c *gin.Context) {
+	var templates []models.DefaultEmailTemplate
+
+	// Membangun query: Select dulu, baru Where dan Find
+	if err := config.DB.Model(&models.EmailTemplate{}).
+		Select("name, body").
+		Where("is_system_template = ?", 1).
+		Find(&templates).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to fetch system default email template",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if len(templates) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"status":  "error",
+			"message": "No default email templates found",
+			"data":    []models.DefaultEmailTemplate{},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Default email template successfully retrieved",
+		"data":    templates,
+	})
+}
+
 // SAVE NEW DATA EMAIL TEMPLATE
 func RegisterEmailTemplate(c *gin.Context) {
 	var input models.EmailTemplateInput
@@ -67,15 +100,26 @@ func RegisterEmailTemplate(c *gin.Context) {
 		return
 	}
 
+	// Convert IsSystemTemplate from string to int
+	isSystemTemplateInt, err := strconv.Atoi(input.IsSystemTemplate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid IsSystemTemplate value",
+			"message": "IsSystemTemplate must be a valid integer string",
+		})
+		return
+	}
+
 	// BUAT EMAIL TEMPLATE BARU
 	newEmailTemplate := models.EmailTemplate{
-		Name:           input.Name,
-		EnvelopeSender: input.EnvelopeSender,
-		Subject:        input.Subject,
-		Body:           input.Body,
-		TrackerImage:   input.TrackerImage,
-		CreatedAt:      time.Now(),
-		CreatedBy:      input.CreatedBy,
+		Name:             input.Name,
+		EnvelopeSender:   input.EnvelopeSender,
+		Subject:          input.Subject,
+		Body:             input.Body,
+		TrackerImage:     input.TrackerImage,
+		IsSystemTemplate: isSystemTemplateInt,
+		CreatedAt:        time.Now(),
+		CreatedBy:        input.CreatedBy,
 	}
 
 	// SIMPAN KE DATABASE
@@ -125,6 +169,7 @@ func UpdateEmailTemplate(c *gin.Context) {
 	emailTemplate.Body = updatedData.Body
 	emailTemplate.TrackerImage = updatedData.TrackerImage
 	emailTemplate.UpdatedBy = int(updatedData.UpdatedBy)
+	emailTemplate.IsSystemTemplate = int(updatedData.IsSystemTemplate)
 	emailTemplate.UpdatedAt = time.Now()
 
 	if err := config.DB.Save(&emailTemplate).Error; err != nil {

@@ -44,7 +44,7 @@ export default function NewEmailTemplateModal({
   
   return (
     <Transition show={isOpen} as={Fragment}>
-      <Dialog open={isOpen} onClose={onClose} className="relative z-[999]">
+      <Dialog open={isOpen} onClose={()=>{}} className="relative z-[999]">
         {/* Backdrop with fade animation */}
         <Transition.Child
           as={Fragment}

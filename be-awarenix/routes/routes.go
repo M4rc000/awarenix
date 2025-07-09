@@ -48,19 +48,21 @@ func SetupRoutes(router *gin.Engine) {
 
 		emailTemplate := api.Group("/email-template")
 		{
-			emailTemplate.POST("/create", controllers.RegisterEmailTemplate) // CREATE
-			emailTemplate.GET("/all", controllers.GetEmailTemplates)         // READ
-			emailTemplate.PUT("/:id", controllers.UpdateEmailTemplate)       // UPDATE
-			emailTemplate.DELETE("/:id", controllers.DeleteEmailTemplate)    // DELETE
+			emailTemplate.POST("/create", controllers.RegisterEmailTemplate)    // CREATE
+			emailTemplate.GET("/all", controllers.GetEmailTemplates)            // READ
+			emailTemplate.GET("/default", controllers.GetDefaultEmailTemplates) // GET DEFAULT EMAIL TEMPLATES
+			emailTemplate.PUT("/:id", controllers.UpdateEmailTemplate)          // UPDATE
+			emailTemplate.DELETE("/:id", controllers.DeleteEmailTemplate)       // DELETE
 		}
 
 		landingPage := api.Group("/landing-page")
 		{
-			landingPage.POST("/create", controllers.RegisterLandingPage) // CREATE
-			landingPage.GET("/all", controllers.GetLandingPages)         // READ
-			landingPage.PUT("/:id", controllers.UpdateLandingPage)       // UPDATE
-			landingPage.DELETE("/:id", controllers.DeleteLandingPage)    // DELETE
-			landingPage.POST("/clone-site", controllers.CloneSite)       // CLONE SITE
+			landingPage.POST("/create", controllers.RegisterLandingPage)    // CREATE
+			landingPage.GET("/all", controllers.GetLandingPages)            // READ
+			landingPage.GET("/default", controllers.GetDefaultLandingPages) // GET DEFAULT LANDING PAGE
+			landingPage.PUT("/:id", controllers.UpdateLandingPage)          // UPDATE
+			landingPage.DELETE("/:id", controllers.DeleteLandingPage)       // DELETE
+			landingPage.POST("/clone-site", controllers.CloneSite)          // CLONE SITE
 		}
 
 		sendingprofiles := api.Group("/sending-profile")
@@ -77,7 +79,9 @@ func SetupRoutes(router *gin.Engine) {
 
 		profiles := api.Group("/profiles")
 		{
-			profiles.POST("/update", controllers.UpdateProfile) // UPDATE
+			profiles.POST("/update", controllers.UpdateProfile)                     // UPDATE PROFILE
+			profiles.GET("/phish-settings", controllers.GetPhishSettings)           // READ PHISH SETTINGS
+			profiles.PUT("/update/phish-settings", controllers.UpdatePhishSettings) // UPDATE PHISH SETTINGS
 		}
 
 		analytics := api.Group("/analytics")

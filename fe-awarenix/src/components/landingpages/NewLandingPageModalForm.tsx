@@ -4,22 +4,22 @@ import Swal from "../utils/AlertContainer";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import LandingPageBodyEditor from "./LandingPageBodyEditor";
-
-// Interface for the data returned by the API
+import LabelWithTooltip from "../ui/tooltip/Tooltip";
 interface LandingPage {
   id: number;
   name: string;
   body: string;
+  isSystemTemplate: number;
   createdAt: string;
   createdBy: number;
   updatedAt: string;
   updatedBy: number;
 }
 
-// Type definition for the form's state
 type LandingPageFormData = {
   name: string;
   body: string;
+  isSystemTemplate: number;
 };
 
 export type NewLandingPageModalFormRef = {
@@ -31,6 +31,7 @@ const NewLandingPageModalForm = forwardRef<NewLandingPageModalFormRef>(
     const [formData, setFormData] = useState<LandingPageFormData>({
       name: "",
       body: "",
+      isSystemTemplate: 0,
     });
 
     const [errors, setErrors] = useState<Partial<LandingPageFormData>>({});
@@ -77,16 +78,10 @@ const NewLandingPageModalForm = forwardRef<NewLandingPageModalFormRef>(
           body: JSON.stringify({
             name: formData.name,
             body: formData.body,
+            isSystemTemplate: formData.isSystemTemplate || 0,
             createdBy: createdBy,
           }),
         });
-
-        console.log('Body: ', {
-          name: formData.name,
-          body: formData.body,
-          createdBy: createdBy
-        });
-        
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ message: `Server error: ${response.status}` }));
@@ -102,7 +97,7 @@ const NewLandingPageModalForm = forwardRef<NewLandingPageModalFormRef>(
         });
         
         // Reset form state after successful submission
-        setFormData({ name: "", body: "" });
+        setFormData({ name: "", body: "", isSystemTemplate: 0});
         setErrors({});
 
         // Return the successfully created object
@@ -143,20 +138,51 @@ const NewLandingPageModalForm = forwardRef<NewLandingPageModalFormRef>(
           <h3 className="flex items-center text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
             <FaPager className="mr-2"/> Landing Page Configuration
           </h3>
-          <div className="grid grid-cols-1">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="page-name">Name</Label>
               <Input
                 id="page-name"
-                placeholder="e.g., Microsoft Login Campaign"
+                placeholder="e.g., Microsoft Login"
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 className={`w-full text-sm sm:text-base h-10 px-3 ${errors.name ? 'border-red-500': ''}`}
                 disabled={isSubmitting}
                 required
-              />
+                />
               {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+            </div>
+            <div>
+              <LabelWithTooltip position="left" tooltip="Templates status means is default template by system or created from user">Template Status</LabelWithTooltip>
+              <select
+                id="email-template-select"
+                value={formData.isSystemTemplate}
+                onChange={(e) => handleInputChange('isSystemTemplate', e.target.value)}
+                className="
+                  appearance-none
+                  block w-full px-4 py-2
+                  text-base
+                  h-11
+                  border border-gray-300 dark:border-gray-700
+                  rounded-lg
+                  bg-white dark:bg-gray-900
+                  text-gray-900 dark:text-gray-100
+                  shadow-sm
+                  transition-all duration-200 ease-in-out
+                  focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                  dark:focus:ring-blue-400 dark:focus:border-blue-400
+                  cursor-pointer
+                  pr-10
+                "
+              >
+                <option value="" selected>Choose Template Type</option>
+                <option value="0">Made In</option>
+                <option value="1">Default</option>
+              </select>
+              {errors.isSystemTemplate && (
+                <p className="text-red-500 text-sm mt-1">{errors.isSystemTemplate}</p>
+              )}
             </div>
           </div>
         </div>

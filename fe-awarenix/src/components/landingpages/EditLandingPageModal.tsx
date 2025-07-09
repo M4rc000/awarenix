@@ -14,6 +14,7 @@ type LandingPage = {
   id: number;
   name: string;
   body: string;
+  isSystemTemplate: number;
   createdAt: string;
   createdBy: number;
   updatedAt: string;
@@ -106,7 +107,7 @@ export default function EditEmailTemplateModal({
                         }
                       } else {
                         Swal.fire({
-                          text: 'Failed to update user. Please try again!',
+                          text: 'Failed to update landing page. Please try again!',
                           icon: "error",
                           duration: 2000
                         })
@@ -114,7 +115,7 @@ export default function EditEmailTemplateModal({
                     } catch (error) {
                       console.log('Error: ', error);
                       Swal.fire({
-                        text: 'An error occurred while updating user!',
+                        text: 'An error occurred while updating landing page!',
                         icon: "error",
                         duration: 2000
                       })

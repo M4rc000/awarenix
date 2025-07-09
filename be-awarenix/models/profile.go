@@ -11,3 +11,8 @@ type UpdateProfileInput struct {
 	UpdatedAt time.Time `gorm:"null" json:"updatedAt"`
 	UpdatedBy int       `gorm:"null" json:"updatedBy"`
 }
+
+type UpdatePhishSettingPayload struct {
+	PhishingRedirectAction int     `json:"phishingRedirectAction"`
+	CustomEducationURL     *string `json:"customEducationUrl"`
+}

@@ -34,6 +34,7 @@ interface EmailTemplate{
   subject: string;
   bodyEmail: string;
   trackerImage: number;
+  isSystemTemplate: number;
   createdAt: string;
   createdBy: number;
   createdByName: string;

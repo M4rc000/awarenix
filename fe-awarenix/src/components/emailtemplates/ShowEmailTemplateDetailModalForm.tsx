@@ -3,6 +3,7 @@ import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
 import ShowEmailBodyEditor from "./ShowEmailBodyEditorTemplate";
 import { formatUserDate } from "../utils/DateFormatter";
+import LabelWithTooltip from "../ui/tooltip/Tooltip";
 
 type EmailTemplate = {
   id: number;
@@ -28,6 +29,7 @@ type EmailTemplateData = {
   subject: string;
   bodyEmail: string;
   trackerImage: number;
+  isSystemTemplate: number;
   createdAt: string;
   createdBy: number;
   createdByName: string;
@@ -62,7 +64,7 @@ const ShowEmailTemplateDetailModalForm = ({ emailTemplate }: ShowEmailTemplateDe
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
           📧 Email Configuration
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-2">
           <div>
             <Label>Template Name</Label>
             <Input 
@@ -102,6 +104,16 @@ const ShowEmailTemplateDetailModalForm = ({ emailTemplate }: ShowEmailTemplateDe
               className={`w-full text-sm sm:text-base h-10 px-3`}
             />
           </div>
+          <div>
+            <LabelWithTooltip position="left" tooltip="Templates status means is default template by system or created from user">Template Status</LabelWithTooltip>
+            <Input 
+              type="text"
+              required 
+              value={emailTemplate.isSystemTemplate == 1 ? 'Default' : 'Made in'} 
+              readonly
+              className={`w-full text-sm sm:text-base h-10 px-3`}
+            />
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-5">
           <div>
@@ -119,10 +131,10 @@ const ShowEmailTemplateDetailModalForm = ({ emailTemplate }: ShowEmailTemplateDe
             <Label>Created By</Label>
             <Input 
               type="text" 
-              value={emailTemplate.createdByName} 
+              value={emailTemplate.createdByName == "" ? 'System': emailTemplate.createdByName} 
               className={`w-full text-sm sm:text-base h-10 px-3`}
               readonly
-            />
+              />
           </div>
           <div>
             <Label>Updated At</Label>
@@ -137,7 +149,7 @@ const ShowEmailTemplateDetailModalForm = ({ emailTemplate }: ShowEmailTemplateDe
             <Label>Updated By</Label>
             <Input 
               type="text" 
-              value={emailTemplate.updatedByName} 
+              value={emailTemplate.updatedByName == "" ? 'System': emailTemplate.updatedByName} 
               className={`w-full text-sm sm:text-base h-10 px-3`}
               readonly
             />

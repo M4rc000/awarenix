@@ -26,11 +26,15 @@ func InitDatabase() {
 
 	// Auto-migrate models
 	db.AutoMigrate(
-		&models.User{}, &models.Event{}, &models.Group{}, &models.EmailTemplate{}, &models.LandingPage{}, &models.SendingProfiles{}, &models.Menu{}, &models.Submenu{}, &models.Role{}, &models.Member{}, &models.EmailHeader{},
+		&models.User{}, &models.Event{}, &models.Group{}, &models.EmailTemplate{}, &models.LandingPage{}, &models.SendingProfiles{}, &models.Menu{}, &models.Submenu{}, &models.Role{}, &models.Member{}, &models.EmailHeader{}, models.PhishSettings{},
 	)
 
 	SeedUsers(db)
 	SeedRoles(db)
+	SeedMenus(db)
+	SeedSubmenus(db)
+	SeedEmailTemplates(db)
+	SeedLandingPages(db)
 
 	DB = db
 }
