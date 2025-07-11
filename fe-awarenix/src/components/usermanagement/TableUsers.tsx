@@ -1,4 +1,4 @@
-import { useState, useMemo, useDeferredValue, useRef, useEffect } from 'react';
+import { useState, useMemo, useDeferredValue, useRef, useEffect, useCallback } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -82,38 +82,47 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
 
   const API_URL = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("token");
-  const fetchData = async () => {
-    try {
-      const res = await fetch(`${API_URL}/users/all`, {
+  const fetchData = useCallback(async (showLoader = true) => {
+      if (showLoader) {
+        setIsLoading(true);
+      }
+        try {
+        const res = await fetch(`${API_URL}/users/all`, {
         credentials: 'include',
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
+  
+        if (!res.ok) throw new Error('Failed to fetch data');
+  
+        const result = await res.json();
+        setData(result.Data || result.data || result);
+        } catch (err) {
+          console.log('Error: ', err);
+          Swal.fire({
+            text: 'Failed to load user data',
+            duration: 2000,
+            icon: "error"
+          });
+        } finally {
+          setIsLoading(false);
+        }
+  }, [API_URL, token]); 
+  
+  useEffect(() => {
+    fetchData(true);
 
-      if (!res.ok) throw new Error('Failed to fetch data');
+    const intervalId = setInterval(() => {
+      fetchData(false);
+    }, 5000);
 
-      const result = await res.json();
-      setData(result.Data || result.data || result);
-    } catch (err) {
-      console.log('Error: ', err);
-      Swal.fire({
-        text: 'Failed to load user data',
-        duration: 2000,
-        icon: "error"
-      }); 
-    }
-  }; 
-
+    return () => clearInterval(intervalId);
+  }, [reloadTrigger, fetchData]);
+  
   useEffect(() => {
     fetchData();
-  }, [reloadTrigger]);
-
-  useEffect(() => {
-  if (reloadTrigger && reloadTrigger > 0) {
-    fetchData();
-  }
   }, [reloadTrigger]);
 
   const onShowDetail = (user: User) => {
@@ -458,10 +467,10 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                     onClick={() => table.setPageIndex(page)}
                     href="#"
                     aria-current="page"
-                    className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-regular focus:z-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:text-grey-400 ${
+                    className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-regular focus:z-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:text-grey-400 ${
                       currentPage === page
-                        ? 'z-10 bg-indigo-600 text-white focus:outline-indigo-600 ring-gray-300 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
-                        : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
+                        ? 'z-10 bg-blue-600 text-white focus:outline-blue-600 ring-gray-300 dark:ring-gray-700 border-1 border-gray-400 dark:border-gray-700'
+                        : 'text-gray-600 ring-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:ring-gray-700 border-1 border-gray-300 dark:border-gray-700'
                     }`}>
                     {page + 1}
                   </a>

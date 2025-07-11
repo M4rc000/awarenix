@@ -7,7 +7,7 @@ import Label from "../form/Label";
 import Swal from "../utils/AlertContainer";
 import { useState } from "react";
 
-interface UserFormData {
+export interface UserFormData {
     id: number;
     name: string;
     email: string;
@@ -141,52 +141,56 @@ export function UserProfileForm() {
             </div>
     
             <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
-            <div className="relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
-                <div className="px-2 pr-14">
-                <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-                    Edit Personal Information
-                </h4>
-                <p className="mb-5 text-sm text-gray-500 dark:text-gray-400 lg:mb-5">
-                    Update your details to keep your profile up-to-date.
-                </p>
-                </div>
-                <form className="flex flex-col">
-                    <div className="overflow-y-auto px-2 pb-3">
-                        <div className="mt-5">
-                            <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                                <div className="col-span-2 lg:col-span-1">
-                                    <Label>Name</Label>
-                                    <Input type="text" value={formData.name ?? ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-                                </div>
-                                <div className="col-span-2 lg:col-span-1">
-                                    <Label>Position</Label>
-                                    <Input type="text" value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })} />
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 gap-x-6 gap-y-3 lg:grid-cols-2 mt-3">
-                                <div className="col-span-2 lg:col-span-1">
-                                    <Label>Company</Label>
-                                    <Input type="text" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} />
-                                </div>
-            
-                                <div className="col-span-2 lg:col-span-1">
-                                    <Label>Country</Label>
-                                    <Input type="text" value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })} />
-                                </div>
-            
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-                            <Button size="sm" variant="outline" onClick={closeModal}>
-                            Close
-                            </Button>
-                            <Button size="sm" onClick={handleSave}>
-                            Save Changes
-                            </Button>
-                        </div>
+                <div className="relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
+                    <div className="px-2 pr-14">
+                    <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
+                        Edit Personal Information
+                    </h4>
+                    <p className="mb-5 text-sm text-gray-500 dark:text-gray-400 lg:mb-5">
+                        Update your details to keep your profile up-to-date.
+                    </p>
                     </div>
-                </form>
-            </div>
+                    <form className="flex flex-col">
+                        <div className="overflow-y-auto px-2 pb-3">
+                            <div className="mt-5">
+                                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-3">
+                                    <div className="col-span-2 lg:col-span-1">
+                                        <Label>Name</Label>
+                                        <Input type="text" value={formData.name ?? ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} readonly/>
+                                    </div>
+                                    <div className="col-span-2 lg:col-span-1">
+                                        <Label>Email</Label>
+                                        <Input type="text" value={formData.email ?? ""} onChange={(e) => setFormData({ ...formData, email: e.target.value })} readonly/>
+                                    </div>
+                                    <div className="col-span-2 lg:col-span-1">
+                                        <Label>Position</Label>
+                                        <Input type="text" value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })}/>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 gap-x-6 gap-y-3 lg:grid-cols-2 mt-3">
+                                    <div className="col-span-2 lg:col-span-1">
+                                        <Label>Company</Label>
+                                        <Input type="text" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} />
+                                    </div>
+                
+                                    <div className="col-span-2 lg:col-span-1">
+                                        <Label>Country</Label>
+                                        <Input type="text" value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })} />
+                                    </div>
+                
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
+                                <Button size="sm" variant="outline" onClick={closeModal}>
+                                Close
+                                </Button>
+                                <Button size="sm" onClick={handleSave}>
+                                Save Changes
+                                </Button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </Modal>
         </div>
     )

@@ -169,7 +169,7 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
           name: user.name,
           email: user.email,
           position: user.position,   
-          role: user.role,   
+          role: parseInt(user.role),   
           isActive: user.isActive,   
           password: user.password,    
           createdBy: createdBy

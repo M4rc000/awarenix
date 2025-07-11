@@ -11,6 +11,7 @@ import { CgWebsite } from "react-icons/cg";
 import { IoIosBookmarks } from "react-icons/io";
 import { JSX } from "react";
 import { IoSettingsOutline } from "react-icons/io5";
+import { IoFootstepsOutline } from "react-icons/io5";
 
 const breadcrumbMap: Record<string, { menu: string; title: string; icon: JSX.Element }> = {
   "/dashboard": { menu: "Admin", title: "Dashboard", icon: <GridIcon /> },
@@ -25,6 +26,7 @@ const breadcrumbMap: Record<string, { menu: string; title: string; icon: JSX.Ele
   "/phishing-websites": { menu: "Phishing Simulation & Training Modules", title: "Phishing Websites", icon: <CgWebsite /> },
   "/training-modules": { menu: "Phishing Simulation & Training Modules", title: "Training Modules", icon: <IoIosBookmarks /> },
   "/account-settings": { menu: "User", title: "Account Settings", icon: <IoSettingsOutline /> },
+  "/logging-activity": { menu: "Logging & Monitoring", title: "Logging Activity", icon: <IoFootstepsOutline /> },
 };
 
 const LayoutContent: React.FC = () => {

@@ -431,8 +431,8 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                     aria-current="page"
                     className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-regular focus:z-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:text-grey-400 ${
                       currentPage === page
-                        ? 'z-10 bg-indigo-600 text-white focus:outline-indigo-600 ring-gray-300 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
-                        : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
+                        ? 'z-10 bg-blue-600 text-white focus:outline-blue-600 ring-gray-300 dark:ring-gray-700 border-1 border-gray-400 dark:border-gray-700'
+                        : 'text-gray-600 ring-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:ring-gray-700 border-1 border-gray-300 dark:border-gray-700'
                     }`}>
                     {page + 1}
                   </a>

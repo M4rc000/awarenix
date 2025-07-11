@@ -27,6 +27,7 @@ const LandingPages = lazy(() => import("./pages/LandingPages/LandingPages"));
 const PhishingEmail = lazy(() => import("./pages/PhisingEmail/PhisingEmail"));
 const PhishingWebsite = lazy(() => import("./pages/PhisingWebsite/PhisingWebsite"));
 const TrainingModules = lazy(() => import("./pages/TrainingModules/TrainingModules"));
+const LoggingActivity = lazy(() => import("./pages/LoggingActivity/LoggingActivity"));
 const CommingSoon = lazy(() => import("./pages/OtherPage/CommingSoon"));
 
 
@@ -60,7 +61,7 @@ export default function App() {
                   <Route path="/training-modules" element={<TrainingModules />} />
                   <Route path="/subscription-billing" element={<CommingSoon />} />
                   <Route path="/account-settings" element={<AccountSettings />} />
-                  <Route path="/logging-activity" element={<CommingSoon />} />
+                  <Route path="/logging-activity" element={<LoggingActivity />} />
                   <Route path="/environtment-check" element={<CommingSoon />} />
                 </Route>
               </Route>

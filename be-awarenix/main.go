@@ -34,6 +34,8 @@ func main() {
 
 	// Init DB
 	config.InitDatabase()
+	config.Migrations()
+	config.RunSeeder()
 
 	// Setup Gin engine
 	app := gin.Default()

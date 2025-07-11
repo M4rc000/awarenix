@@ -19,6 +19,28 @@ type User struct {
 	UpdatedBy    int       `gorm:"type:tinyint(3);null" json:"updatedBy"`
 }
 
+type FullUserLoginData struct {
+	User
+	RoleName string `json:"role_name"`
+}
+
+type LoginInput struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+	Status   string `json:"status"`
+}
+type UserLoginResponse struct {
+	ID        uint      `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	Position  string    `json:"position"`
+	Role      int       `json:"role"`
+	RoleName  string    `json:"role_name"`
+	Company   string    `json:"company"`
+	Country   string    `json:"country"`
+	LastLogin time.Time `json:"last_login"`
+}
+
 type UserResponse struct {
 	ID        uint      `json:"id"`
 	Name      string    `json:"name"`

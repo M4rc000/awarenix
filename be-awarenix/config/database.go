@@ -5,8 +5,6 @@ import (
 	"log"
 	"os"
 
-	"be-awarenix/models"
-
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -23,18 +21,14 @@ func InitDatabase() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-
-	// Auto-migrate models
-	db.AutoMigrate(
-		&models.User{}, &models.Event{}, &models.Group{}, &models.EmailTemplate{}, &models.LandingPage{}, &models.SendingProfiles{}, &models.Menu{}, &models.Submenu{}, &models.Role{}, &models.Member{}, &models.EmailHeader{}, models.PhishSettings{},
-	)
-
-	SeedUsers(db)
-	SeedRoles(db)
-	SeedMenus(db)
-	SeedSubmenus(db)
-	SeedEmailTemplates(db)
-	SeedLandingPages(db)
-
 	DB = db
+}
+
+func RunSeeder() {
+	SeedUsers(DB)
+	SeedRoles(DB)
+	SeedMenus(DB)
+	SeedSubmenus(DB)
+	SeedEmailTemplates(DB)
+	SeedLandingPages(DB)
 }

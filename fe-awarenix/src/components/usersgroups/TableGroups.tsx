@@ -91,7 +91,6 @@ export default function TableGroups({ reloadTrigger, onReload }: { reloadTrigger
   const API_URL = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("token");
   const fetchData = useCallback(async (showLoader = true) => {
-    // Hanya set isLoading jika showLoader adalah true
     if (showLoader) {
       setIsLoading(true);
     }
@@ -111,42 +110,41 @@ export default function TableGroups({ reloadTrigger, onReload }: { reloadTrigger
       } catch (err) {
         console.log('Error: ', err);
         Swal.fire({
-          text: 'Failed to load email template data',
+          text: 'Failed to load groups data',
           duration: 2000,
           icon: "error"
         });
       } finally {
         setIsLoading(false);
       }
-    }, [API_URL, token]); 
+  }, [API_URL, token]); 
 
-    useEffect(() => {
-      fetchData(true);
+  useEffect(() => {
+    fetchData(true);
 
-      const intervalId = setInterval(() => {
-        fetchData(false);
-      }, 5000);
+    const intervalId = setInterval(() => {
+      fetchData(false);
+    }, 5000);
 
-      return () => clearInterval(intervalId);
-    }, [reloadTrigger, fetchData]);
+    return () => clearInterval(intervalId);
+  }, [reloadTrigger, fetchData]);
 
-  // Gunakan useEffect ini saja, karena sudah menangani reloadTrigger dan initial fetch
   useEffect(() => {
     fetchData();
   }, [reloadTrigger]);
 
 
-  const onShowDetail = (group: Group) => { // Ganti user menjadi group untuk konsistensi
+  const onShowDetail = (group: Group) => {
     setSelectedGroup(group);
     setActiveModal('detail');
   };
 
-  const onEditUser = (group: Group) => { // Ganti user menjadi group
+  const onEditUser = (group: Group) => { 
     setSelectedGroup(group);
     setActiveModal('edit');
   }
 
-  const onDeleteUser = (group: Group) => { // Ganti user menjadi group
+  const onDeleteUser = (group: Group) => {
     setSelectedGroup(group);
     setActiveModal('delete');
   }
@@ -436,10 +434,10 @@ export default function TableGroups({ reloadTrigger, onReload }: { reloadTrigger
                       href="#"
                       aria-current="page"
                       className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-regular focus:z-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:text-grey-400 ${
-                        currentPage === page
-                          ? 'z-10 bg-indigo-600 text-white focus:outline-indigo-600 ring-gray-300 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
-                          : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
-                      }`}
+                      currentPage === page
+                        ? 'z-10 bg-blue-600 text-white focus:outline-blue-600 ring-gray-300 dark:ring-gray-700 border-1 border-gray-400 dark:border-gray-700'
+                        : 'text-gray-600 ring-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:ring-gray-700 border-1 border-gray-300 dark:border-gray-700'
+                    }`}
                     >
                       {page + 1}
                     </a>

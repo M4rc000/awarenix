@@ -22,7 +22,7 @@ const AccountSettingsTabs = () => {
   const activeTabObject = tabs.find(tab => tab.id === activeTab);
 
   return (
-    <div className="w-full max-w-5xl dark:bg-gray-900 border-1 border-gray-300 dark:border-gray-800 rounded-xl">
+    <div className="w-full dark:bg-gray-900 border-1 border-gray-300 dark:border-gray-800 rounded-lg">
       <div className="rounded-lg p-6">
         {/* Tab Navigation */}
         <div className="flex space-x-8 border-b-1 border-b-gray-300 dark:border-b-gray-700">

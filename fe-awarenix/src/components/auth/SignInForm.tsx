@@ -45,10 +45,7 @@ export default function SignInForm() {
       const body = await res.json();
       // validation / credentials error
       if (res.status === 400 || res.status === 401 || res.status == 500) {
-        console.log('Body', body);
-        
         if (body.errors) {
-          console.log('Body Errors');
           setErrors(body.errors);
         } else if (body.error) {
           Swal.fire({
@@ -56,9 +53,7 @@ export default function SignInForm() {
             icon: 'error',
             duration: 2000
           })
-          // setErrors({ general: body.error });
         } else {
-          console.log('Login Gagal');
           setErrors({ general: "Login gagal" });
         }
         return;

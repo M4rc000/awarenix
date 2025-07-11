@@ -88,5 +88,10 @@ func SetupRoutes(router *gin.Engine) {
 		{
 			analytics.GET("/growth-percentage", controllers.GetGrowthPercentage)
 		}
+
+		activityLogs := api.Group("/activity-logs")
+		{
+			activityLogs.GET("/all", controllers.GetActivityLogs) // READ
+		}
 	}
 }

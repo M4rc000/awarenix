@@ -6,6 +6,7 @@ export type SessionUser = {
   name: string;
   email: string;
   role: string;
+  role_name: string;
   position: string;
   company: string;
   country: string;

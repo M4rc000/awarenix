@@ -128,7 +128,7 @@ const navGroups: NavGroup[] = [
   },
   {
     title: "Logging & Monitoring",
-    key: "loging-monitoring",
+    key: "logging-monitoring",
     items: [
       {
         icon: <IoFootstepsOutline />,

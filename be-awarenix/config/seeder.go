@@ -1,11 +1,10 @@
 package config
 
 import (
-	"log"
-	"time"
-
 	"be-awarenix/models"
 	"be-awarenix/services"
+	"log"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -694,40 +693,40 @@ func SeedEmailTemplates(db *gorm.DB) {
 							<div class="header">
 								<img src="https://ci3.googleusercontent.com/meips/ADKq_NaZS80lJKKLmNWJbywLi3-jL3P8kFjdgCFzkf0a8q_y3PqMIkP33vZjoMOTXpjrwVWBEkCT00SFqqw25LqKDg26-N7T-ACNc2svYj3RVaPB2cBiRYM=s0-d-e1-ft#https://static.licdn.com/aero-v1/sc/h/9ehe6n39fa07dc5edzv0rla4e" alt="LinkedIn logo in blue with white text" class="logo">
 							</div>
-							
+
 							<div class="content">
 								<div class="title">Reset your LinkedIn password</div>
-								
+
 								<div class="body-text">Hi [First Name],</div>
-								
+
 								<div class="body-text">We received a request to reset the password for your LinkedIn account associated with [email address].</div>
-								
+
 								<div class="body-text">If you made this request, please click below to reset your password:</div>
-								
+
 								<div class="button-container">
 									<a href="[password-reset-link]" class="button">Reset password</a>
 								</div>
-								
+
 								<div class="body-text">This link will expire in 24 hours. If you didn't request a password reset, you can ignore this message or let us know. Someone else might have entered your email address by mistake.</div>
-								
+
 								<div class="security-notice">
 									<div class="security-title">Security tips:</div>
 									<div class="info-item">• Never share your password</div>
 									<div class="info-item">• Change your password regularly</div>
 									<div class="info-item">• Use a unique password for each account</div>
 								</div>
-								
+
 								<div class="body-text">The LinkedIn team</div>
 							</div>
-							
+
 							<div class="footer">
 								<div>This is a mandatory service email from LinkedIn.</div>
 								<div class="info-item">LinkedIn Corporation, 1000 West Maude Avenue, Sunnyvale, CA 94085</div>
 								<div class="info-item">LinkedIn and the LinkedIn logo are registered trademarks of LinkedIn Corporation.</div>
 								<div class="unsubscribe">
-									<a href="#" style="color: #666666; text-decoration: none;">Privacy Policy</a> | 
-									<a href="#" style="color: #666666; text-decoration: none;">User Agreement</a> | 
-									<a href="#" style="color: #666666; text-decoration: none;">Cookie Policy</a> | 
+									<a href="#" style="color: #666666; text-decoration: none;">Privacy Policy</a> |
+									<a href="#" style="color: #666666; text-decoration: none;">User Agreement</a> |
+									<a href="#" style="color: #666666; text-decoration: none;">Cookie Policy</a> |
 									<a href="#" style="color: #666666; text-decoration: none;">Copyright Policy</a>
 								</div>
 							</div>
@@ -834,41 +833,41 @@ func SeedEmailTemplates(db *gorm.DB) {
 							<div class="header">
 							<img src="https://ci3.googleusercontent.com/meips/ADKq_NanW4CgGwRjEPu6W145C0FAUPkNSUfK2Qk70Sk3Zn2ekP6aADG4-gVTyNoqEz-XDsiJ_6ZWMnkWI3bZTOwiLtj2anEZ2dc=s0-d-e1-ft#https://assets.nflxext.com/us/email/gem/nflx.png" alt="Netflix" width="24" border="0" style="border:none;outline:none;border-collapse:collapse;display:block;border-style:none" class="CToWUd" data-bit="iit">
 							</div>
-							
+
 							<div class="content">
 								<div class="title">Reset your Netflix password</div>
-								
+
 								<div class="body-text">Hi,</div>
-								
+
 								<div class="body-text">We received a request to reset the password for your Netflix account associated with [email address].</div>
-								
+
 								<div class="body-text">If you made this request, please click below to reset your password:</div>
-								
+
 								<div class="button-container">
 									<a href="[password-reset-link]" class="button">Reset password</a>
 								</div>
-								
+
 								<div class="body-text">This link will expire in 24 hours. If you didn't request a password reset, you can ignore this message or let us know. Someone else might have entered your email address by mistake.</div>
-								
+
 								<div class="security-notice">
 									<div class="security-title">Security tips:</div>
 									<div class="info-item">• Never share your password</div>
 									<div class="info-item">• Change your password regularly</div>
 									<div class="info-item">• Use a unique password for each account</div>
 								</div>
-								
+
 								<div class="body-text">The Netflix team</div>
 					<img src="https://ci3.googleusercontent.com/meips/ADKq_NanW4CgGwRjEPu6W145C0FAUPkNSUfK2Qk70Sk3Zn2ekP6aADG4-gVTyNoqEz-XDsiJ_6ZWMnkWI3bZTOwiLtj2anEZ2dc=s0-d-e1-ft#https://assets.nflxext.com/us/email/gem/nflx.png" alt="Netflix" width="24" border="0" style="border:none;outline:none;border-collapse:collapse;display:block;border-style:none" class="CToWUd" data-bit="iit">
 							</div>
-							
+
 							<div class="footer">
 								<div>You received this email because a password reset was requested for your Netflix account.</div>
 								<div class="info-item">Netflix, Inc., 100 Winchester Circle, Los Gatos, CA 95032</div>
 								<div class="info-item">Netflix and the Netflix logo are registered trademarks of Netflix, Inc.</div>
 								<div class="unsubscribe">
-									<a href="#" style="color: #666666; text-decoration: none;">Privacy Policy</a> | 
-									<a href="#" style="color: #666666; text-decoration: none;">User Agreement</a> | 
-									<a href="#" style="color: #666666; text-decoration: none;">Cookie Policy</a> | 
+									<a href="#" style="color: #666666; text-decoration: none;">Privacy Policy</a> |
+									<a href="#" style="color: #666666; text-decoration: none;">User Agreement</a> |
+									<a href="#" style="color: #666666; text-decoration: none;">Cookie Policy</a> |
 									<a href="#" style="color: #666666; text-decoration: none;">Copyright Policy</a>
 								</div>
 							</div>
@@ -975,41 +974,41 @@ func SeedEmailTemplates(db *gorm.DB) {
 								<div class="header">
 									<img src="https://st1.zoom.us/fe-static/fe-signup-login-active/img/ZoomNewLogo.b2fd5c95.png" alt="Zoom logo in blue with white text" class="logo">
 								</div>
-								
+
 								<div class="content">
 									<div class="title">You're invited to a Zoom Meeting</div>
-									
+
 									<div class="body-text">Hi [Recipient],</div>
-									
+
 									<div class="body-text">[Host Name] has invited you to a Zoom meeting.</div>
-									
+
 									<div class="body-text"><strong>Topic:</strong> [Meeting Topic]</div>
 									<div class="body-text"><strong>Time:</strong> [Date and Time]</div>
-									
+
 									<div class="button-container">
 										<a href="[Zoom Join Link]" class="button">Join Meeting</a>
 									</div>
-									
+
 									<div class="body-text">Meeting ID: [ID]<br>Password: [Password]</div>
-									
+
 									<div class="security-notice">
 										<div class="security-title">Security tips:</div>
 										<div class="info-item">• Never share your password</div>
 										<div class="info-item">• Change your password regularly</div>
 										<div class="info-item">• Use a unique password for each account</div>
 									</div>
-									
+
 									<div class="body-text">Zoom Team</div>
 								</div>
-								
+
 								<div class="footer">
 									<div>This invitation was sent by [Host Email] via Zoom.</div>
 									<div class="info-item">Zoom Video Communications, Inc., 55 Almaden Blvd, Suite 600, San Jose, CA 95113</div>
 									<div class="info-item">Zoom and the Zoom logo are registered trademarks of Zoom Video Communications, Inc.</div>
 									<div class="unsubscribe">
-										<a href="#" style="color: #666666; text-decoration: none;">Privacy Policy</a> | 
-										<a href="#" style="color: #666666; text-decoration: none;">User Agreement</a> | 
-										<a href="#" style="color: #666666; text-decoration: none;">Cookie Policy</a> | 
+										<a href="#" style="color: #666666; text-decoration: none;">Privacy Policy</a> |
+										<a href="#" style="color: #666666; text-decoration: none;">User Agreement</a> |
+										<a href="#" style="color: #666666; text-decoration: none;">Cookie Policy</a> |
 										<a href="#" style="color: #666666; text-decoration: none;">Copyright Policy</a>
 									</div>
 								</div>
@@ -1093,7 +1092,7 @@ func SeedEmailTemplates(db *gorm.DB) {
 							</p>
 							<a href="#" class="button">Join the Team</a>
 							<p class="footer">
-								Trello boards help you put your plans into action and achieve your goals. 
+								Trello boards help you put your plans into action and achieve your goals.
 								<a href="#">Learn more</a>
 								<br>
 								<a href="#">Unsubscribe from these emails</a>
@@ -1136,13 +1135,13 @@ func SeedLandingPages(db *gorm.DB) {
 			Body: `<!DOCTYPE html>
 							<html lang="id-ID" class="artdeco ">
 							<head>
-								
+
 								<meta http-equiv="X-UA-Compatible" content="IE=EDGE">
 								<meta charset="UTF-8">
 								<meta name="viewport" content="width=device-width, initial-scale=1">
 								<meta name="asset-url" id="artdeco/static/images/icons.svg" content="https://static.licdn.com/sc/h/6bja66gymvrvqrp5m6btz3vkz">
-								<title>        
-								Login LinkedIn, Login | LinkedIn  
+								<title>
+								Login LinkedIn, Login | LinkedIn
 								</title>
 								<link rel="shortcut icon" href="https://static.licdn.com/sc/h/9lb1g1kp916tat669q9r5g2kz">
 								<link rel="apple-touch-icon" href="https://static.licdn.com/sc/h/1exdo4axa6eaw1jioxh1vu4fj">
@@ -1155,7 +1154,7 @@ func SeedLandingPages(db *gorm.DB) {
 								<meta id="heartbeat_config" data-enable-page-view-heartbeat-tracking>
 								<meta name="appName" content="checkpoint-frontend">
 						<!----><!---->
-								
+
 								<meta name="description" content="Login ke LinkedIn untuk menjalin relasi dengan orang yang Anda kenal, bertukar ide, dan membina karier Anda.">
 								<meta name="robots" content="noarchive">
 								<meta property="og:site_name" content="LinkedIn">
@@ -1168,22 +1167,15 @@ func SeedLandingPages(db *gorm.DB) {
 								<meta name="twitter:site" content="@linkedin">
 								<meta name="twitter:title" content="Login LinkedIn, Login | LinkedIn">
 								<meta name="twitter:description" content="Login ke LinkedIn untuk menjalin relasi dengan orang yang Anda kenal, bertukar ide, dan membina karier Anda.">
-								
-								
-							
+
 								<meta property="al:android:url" content="https://www.linkedin.com/login/id">
 								<meta property="al:android:package" content="com.linkedin.android">
 								<meta property="al:android:app_name" content="LinkedIn">
 								<meta property="al:ios:app_store_id" content="288429040">
 								<meta property="al:ios:app_name" content="LinkedIn">
 
-								
-								
 								<link rel="stylesheet" href="https://static.licdn.com/sc/h/aqyadolt0wu7chazdqaa989fi">
-							
-								
-								
-								
+
 							<link rel="canonical" href="https://www.linkedin.com/login/id">
 
 							<link rel="alternate" hreflang="ar" href="https://www.linkedin.com/login/ar">
@@ -1213,35 +1205,22 @@ func SeedLandingPages(db *gorm.DB) {
 							<link rel="alternate" hreflang="zh-cn" href="https://www.linkedin.com/login/zh">
 							<link rel="alternate" hreflang="zh-tw" href="https://www.linkedin.com/login/zh-tw">
 							<link rel="alternate" hreflang="x-default" href="https://www.linkedin.com/login">
-						
-								
-							
-								
+
 								<link rel="preload" href="https://static.licdn.com/sc/h/ax9fa8qn7acaw8v5zs7uo0oba">
 								<link rel="preload" href="https://static.licdn.com/sc/h/2nrnip1h2vmblu8dissh3ni93">
 								<link rel="preload" href="https://static.licdn.com/sc/h/ce1b60o9xz87bra38gauijdx4">
 								<link rel="preload" href="https://static.licdn.com/sc/h/zf50zdwg8datnmpgmdbkdc4r">
-							
-							
+
 								<link rel="preload" href="https://static.licdn.com/sc/h/dj0ev57o38hav3gip4fdd172h">
 								<link rel="preload" href="https://static.licdn.com/sc/h/3tcbd8fu71yh12nuw2hgnoxzf">
-							
+
 							</head>
 							<body class="system-fonts ">
-								
-								
 
-							
 							<div id="app__container" class="glimmer">
 							<header>
-								
-									
-								
-								
-							
 
 							<a class="linkedin-logo" href="/" aria-label="LinkedIn">
-								
 
 								<li-icon aria-label="LinkedIn" size="28dp" alt="LinkedIn" color="brand" type="linkedin-logo">
 									<svg width="102" height="26" viewbox="0 0 102 26" fill="none" xmlns="http://www.w3.org/2000/svg" id="linkedin-logo" preserveaspectratio="xMinYMin meet" focusable="false">
@@ -1249,33 +1228,17 @@ func SeedLandingPages(db *gorm.DB) {
 									</svg>
 								</li-icon>
 
-						
 							</a>
-						
-							
-							
-									
+
 							</header>
 
 							<main class="app__content" role="main">
-								
-									
-								
-								
-						<!----><!---->  
-								
-							
-							
-							
-							
-							
-							
-							
-							
+
+						<!----><!---->
 
 							<form method="post" id="otp-generation" class="hidden__imp">
-							
-							<input name="csrfToken" value="ajax:7801759608768218721" type="hidden">  
+
+							<input name="csrfToken" value="ajax:7801759608768218721" type="hidden">
 
 							<input name="resendUrl" id="input-resend-otp-url" type="hidden">
 							<input name="midToken" type="hidden">
@@ -1291,17 +1254,12 @@ func SeedLandingPages(db *gorm.DB) {
 							<code id="i18nOtpSuccessMessage" style="display: none"><!--"Kami telah mengirimkan link sekali pakai ke alamat email Anda. Tidak menemukannya? Periksa folder spam Anda."--></code>
 							<code id="i18nOtpErrorMessage" style="display: none"><!--"Terjadi kesalahan. Coba lagi."--></code>
 							<code id="i18nOtpRestrictedMessage" style="display: none"><!--"Untuk keamanan akun, sebaiknya hubungi kami agar Anda dapat login dengan kata sandi sekali pakai dari <a href="/help/linkedin/ask/MPRRF">Pusat Bantuan LinkedIn.</a>"--></code>
-						<!----><!---->  
-								
+						<!----><!---->
+
 							<div data-litms-pageview="true"></div>
-						
+
 								<div class="card-layout">
 								<div id="organic-div">
-									
-							
-							
-							
-							
 
 							<div class="header__content ">
 							<h1 class="header__content__heading ">
@@ -1310,45 +1268,28 @@ func SeedLandingPages(db *gorm.DB) {
 							<p class="header__content__subheading ">
 						<!---->          </p>
 						</div>
-						
+
 									<div class="alternate-signin-container">
-										
-						<!---->          
-							
-							
+
+						<!---->
 
 						<!---->      <div class="alternate-signin__btn--google invisible__imp  margin-top-12"></div>
-						
-								
-							
-							
-							
-							
 
-						<!---->  
-								
+						<!---->
+
 							<div class="microsoft-auth-button w-full">
 						<!---->      <div class="microsoft-auth-button__placeholder" data-text="signin_with"></div>
 							</div>
-						
-								
-							
-							
-							
 
-						<!---->  
-								
-							
-							
+						<!---->
 
 							<button class="sign-in-with-apple-button hidden__imp" aria-label="Login dengan Apple" type="button">
-							
 
 								<svg width="24" height="24" viewbox="0 2 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 									<rect width="24" height="24" fill="transparent"></rect>
 									<path d="M17.569 12.6254C17.597 15.652 20.2179 16.6592 20.247 16.672C20.2248 16.743 19.8282 18.1073 18.8662 19.5166C18.0345 20.735 17.1714 21.9488 15.8117 21.974C14.4756 21.9986 14.046 21.1799 12.5185 21.1799C10.9915 21.1799 10.5142 21.9489 9.2495 21.9987C7.93704 22.0485 6.93758 20.6812 6.09906 19.4673C4.38557 16.9842 3.0761 12.4508 4.83438 9.39061C5.70786 7.87092 7.26882 6.90859 8.96311 6.88391C10.2519 6.85927 11.4683 7.753 12.2562 7.753C13.0436 7.753 14.5219 6.67821 16.0759 6.83605C16.7265 6.8632 18.5527 7.09947 19.7253 8.81993C19.6309 8.87864 17.5463 10.095 17.569 12.6254ZM15.058 5.1933C15.7548 4.34789 16.2238 3.171 16.0959 2C15.0915 2.04046 13.877 2.67085 13.1566 3.5158C12.5109 4.26404 11.9455 5.46164 12.0981 6.60946C13.2176 6.69628 14.3612 6.03925 15.058 5.1933Z" fill="black"></path>
 								</svg>
-						
+
 							<span class="sign-in-with-apple-button__text">
 								Login dengan Apple
 							</span>
@@ -1356,37 +1297,31 @@ func SeedLandingPages(db *gorm.DB) {
 							<code id="appleSignInLibScriptPath" style="display: none"><!--"https://static.licdn.com/sc/h/1gpe377m8n1eq73qveizv5onv"--></code>
 							<code id="i18nErrorAppleSignInGeneralErrorMessage" style="display: none"><!--"Terjadi kesalahan. Coba gunakan nama pengguna dan kata sandi."--></code>
 							<code id="lix_checkpoint_auth_nexus_apple_flow" style="display: none"><!--true--></code>
-						
-								
-							
-							
-							
 
-						<!---->  
+						<!---->
 						<!----><!----><!---->
 						<!---->
-						<!---->      
-							
+						<!---->
 
 							<a aria-label="Login dengan kunci sandi" class="alternate-signin__btn margin-top-12" role="button" id="sign-in-with-passkey-btn" style="display:none">
 							<span class="btn-text">
 								Login dengan kunci sandi
 							</span>
 							</a>
-						
-						<!---->      
+
+						<!---->
 							<form class="microsoft-auth" action="/uas/login-submit" method="post" onlyshowonwindows>
 							<input name="loginCsrfParam" value="e91fb616-884d-4835-80f4-e6a688f421ee" type="hidden">
 
 						<!---->
 							<input name="trk" value="d_checkpoint_lg_consumerLogin_microsoft-auth-submit" type="hidden">
-							
+
 							<div class="loader loader--full-screen">
 							<div class="loader__container mb-2 overflow-hidden">
 								<icon class="loader__icon inline-block loader__icon--default text-color-progress-loading" data-delayed-url="https://static.licdn.com/sc/h/bzquwuxc79kqghdtn2kktfn5c" data-svg-class-name="loader__icon-svg--large fill-currentColor h-[60px] min-h-[60px] w-[60px] min-w-[60px]"></icon>
 							</div>
 							</div>
-						
+
 							</form>
 
 							<script data-delayed-url="https://static.licdn.com/sc/h/7kewwbk0p2dthzs10jar2ce0z" data-module-id="microsoft-auth-lib"></script>
@@ -1394,56 +1329,33 @@ func SeedLandingPages(db *gorm.DB) {
 							<code id="microsoftAuthLibraryPath" style="display: none"><!--"https://static.licdn.com/sc/h/7kewwbk0p2dthzs10jar2ce0z"--></code>
 							<code id="microsoftShowOneTap" style="display: none"><!--false--></code>
 							<code id="microsoftLocale" style="display: none"><!--"in_ID"--></code>
-						
-						<!---->      
-							
+
+						<!---->
 
 							<div id="or-separator" class="or-separator margin-top-24 snapple-seperator hidden__imp">
 							<span class="or-text">atau</span>
 							</div>
-						
+
 							<code id="googleGSILibPath" style="display: none"><!--"https://static.licdn.com/sc/h/aofke6z5sqc44bjlvj6yr05c8"--></code>
 							<code id="useGoogleGSILibraryTreatment" style="display: none"><!--"middle"--></code>
 							<code id="usePasskeyLogin" style="display: none"><!--"support"--></code>
 
-						
 									</div>
-									
-							
-							
-							
-							
-							
 
 							<form method="post" class="login__form" action="/checkpoint/lg/login-submit" novalidate>
-								
-							<input name="csrfToken" value="ajax:7801759608768218721" type="hidden">  
-								
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
+
+							<input name="csrfToken" value="ajax:7801759608768218721" type="hidden">
 
 							<code id="login_form_validation_error_username" style="display: none"><!--"Masukkan nama pengguna yang valid."--></code>
 							<code id="consumer_login__text_plain__large_username" style="display: none"><!--"Email atau nomor telepon harus terdiri dari 3 hingga 128 karakter."--></code>
 							<code id="consumer_login__text_plain__no_username" style="display: none"><!--"Masukkan alamat email atau nomor telepon."--></code>
 
 							<code id="domainSuggestion" style="display: none"><!--false--></code>
-						
 
 						<!---->        <input name="ac" value="0" type="hidden">
 								<input name="loginFailureCount" value="0" type="hidden">
 							<input name="sIdString" value="7c17a5ed-80db-4721-bc47-25b9fea9aa5e" type="hidden">
-							
+
 							<input id="pkSupported" name="pkSupported" value="false" type="hidden">
 
 							<input name="parentPageKey" value="d_checkpoint_lg_consumerLogin" type="hidden">
@@ -1462,13 +1374,6 @@ func SeedLandingPages(db *gorm.DB) {
 								<code id="i18nShow" style="display: none"><!--"Tampilkan"--></code>
 								<code id="i18nHide" style="display: none"><!--"Sembunyikan"--></code>
 								<input name="controlId" value="d_checkpoint_lg_consumerLogin-login_submit_button" type="hidden">
-								
-							
-							
-							
-							
-							
-							
 
 							<code id="consumer_login__text_plain__empty_password" style="display: none"><!--"Masukkan kata sandi."--></code>
 							<code id="consumer_login__text_plain__small_password" style="display: none"><!--"Kata sandi yang Anda masukkan harus terdiri dari minimum 6 karakter."--></code>
@@ -1487,7 +1392,7 @@ func SeedLandingPages(db *gorm.DB) {
 							<div error-for="password" id="error-for-password" class="form__label--error  hidden__imp" role="alert" aria-live="assertive">
 						<!---->      </div>
 							</div>
-							
+
 							<div class="form__input--floating margin-top-24">
 						<!---->      <input id="password" aria-describedby="error-for-password" name="session_password" required validation="password" autocomplete="current-password" aria-label="Kata sandi" type="password">
 								<label for="password" class="form__label--floating" aria-hidden="true">
@@ -1499,7 +1404,7 @@ func SeedLandingPages(db *gorm.DB) {
 							<div error-for="password" id="error-for-password" class="form__label--error  hidden__imp" role="alert" aria-live="assertive">
 						<!---->      </div>
 							</div>
-							
+
 							<div class="form__input--floating margin-top-24">
 						<!---->      <input id="password" aria-describedby="error-for-password" name="session_password" required validation="password" autocomplete="current-password" aria-label="Kata sandi" type="password">
 								<label for="password" class="form__label--floating" aria-hidden="true">
@@ -1511,8 +1416,6 @@ func SeedLandingPages(db *gorm.DB) {
 							<div error-for="password" id="error-for-password" class="form__label--error  hidden__imp" role="alert" aria-live="assertive">
 						<!---->      </div>
 							</div>
-						
-								
 
 						<!---->
 								<div class="login__form_action_container ">
@@ -1520,33 +1423,20 @@ func SeedLandingPages(db *gorm.DB) {
 									Reset Password
 								</button>
 								</div>
-							
+
 							</form>
 							<script src="https://static.licdn.com/sc/h/b4wm5m9prmznzyqy5g7fxos4u" defer></script>
 							<code id="lix_checkpoint_reset_password_username_autofill" style="display: none"><!--true--></code>
-						
+
 						<!---->          </div>
 								<div id="otp-div" class="hidden__imp">
-									
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
-							
+
 							<div class="otp-success-container">
 								<h2 class="otp__header__content">
 									Kami telah mengirimkan link sekali pakai ke alamat email utama Anda
 								</h2>
 								<p class="medium_text subheader__content">Klik link untuk login langsung ke akun LinkedIn Anda.</p>
 								<div class="mailbox__logo" aria-hidden="true">
-								
 
 								<svg width="64" height="64" viewbox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
 									<path d="M1 11H63V54H1V11Z" fill="#95ABC1"></path>
@@ -1554,7 +1444,6 @@ func SeedLandingPages(db *gorm.DB) {
 									<path d="M63 11L36.5 36.8C34 39.2 29.9 39.2 27.4 36.8L1 11H63Z" fill="#D1DDE9"></path>
 								</svg>
 
-						
 								</div>
 								<p class="medium_text footer__content">Jika Anda tidak menemukan email tersebut di kotak pesan, periksa folder spam.</p>
 								<button class="resend-button margin-top-12" id="btn-resend-otp" aria-label="Kirim ulang email" type="button">
@@ -1564,56 +1453,23 @@ func SeedLandingPages(db *gorm.DB) {
 								Kembali
 								</button>
 							</div>
-						<!---->  
+						<!---->
 								</div>
 								</div>
 								<div class="join-now">
-								
-							
-							
 
 							Baru mengenal LinkedIn? <a href="/signup/cold-join" class="btn__tertiary--medium" id="join_now" data-litms-control-urn="login_join_now" data-cie-control-urn="join-now-btn">Bergabung sekarang</a>
-						
+
 								</div>
 								<div id="checkpointGoogleOneTapContainerId" class="googleOneTapContainer global-alert-offset">
-								
-							
-							
 
-						
 								</div>
-								
-							
-							
-									
+
 							</main>
-
-							
-									
-								
-							
-							
-							
-							
-							
-							
-							
-							
-
-							
-							
-							
-							
-							
-							
-							
-							
-							
 
 						<!---->    <footer class="footer__base" role="contentinfo">
 								<div class="footer__base__wrapper">
 								<p class="copyright">
-									
 
 									<li-icon size="14dp" alt="LinkedIn" aria-hidden="true" type="linkedin-logo"><svg preserveaspectratio="xMinYMin meet" focusable="false">
 											<g class="scaling-icon" style="fill-opacity: 1">
@@ -1656,7 +1512,6 @@ func SeedLandingPages(db *gorm.DB) {
 											</g>
 										</svg></li-icon>
 
-						
 									<em>
 									<span class="a11y__label">
 										LinkedIn
@@ -1696,22 +1551,17 @@ func SeedLandingPages(db *gorm.DB) {
 										Kirim Feedback
 										</a>
 									</li>
-									
-									
-
-							
 
 							<li>
 								<div class="language-selector">
 								<button class="language-selector__button" aria-expanded="false">
 									<span class="language-selector__label-text">Bahasa</span>
 									<i class="language-selector__label-icon">
-									
 
 								<svg viewbox="0 0 16 16" width="16" height="16" preserveaspectratio="xMinYMin meet" xmlns="http://www.w3.org/2000/svg">
 									<path d="M8 9l5.93-4L15 6.54l-6.15 4.2a1.5 1.5 0 01-1.69 0L1 6.54 2.07 5z" fill="currentColor"></path>
 								</svg>
-						
+
 									</i>
 								</button>
 								<div class="language-selector__dropdown hidden__imp">
@@ -1900,17 +1750,14 @@ func SeedLandingPages(db *gorm.DB) {
 								</div>
 								</div>
 							</li>
-						
-									
+
 									</ul>
 						<!---->          </div>
 								</div>
 							</footer>
-						
-								
+
 							<artdeco-toasts></artdeco-toasts>
 							<span class="hidden__imp toast-success-icon">
-							
 
 									<li-icon size="small" aria-hidden="true" type="success-pebble-icon"><svg viewbox="0 0 24 24" width="24px" height="24px" x="0" y="0" preserveaspectratio="xMinYMin meet" class="artdeco-icon" focusable="false">
 											<g class="small-icon" style="fill-opacity: 1">
@@ -1919,10 +1766,8 @@ func SeedLandingPages(db *gorm.DB) {
 											</g>
 										</svg></li-icon>
 
-						
 							</span>
 							<span class="hidden__imp toast-error-icon">
-							
 
 								<li-icon size="small" aria-hidden="true" type="error-pebble-icon"><svg viewbox="0 0 24 24" width="24px" height="24px" x="0" y="0" preserveaspectratio="xMinYMin meet" class="artdeco-icon" focusable="false">
 										<g class="small-icon" style="fill-opacity: 1">
@@ -1933,10 +1778,8 @@ func SeedLandingPages(db *gorm.DB) {
 									</svg>
 								</li-icon>
 
-						
 							</span>
 							<span class="hidden__imp toast-notify-icon">
-							
 
 								<li-icon size="small" aria-hidden="true" type="yield-pebble-icon"><svg viewbox="0 0 24 24" width="24px" height="24px" x="0" y="0" preserveaspectratio="xMinYMin meet" class="artdeco-icon" focusable="false">
 										<g class="small-icon" style="fill-opacity: 1">
@@ -1945,18 +1788,15 @@ func SeedLandingPages(db *gorm.DB) {
 										</g>
 									</svg></li-icon>
 
-						
 							</span>
 							<span class="hidden__imp toast-gdpr-icon">
-							
 
 								<li-icon aria-hidden="true" size="small" type="shield-icon"><svg viewbox="0 0 24 24" width="24px" height="24px" x="0" y="0" preserveaspectratio="xMinYMin meet" class="artdeco-icon" focusable="false">
 										<path d="M8,1A10.89,10.89,0,0,1,2.87,3,1,1,0,0,0,2,4V9.33a5.67,5.67,0,0,0,2.91,5L8,16l3.09-1.71a5.67,5.67,0,0,0,2.91-5V4a1,1,0,0,0-.87-1A10.89,10.89,0,0,1,8,1ZM4,4.7A12.92,12.92,0,0,0,8,3.26a12.61,12.61,0,0,0,3.15,1.25L4.45,11.2A3.66,3.66,0,0,1,4,9.46V4.7Zm6.11,8L8,13.84,5.89,12.66A3.65,3.65,0,0,1,5,11.92l7-7V9.46A3.67,3.67,0,0,1,10.11,12.66Z" class="small-icon" style="fill-opacity: 1"></path>
 									</svg></li-icon>
-						
+
 							</span>
 							<span class="hidden__imp toast-cancel-icon">
-							
 
 									<li-icon size="large" type="cancel-icon">
 										<svg x="0" y="0" id="cancel-icon" preserveaspectratio="xMinYMin meet" viewbox="0 0 24 24" width="24px" height="24px" style="color: black;">
@@ -1969,25 +1809,19 @@ func SeedLandingPages(db *gorm.DB) {
 										</svg>
 									</li-icon>
 
-						
 							</span>
 						<code id="lix_checkpoint_remove_artdeco_toasts" style="display: none"><!--false--></code>
-						
-							
-									
 
 								<div id="loader-wrapper" class="hidden__imp">
-								
 
 									<li-icon class="blue" size="medium" aria-hidden="true" type="loader">
 										<div class="artdeco-spinner"><span class="artdeco-spinner-bars"></span><span class="artdeco-spinner-bars"></span><span class="artdeco-spinner-bars"></span><span class="artdeco-spinner-bars"></span><span class="artdeco-spinner-bars"></span><span class="artdeco-spinner-bars"></span><span class="artdeco-spinner-bars"></span><span class="artdeco-spinner-bars"></span><span class="artdeco-spinner-bars"></span><span class="artdeco-spinner-bars"></span><span class="artdeco-spinner-bars"></span><span class="artdeco-spinner-bars"></span></div>
 									</li-icon>
 
-						
 								</div>
 							</div>
 
-						<!---->  
+						<!---->
 								<code id="isDesktop" style="display: none"><!--true--></code>
 								<code id="lix_pemberly_tracking_fireApfcEvent" style="display: none"><!--"enabled"--></code>
 								<code id="lix_pemberly_tracking_human_integration" style="display: none"><!--"enabled"--></code>
@@ -1998,34 +1832,25 @@ func SeedLandingPages(db *gorm.DB) {
 								<code id="lix_pemberly_tracking_apfc_network_interceptor" style="display: none"><!--"control"--></code>
 								<script src="https://static.licdn.com/sc/h/dj0ev57o38hav3gip4fdd172h" defer></script>
 								<script src="https://static.licdn.com/sc/h/3tcbd8fu71yh12nuw2hgnoxzf" defer></script>
-								
-								
+
 								<script src="https://static.licdn.com/sc/h/ax9fa8qn7acaw8v5zs7uo0oba" defer></script>
 								<script src="https://static.licdn.com/sc/h/2nrnip1h2vmblu8dissh3ni93" defer></script>
-								
-								
-							
 
 							<code id="googleOneTapLibScriptPath" style="display: none"><!--"https://static.licdn.com/sc/h/923rbykk7ysv54066ch2pp3qb"--></code>
 							<code id="i18nErrorGoogleOneTapGeneralErrorMessage" style="display: none"><!--"Terjadi kesalahan. Coba gunakan nama pengguna dan kata sandi."--></code>
 							<code id="googleUseAutoSelect" style="display: none"><!--true--></code>
-						
-							
-							
 
 							<code id="googleSignInLibScriptPath" style="display: none"><!--"https://static.licdn.com/sc/h/84fpq9merojrilm067r9x3jdk"--></code>
 							<code id="i18nErrorGoogleSignInGeneralErrorMessage" style="display: none"><!--"Terjadi kesalahan. Coba gunakan nama pengguna dan kata sandi."--></code>
-						
-						
+
 								<code id="apfcDfPK" style="display: none"><!--"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqyVTa3Pi5twlDxHc34nl3MlTHOweIenIid6hDqVlh5/wcHzIxvB9nZjObW3HWfwqejGM+n2ZGbo9x8R7ByS3/V4qRgAs1z4aB6F5+HcXsx8uVrQfwigK0+u7d3g1s7H8qUaguMPHxNnyj5EisTJBh2jf9ODp8TpWnhAQHCCSZcDM4JIoIlsVdGmv+dGlzZzmf1if26U4KJqFdrqS83r3nGWcEpXWiQB+mx/EX4brbrhOFCvfPovvsLEjMTm0UC68Bvki3UsB/vkkMPW9cxNiiJJdnDkOEEdQPuFmPug+sqhACl3IIHLVBFM7vO0ca14rcCNSbSDaaKOY6BQoW1A30wIDAQAB"--></code>
 								<code id="apfcDfPKV" style="display: none"><!--"2"--></code>
 								<script src="https://static.licdn.com/sc/h/ce1b60o9xz87bra38gauijdx4" defer></script>
 								<code id="usePasskeyLogin" style="display: none"><!--"support"--></code>
 						<!---->          <code id="isGoogleAutologinFixEnabled" style="display: none"><!--true--></code>
 						<!---->        <script src="https://static.licdn.com/sc/h/zf50zdwg8datnmpgmdbkdc4r" defer></script>
-						<!---->      
-							
-							
+						<!---->
+
 							</body>
 						</html>package config`,
 			CreatedAt: time.Now(),
@@ -2385,7 +2210,7 @@ func SeedLandingPages(db *gorm.DB) {
 								<label>Password</label>
 							</div>
 							<button type="submit">Sign In</button>
-							<div class="form-help"> 
+							<div class="form-help">
 								<div class="remember-me">
 									<input type="checkbox" id="remember-me">
 									<label for="remember-me">Remember me</label>
@@ -2395,7 +2220,7 @@ func SeedLandingPages(db *gorm.DB) {
 						</form>
 						<p>New to Netflix? <a href="#">Sign up now</a></p>
 						<small>
-							This page is protected by Google reCAPTCHA to ensure you're not a bot. 
+							This page is protected by Google reCAPTCHA to ensure you're not a bot.
 							<a href="#">Learn more.</a>
 						</small>
 					</div>
