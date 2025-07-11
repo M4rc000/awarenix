@@ -38,6 +38,7 @@ type UserLoginResponse struct {
 	RoleName  string    `json:"role_name"`
 	Company   string    `json:"company"`
 	Country   string    `json:"country"`
+	IsActive  int       `json:"isActive"`
 	LastLogin time.Time `json:"last_login"`
 }
 

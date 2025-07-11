@@ -4,6 +4,7 @@ import (
 	"be-awarenix/models"
 	"encoding/json"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,13 +13,18 @@ import (
 
 // LogActivity mencatat aktivitas pengguna ke tabel activity_logs.
 // Menambahkan parameter 'db *gorm.DB' untuk menerima instance database.
-func LogActivity(db *gorm.DB, c *gin.Context, action, moduleName, recordID string, oldValue, newValue interface{}, status, errorMessage string) {
+func LogActivity(db *gorm.DB, c *gin.Context, action, moduleName, recordID string, oldValue, newValue interface{}, status, message string) {
 	// Mendapatkan ID pengguna dari konteks Gin (diasumsikan disetel oleh middleware JWTAuth)
 	var userID uint
 	if user, exists := c.Get("user"); exists {
 		if u, ok := user.(*models.User); ok {
 			userID = u.ID
 		}
+	}
+
+	if userID == 0 && action == "Login" {
+		userIDInt, _ := strconv.Atoi(recordID)
+		userID = uint(userIDInt)
 	}
 
 	// Mendapatkan IP Address dan User Agent
@@ -39,17 +45,17 @@ func LogActivity(db *gorm.DB, c *gin.Context, action, moduleName, recordID strin
 	}
 
 	logEntry := models.ActivityLog{
-		UserID:       userID,
-		Action:       action,
-		ModuleName:   moduleName,
-		RecordID:     recordID,
-		OldValue:     string(oldValueJSON),
-		NewValue:     string(newValueJSON),
-		Status:       status,       // Set status aksi
-		ErrorMessage: errorMessage, // Set pesan kesalahan
-		IPAddress:    ipAddress,
-		UserAgent:    userAgent,
-		Timestamp:    time.Now(),
+		UserID:     userID,
+		Action:     action,
+		ModuleName: moduleName,
+		RecordID:   recordID,
+		OldValue:   string(oldValueJSON),
+		NewValue:   string(newValueJSON),
+		Status:     status,  // Set status aksi
+		Message:    message, // Set pesan kesalahan
+		IPAddress:  ipAddress,
+		UserAgent:  userAgent,
+		Timestamp:  time.Now(),
 	}
 
 	// Simpan log ke database

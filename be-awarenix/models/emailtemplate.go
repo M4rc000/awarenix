@@ -35,7 +35,7 @@ type EmailTemplateInput struct {
 	Subject          string    `gorm:"not null" json:"subject"`
 	Body             string    `gorm:"null" json:"bodyEmail"`
 	TrackerImage     int       `gorm:"not null" json:"trackerImage"`
-	IsSystemTemplate string    `gorm:"null" json:"isSystemTemplate"`
+	IsSystemTemplate int       `gorm:"null" json:"isSystemTemplate"`
 	CreatedBy        int       `gorm:"null" json:"createdBy"`
 	CreatedAt        time.Time `gorm:"null" json:"createdAt"`
 }

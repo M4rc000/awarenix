@@ -43,8 +43,9 @@ func GetActivityLogs(c *gin.Context) {
 
 	query.Count(&total)
 
-	if err := query.Select(`activity_logs.*, user_name.name AS user_name`).
+	if err := query.Select(`activity_logs.*, user_name.name AS user_name, record_name.name as record_name`).
 		Joins(`LEFT JOIN users AS user_name ON user_name.id = activity_logs.user_id`).
+		Joins(`LEFT JOIN users AS record_name ON record_name.id = activity_logs.record_id`).
 		Offset(offset).
 		Limit(limit).
 		Order("timestamp DESC").

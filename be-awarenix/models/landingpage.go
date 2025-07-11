@@ -15,7 +15,7 @@ type LandingPage struct {
 type LandingPageInput struct {
 	Name             string    `gorm:"not null" json:"name"`
 	Body             string    `gorm:"not null" json:"body"`
-	IsSystemTemplate string    `gorm:"null" json:"isSystemTemplate"`
+	IsSystemTemplate int       `gorm:"null" json:"isSystemTemplate"`
 	CreatedBy        int       `gorm:"null" json:"createdBy"`
 	CreatedAt        time.Time `gorm:"null" json:"createdAt"`
 }

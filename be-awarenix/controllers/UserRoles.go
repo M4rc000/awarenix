@@ -7,7 +7,7 @@ import (
 
 	"be-awarenix/config"
 	"be-awarenix/models"
-	"be-awarenix/services" // Pastikan ini diimpor
+	"be-awarenix/services"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -19,7 +19,7 @@ func RegisterRole(c *gin.Context) {
 
 	// BIND & VALIDASI INPUT JSON
 	if err := c.ShouldBindJSON(&input); err != nil {
-		services.LogActivity(config.DB, c, "Create", "Role", "", nil, input, "error", "Invalid input: "+err.Error())
+		services.LogActivity(config.DB, c, "Create", "Role", "", nil, input, "failed", "Invalid input: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Invalid input",
@@ -31,7 +31,7 @@ func RegisterRole(c *gin.Context) {
 	// MULAI TRANSAKSI
 	tx := config.DB.Begin()
 	if tx.Error != nil {
-		services.LogActivity(config.DB, c, "Create", "Role", "", nil, input, "error", "Failed to start transaction: "+tx.Error.Error())
+		services.LogActivity(config.DB, c, "Create", "Role", "", nil, input, "failed", "Failed to start transaction: "+tx.Error.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to start database transaction",
@@ -53,7 +53,7 @@ func RegisterRole(c *gin.Context) {
 	if err := tx.Where("name = ?", input.Name).First(&existingRole).Error; err == nil {
 		// Jika role ditemukan, rollback transaksi dan kirim error
 		errorMessage := "Role with this name already exists"
-		services.LogActivity(config.DB, c, "Create", "Role", "", nil, input, "error", errorMessage)
+		services.LogActivity(config.DB, c, "Create", "Role", "", nil, input, "failed", errorMessage)
 		c.JSON(http.StatusConflict, gin.H{
 			"status":  "error",
 			"message": errorMessage,
@@ -65,7 +65,7 @@ func RegisterRole(c *gin.Context) {
 		return
 	} else if err != gorm.ErrRecordNotFound {
 		// Tangani error database selain record not found
-		services.LogActivity(config.DB, c, "Create", "Role", "", nil, input, "error", "Database error checking existing role: "+err.Error())
+		services.LogActivity(config.DB, c, "Create", "Role", "", nil, input, "failed", "Database error checking existing role: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to check existing role",
@@ -83,7 +83,7 @@ func RegisterRole(c *gin.Context) {
 
 	// SIMPAN KE DATABASE (menggunakan transaksi)
 	if err := tx.Create(&newRole).Error; err != nil {
-		services.LogActivity(config.DB, c, "Create", "Role", "", nil, newRole, "error", "Failed to create role in DB: "+err.Error())
+		services.LogActivity(config.DB, c, "Create", "Role", "", nil, newRole, "failed", "Failed to create role in DB: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to create role",
@@ -94,7 +94,7 @@ func RegisterRole(c *gin.Context) {
 
 	// COMMIT TRANSAKSI jika semua operasi berhasil
 	if err := tx.Commit().Error; err != nil {
-		services.LogActivity(config.DB, c, "Create", "Role", strconv.Itoa(int(newRole.ID)), nil, newRole, "error", "Failed to commit transaction: "+err.Error())
+		services.LogActivity(config.DB, c, "Create", "Role", strconv.Itoa(int(newRole.ID)), nil, newRole, "failed", "Failed to commit transaction: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to commit transaction",
@@ -112,7 +112,7 @@ func RegisterRole(c *gin.Context) {
 	}
 
 	// Log aktivitas sukses
-	services.LogActivity(config.DB, c, "Create", "Role", strconv.Itoa(int(newRole.ID)), nil, newRole, "success", "")
+	services.LogActivity(config.DB, c, "Create", "Role", strconv.Itoa(int(newRole.ID)), nil, newRole, "success", "Role created successfully")
 
 	// RESPONSE SUKSES
 	c.JSON(http.StatusCreated, gin.H{
@@ -160,7 +160,7 @@ func UpdateRole(c *gin.Context) {
 	// MULAI TRANSAKSI
 	tx := config.DB.Begin()
 	if tx.Error != nil {
-		services.LogActivity(config.DB, c, "Update", "Role", id, nil, nil, "error", "Failed to start transaction: "+tx.Error.Error())
+		services.LogActivity(config.DB, c, "Update", "Role", id, nil, nil, "failed", "Failed to start transaction: "+tx.Error.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Success": false,
 			"Message": "Failed to start transaction",
@@ -181,7 +181,7 @@ func UpdateRole(c *gin.Context) {
 	// Ambil data role sebelum diupdate untuk oldValue
 	var oldRoleValue models.Role
 	if err := tx.First(&role, id).Error; err != nil {
-		services.LogActivity(config.DB, c, "Update", "Role", id, nil, nil, "error", "Role not found for update: "+err.Error())
+		services.LogActivity(config.DB, c, "Update", "Role", id, nil, nil, "failed", "Role not found for update: "+err.Error())
 		c.JSON(http.StatusNotFound, gin.H{
 			"Success": false,
 			"Message": "Role not found",
@@ -193,7 +193,7 @@ func UpdateRole(c *gin.Context) {
 
 	var updatedData models.UpdateRoleInput
 	if err := c.ShouldBindJSON(&updatedData); err != nil {
-		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, nil, "error", "Invalid request for update: "+err.Error())
+		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, nil, "failed", "Invalid request for update: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Success": false,
 			"Message": "Invalid request",
@@ -205,7 +205,7 @@ func UpdateRole(c *gin.Context) {
 	// CEK APAKAH NAMA SUDAH DIPAKAI OLEH ROLE LAIN (menggunakan transaksi)
 	var existingRole models.Role
 	if err := tx.Where("name = ? AND id <> ?", updatedData.Name, id).First(&existingRole).Error; err == nil {
-		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, updatedData, "error", "Role name already taken by another role")
+		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, updatedData, "failed", "Role name already taken by another role")
 		c.JSON(http.StatusConflict, gin.H{
 			"status":  "error",
 			"message": "Role name already exists for another role",
@@ -216,7 +216,7 @@ func UpdateRole(c *gin.Context) {
 		})
 		return
 	} else if err != gorm.ErrRecordNotFound {
-		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, updatedData, "error", "Database error checking duplicate role name: "+err.Error())
+		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, updatedData, "failed", "Database error checking duplicate role name: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to check existing role name",
@@ -231,7 +231,7 @@ func UpdateRole(c *gin.Context) {
 	role.UpdatedBy = uint(updatedData.UpdatedBy)
 
 	if err := tx.Save(&role).Error; err != nil {
-		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, role, "error", "Failed to update role in DB: "+err.Error())
+		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, role, "failed", "Failed to update role in DB: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Success": false,
 			"Message": "Failed to update role",
@@ -242,7 +242,7 @@ func UpdateRole(c *gin.Context) {
 
 	// COMMIT TRANSAKSI jika semua operasi berhasil
 	if err := tx.Commit().Error; err != nil {
-		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, role, "error", "Failed to commit update transaction: "+err.Error())
+		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, role, "failed", "Failed to commit update transaction: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Success": false,
 			"Message": "Failed to commit transaction",
@@ -252,7 +252,7 @@ func UpdateRole(c *gin.Context) {
 	}
 
 	// Log aktivitas sukses
-	services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, role, "success", "")
+	services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, role, "success", "Role updated successfully")
 
 	c.JSON(http.StatusOK, gin.H{
 		"Success": true,
@@ -273,7 +273,7 @@ func DeleteRole(c *gin.Context) {
 	// Validate role ID
 	id, err := strconv.ParseUint(roleID, 10, 32)
 	if err != nil {
-		services.LogActivity(config.DB, c, "Delete", "Role", roleID, nil, nil, "error", "Invalid role ID format for delete: "+err.Error())
+		services.LogActivity(config.DB, c, "Delete", "Role", roleID, nil, nil, "failed", "Invalid role ID format for delete: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "Invalid role ID format",
@@ -286,7 +286,7 @@ func DeleteRole(c *gin.Context) {
 	var roleToDelete models.Role
 	if err := config.DB.First(&roleToDelete, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			services.LogActivity(config.DB, c, "Delete", "Role", roleID, nil, nil, "error", "Role not found for deletion: "+err.Error())
+			services.LogActivity(config.DB, c, "Delete", "Role", roleID, nil, nil, "failed", "Role not found for deletion: "+err.Error())
 			c.JSON(http.StatusNotFound, gin.H{
 				"success": false,
 				"message": "Role not found",
@@ -294,7 +294,7 @@ func DeleteRole(c *gin.Context) {
 			})
 			return
 		}
-		services.LogActivity(config.DB, c, "Delete", "Role", roleID, nil, nil, "error", "Database error checking role for deletion: "+err.Error())
+		services.LogActivity(config.DB, c, "Delete", "Role", roleID, nil, nil, "failed", "Database error checking role for deletion: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": "Database error",
@@ -306,7 +306,7 @@ func DeleteRole(c *gin.Context) {
 	// Start database transaction for safe deletion
 	tx := config.DB.Begin()
 	if tx.Error != nil {
-		services.LogActivity(config.DB, c, "Delete", "Role", roleID, nil, nil, "error", "Failed to start transaction for delete: "+tx.Error.Error())
+		services.LogActivity(config.DB, c, "Delete", "Role", roleID, nil, nil, "failed", "Failed to start transaction for delete: "+tx.Error.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": "Failed to start transaction",
@@ -325,7 +325,7 @@ func DeleteRole(c *gin.Context) {
 
 	// Hard Delete role (permanently remove from database)
 	if err := tx.Unscoped().Delete(&roleToDelete).Error; err != nil {
-		services.LogActivity(config.DB, c, "Delete", "Role", roleID, roleToDelete, nil, "error", "Failed to delete role from DB: "+err.Error())
+		services.LogActivity(config.DB, c, "Delete", "Role", roleID, roleToDelete, nil, "failed", "Failed to delete role from DB: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": "Failed to delete role",
@@ -335,7 +335,7 @@ func DeleteRole(c *gin.Context) {
 	}
 	// Commit transaction
 	if err := tx.Commit().Error; err != nil {
-		services.LogActivity(config.DB, c, "Delete", "Role", roleID, roleToDelete, nil, "error", "Failed to commit delete transaction: "+err.Error())
+		services.LogActivity(config.DB, c, "Delete", "Role", roleID, roleToDelete, nil, "failed", "Failed to commit delete transaction: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"message": "Failed to commit transaction",
@@ -345,7 +345,7 @@ func DeleteRole(c *gin.Context) {
 	}
 
 	// Log aktivitas sukses
-	services.LogActivity(config.DB, c, "Delete", "Role", roleID, roleToDelete, nil, "success", "")
+	services.LogActivity(config.DB, c, "Delete", "Role", roleID, roleToDelete, nil, "success", "Role deleted successfully")
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

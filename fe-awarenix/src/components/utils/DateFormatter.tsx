@@ -17,7 +17,7 @@ export const formatUserDate = (dateString: string | Date, locale = 'en-GB', time
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false, // 24-hour format
+    hour12: false, 
     timeZone: timeZone,
   });
 };

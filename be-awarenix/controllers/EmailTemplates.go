@@ -3,6 +3,7 @@ package controllers
 import (
 	"be-awarenix/config"
 	"be-awarenix/models"
+	"be-awarenix/services"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,6 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+const moduleNameEmailTemplate = "Email Template"
 
 // GET ALL DATA EMAIL TEMPLATE
 func GetEmailTemplates(c *gin.Context) {
@@ -75,15 +78,16 @@ func GetDefaultEmailTemplates(c *gin.Context) {
 	})
 }
 
-// SAVE NEW DATA EMAIL TEMPLATE
 func RegisterEmailTemplate(c *gin.Context) {
 	var input models.EmailTemplateInput
 
 	// Bind dan validasi input JSON
 	if err := c.ShouldBindJSON(&input); err != nil {
+		services.LogActivity(config.DB, c, "Create", moduleNameEmailTemplate, "", nil, input, "error", "Validation failed: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Validation failed",
-			"message": err.Error(),
+			"status":  "error",
+			"message": "Validation failed",
+			"data":    err.Error(),
 		})
 		return
 	}
@@ -93,19 +97,11 @@ func RegisterEmailTemplate(c *gin.Context) {
 	if err := config.DB.
 		Where("subject = ? AND envelope_sender = ?", input.Subject, input.EnvelopeSender).
 		First(&existingEmailTemplate).Error; err == nil {
+		services.LogActivity(config.DB, c, "Create", moduleNameEmailTemplate, "", nil, input, "error", "Email Template already exists with this Subject and Envelope Sender.")
 		c.JSON(http.StatusConflict, gin.H{
-			"error":   "Email Template already exists",
+			"status":  "error",
 			"message": "Email Template with this Subject and Envelope Sender already registered",
-		})
-		return
-	}
-
-	// Convert IsSystemTemplate from string to int
-	isSystemTemplateInt, err := strconv.Atoi(input.IsSystemTemplate)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid IsSystemTemplate value",
-			"message": "IsSystemTemplate must be a valid integer string",
+			"data":    nil,
 		})
 		return
 	}
@@ -117,51 +113,81 @@ func RegisterEmailTemplate(c *gin.Context) {
 		Subject:          input.Subject,
 		Body:             input.Body,
 		TrackerImage:     input.TrackerImage,
-		IsSystemTemplate: isSystemTemplateInt,
+		IsSystemTemplate: input.IsSystemTemplate,
 		CreatedAt:        time.Now(),
 		CreatedBy:        input.CreatedBy,
 	}
 
 	// SIMPAN KE DATABASE
 	if err := config.DB.Create(&newEmailTemplate).Error; err != nil {
+		services.LogActivity(config.DB, c, "Create", moduleNameEmailTemplate, "", nil, newEmailTemplate, "error", "Failed to create email template: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Database error",
+			"status":  "error",
 			"message": "Failed to create email template",
+			"data":    err.Error(),
 		})
 		return
 	}
 
 	// RESPONSE SUKSES
+	services.LogActivity(config.DB, c, "Create", moduleNameEmailTemplate, strconv.FormatUint(uint64(newEmailTemplate.ID), 10), nil, newEmailTemplate, "success", "Email Template created successfully")
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "Email Template created successfully",
+		"data":    newEmailTemplate, // Mengembalikan objek yang baru dibuat
 	})
 }
 
-// EDIT DATA EMAIL TEMPLATE
+// EDIT
 func UpdateEmailTemplate(c *gin.Context) {
-	id := c.Param("id")
-
-	var emailTemplate models.EmailTemplate
-	if err := config.DB.First(&emailTemplate, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"Success": false,
-			"Message": "Email template not found",
-			"Error":   err.Error(),
+	idParam := c.Param("id")
+	id, err := strconv.ParseUint(idParam, 10, 64) // Parse ke uint64 untuk konsistensi
+	if err != nil {
+		services.LogActivity(config.DB, c, "Update", moduleNameEmailTemplate, idParam, nil, nil, "failed", "Invalid Email Template ID format: "+err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid Email Template ID format",
+			"data":    err.Error(),
 		})
 		return
 	}
+
+	var emailTemplate models.EmailTemplate
+	if err := config.DB.First(&emailTemplate, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			services.LogActivity(config.DB, c, "Update", moduleNameEmailTemplate, idParam, nil, nil, "failed", "Email template not found.")
+			c.JSON(http.StatusNotFound, gin.H{
+				"status":  "error",
+				"message": "Email template not found",
+				"data":    nil,
+			})
+			return
+		}
+		services.LogActivity(config.DB, c, "Update", moduleNameEmailTemplate, idParam, nil, nil, "failed", "Failed to retrieve email template: "+err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to retrieve email template",
+			"data":    err.Error(),
+		})
+		return
+	}
+
+	oldEmailTemplate := emailTemplate // Salin data lama untuk logging
 
 	var updatedData models.EmailTemplateUpdate
 
 	if err := c.ShouldBindJSON(&updatedData); err != nil {
+		services.LogActivity(config.DB, c, "Update", moduleNameEmailTemplate, idParam, oldEmailTemplate, updatedData, "error", "Invalid request payload: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Success": false,
-			"Message": "Invalid request",
-			"Error":   err.Error(),
+			"status":  "error",
+			"message": "Invalid request",
+			"data":    err.Error(),
 		})
 		return
 	}
+
+	// Convert IsSystemTemplate from int32 to int
+	isSystemTemplateInt := int(updatedData.IsSystemTemplate)
 
 	emailTemplate.Name = updatedData.Name
 	emailTemplate.EnvelopeSender = updatedData.EnvelopSender
@@ -169,36 +195,39 @@ func UpdateEmailTemplate(c *gin.Context) {
 	emailTemplate.Body = updatedData.Body
 	emailTemplate.TrackerImage = updatedData.TrackerImage
 	emailTemplate.UpdatedBy = int(updatedData.UpdatedBy)
-	emailTemplate.IsSystemTemplate = int(updatedData.IsSystemTemplate)
+	emailTemplate.IsSystemTemplate = isSystemTemplateInt
 	emailTemplate.UpdatedAt = time.Now()
 
 	if err := config.DB.Save(&emailTemplate).Error; err != nil {
+		services.LogActivity(config.DB, c, "Update", moduleNameEmailTemplate, idParam, oldEmailTemplate, emailTemplate, "error", "Failed to update email template: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"Success": false,
-			"Message": "Failed to update email template",
-			"Error":   err.Error(),
+			"status":  "error",
+			"message": "Failed to update email template",
+			"data":    err.Error(),
 		})
 		return
 	}
 
+	services.LogActivity(config.DB, c, "Update", moduleNameEmailTemplate, idParam, oldEmailTemplate, emailTemplate, "success", "Email template updated successfully")
 	c.JSON(http.StatusOK, gin.H{
-		"Success": true,
-		"Message": "Email template updated successfully",
-		"Data":    emailTemplate,
+		"status":  "success",
+		"message": "Email template updated successfully",
+		"data":    emailTemplate,
 	})
 }
 
-// DELETE DATA EMAIL TEMPLATE
+// DELETE
 func DeleteEmailTemplate(c *gin.Context) {
-	emailTemplateID := c.Param("id")
+	emailTemplateIDParam := c.Param("id")
 
 	// VALIDATE EMAIL TEMPLATE ID
-	id, err := strconv.ParseUint(emailTemplateID, 10, 32)
+	id, err := strconv.ParseUint(emailTemplateIDParam, 10, 32)
 	if err != nil {
+		services.LogActivity(config.DB, c, "Delete", moduleNameEmailTemplate, emailTemplateIDParam, nil, nil, "failed", "Invalid Email Template ID format: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
+			"status":  "error",
 			"message": "Invalid Email Template ID format",
-			"error":   "Email Template ID must be a valid number",
+			"data":    "Email Template ID must be a valid number",
 		})
 		return
 	}
@@ -207,28 +236,33 @@ func DeleteEmailTemplate(c *gin.Context) {
 	var emailTemplateDelete models.EmailTemplate
 	if err := config.DB.First(&emailTemplateDelete, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
+			services.LogActivity(config.DB, c, "Delete", moduleNameEmailTemplate, emailTemplateIDParam, nil, nil, "failed", "Email Template not found.")
 			c.JSON(http.StatusNotFound, gin.H{
-				"success": false,
+				"status":  "error",
 				"message": "Email Template not found",
-				"error":   "The specified user does not exist",
+				"data":    "The specified email template does not exist",
 			})
 			return
 		}
+		services.LogActivity(config.DB, c, "Delete", moduleNameEmailTemplate, emailTemplateIDParam, nil, nil, "failed", "Database error when retrieving email template: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"status":  "error",
 			"message": "Database error",
-			"error":   err.Error(),
+			"data":    err.Error(),
 		})
 		return
 	}
 
+	oldEmailTemplateData := emailTemplateDelete // Salin data lama untuk logging
+
 	// START DB TRANSACTION FOR SAFE DELETION
 	tx := config.DB.Begin()
 	if tx.Error != nil {
+		services.LogActivity(config.DB, c, "Delete", moduleNameEmailTemplate, emailTemplateIDParam, oldEmailTemplateData, nil, "failed", "Failed to start transaction: "+tx.Error.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"status":  "error",
 			"message": "Failed to start transaction",
-			"error":   tx.Error.Error(),
+			"data":    tx.Error.Error(),
 		})
 		return
 	}
@@ -236,33 +270,36 @@ func DeleteEmailTemplate(c *gin.Context) {
 	// Hard Delete Email Template (permanently remove from database)
 	if err := tx.Unscoped().Delete(&emailTemplateDelete).Error; err != nil {
 		tx.Rollback()
+		services.LogActivity(config.DB, c, "Delete", moduleNameEmailTemplate, emailTemplateIDParam, oldEmailTemplateData, nil, "failed", "Failed to delete email template: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"status":  "error",
 			"message": "Failed to delete email template",
-			"error":   err.Error(),
+			"data":    err.Error(),
 		})
 		return
 	}
 
 	// Commit transaction
 	if err := tx.Commit().Error; err != nil {
+		services.LogActivity(config.DB, c, "Delete", moduleNameEmailTemplate, emailTemplateIDParam, oldEmailTemplateData, nil, "failed", "Failed to commit transaction: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
+			"status":  "error",
 			"message": "Failed to commit transaction",
-			"error":   err.Error(),
+			"data":    err.Error(),
 		})
 		return
 	}
 
+	services.LogActivity(config.DB, c, "Delete", moduleNameEmailTemplate, emailTemplateIDParam, oldEmailTemplateData, nil, "success", "Email template deleted successfully")
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"status":  "success",
 		"message": "Email template deleted successfully",
-		"data": gin.H{
-			"deleted_user": gin.H{
-				"id":            emailTemplateDelete.ID,
-				"name":          emailTemplateDelete.Name,
-				"envelopSender": emailTemplateDelete.EnvelopeSender,
-				"subject":       emailTemplateDelete.Subject,
+		"data": gin.H{ // Mengembalikan data yang dihapus untuk konfirmasi
+			"deleted_template": gin.H{
+				"id":             emailTemplateDelete.ID,
+				"name":           emailTemplateDelete.Name,
+				"envelopeSender": emailTemplateDelete.EnvelopeSender,
+				"subject":        emailTemplateDelete.Subject,
 			},
 		},
 	})
