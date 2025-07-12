@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Search, Filter, Download, AlertCircle, CheckCircle, XCircle, Clock, User, Settings, Eye, RefreshCw, Database, Edit, Plus, Trash2, Globe, EyeOff, Activity } from 'lucide-react'; // Import EyeOff
+import { Search, Filter, Download, AlertCircle, CheckCircle, XCircle, Mails ,Clock, User, Settings, Eye, RefreshCw, Database, Edit, Plus, Trash2, Globe, EyeOff, Activity } from 'lucide-react'; // Import EyeOff
 import { formatUserDate } from '../../components/utils/DateFormatter';
 
 type Activity = {
@@ -177,6 +177,8 @@ const LoggingActivity = () => {
       'Settings': Settings,
       'Config': Settings,
       'Refresh': RefreshCw,
+      'Send Email': Mails,
+      'Send Test Email': Mails,
     };
     
     const IconComponent = iconMap[action as keyof typeof iconMap] || Database;
@@ -185,11 +187,11 @@ const LoggingActivity = () => {
 
   // Get status badge
   const getStatusBadge = useCallback((status: string) => {
-    type StatusType = 'success' | 'failed' | 'pending' | 'unknown';
+    type StatusType = 'success' | 'failed' | 'warning' | 'unknown';
     const statusConfig: Record<StatusType, { icon: typeof CheckCircle | typeof XCircle | typeof Clock; color: string; label: string }> = {
       success: { icon: CheckCircle, color: 'text-emerald-600 bg-emerald-100 border-emerald-200', label: 'Success' },
       failed: { icon: XCircle, color: 'text-red-600 bg-red-50 border-red-200', label: 'Failed' },
-      pending: { icon: Clock, color: 'text-yellow-600 bg-yellow-50 border-yellow-200', label: 'Pending' },
+      warning: { icon: Clock, color: 'text-yellow-600 bg-yellow-50 border-yellow-200', label: 'Pending' },
       unknown: { icon: Clock, color: 'text-gray-600 bg-gray-50 border-gray-200', label: 'Unknown' }
     };
 
@@ -210,6 +212,8 @@ const LoggingActivity = () => {
       'Update': 'border-l-blue-400 dark:border-l-blue-400',
       'Delete': 'border-l-red-400 dark:border-l-red-400',
       'Login': 'border-l-green-400 dark:border-l-green-400',
+      'Send Email': 'border-l-amber-400 dark:border-l-amber-400',
+      'Send Test Email': 'border-l-amber-400 dark:border-l-amber-400',
     };
     return colors[action as keyof typeof colors] || 'border-l-gray-400';
   }, []);
@@ -224,6 +228,8 @@ const LoggingActivity = () => {
       'Settings': 'bg-gray-100 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400',
       'Config': 'bg-gray-100 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400',
       'Refresh': 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
+      'Send Email': 'bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
+      'Send Test Email': 'bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
     };
     return colors[action as keyof typeof colors] || 'bg-gray-100 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400';
   }, []);
@@ -357,6 +363,8 @@ const LoggingActivity = () => {
                     className="w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
                   >
                     <option value="all">All Actions</option>
+                    <option value="Send Email">Create</option>
+                    <option value="Send Test Email">Create</option>
                     <option value="Create">Create</option>
                     <option value="Update">Update</option>
                     <option value="Delete">Delete</option>
@@ -509,6 +517,28 @@ const LoggingActivity = () => {
                                   : 'text-emerald-600 bg-white border-emerald-500 dark:text-green-700 dark:bg-gray-900 dark:border-green-900'}`}>
                                   <span className="font-semibold">Details:</span> {activity.message}
                                 </p>
+                              </div>
+                            )}
+                            
+                            {/* Send Test Email or Send Email */}
+                            {(activity.action == 'Send Test Email' || activity.action == "Send Email") && activity.old_value && (
+                              <div className={`rounded-lg border ${activity.status === "success" ? "bg-green-50 dark:bg-gray-900 border-green-200 dark:border-green-700" : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700"}`}>
+                                <div className={`p-2 border-b rounded-tr-lg rounded-tl-lg ${activity.status === "success"
+                                  ? "border-green-200 dark:border-green-700 dark:bg-gray-900 bg-green-100"
+                                  : "border-red-200 dark:border-red-700 dark:bg-gray-900 bg-red-100"}`}>
+                                  <h4 className={`text-xs font-semibold ${activity.status === "success"
+                                    ? "text-emerald-900 dark:text-green-700"
+                                    : "text-red-900 dark:text-red-700"}`}>
+                                    Send Data
+                                  </h4>
+                                </div>
+                                <div className="p-2 bg-white dark:bg-gray-900 rounded-bl-lg rounded-br-lg">
+                                  <pre className={`text-xs whitespace-pre-wrap break-words max-h-32 overflow-y-auto ${activity.status === "success"
+                                    ? "text-green-700 dark:text-green-300"
+                                    : "text-red-700 dark:text-red-300"}`}>
+                                    {formatJsonForDisplay(parseJsonSafely(activity.old_value))}
+                                  </pre>
+                                </div>
                               </div>
                             )}
                             

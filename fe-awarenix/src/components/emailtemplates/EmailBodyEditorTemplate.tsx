@@ -177,6 +177,9 @@ const EmailBodyEditorTemplate = ({
       // Jika "Custom" dipilih, biarkan pengguna mengedit manual.
       // Anda bisa setHtmlContent('') jika ingin mengosongkan editor saat memilih "Custom".
       setHtmlContent(""); // Mengosongkan editor saat memilih "Custom"
+      if (onBodyChange) {
+        onBodyChange(""); // Beri tahu parent bahwa konten dikosongkan
+      }
       return;
     }
 
@@ -184,8 +187,12 @@ const EmailBodyEditorTemplate = ({
     const template = availableTemplates.find(t => t.name === newTemplateName);
     if (template) {
       // Terapkan penggantian link saat memilih template bawaan
-      const processedContent = replaceLinksWithUrlPlaceholder(template.content);
-      setHtmlContent(processedContent);
+      // const processedContent = replaceLinksWithUrlPlaceholder(template.content);
+      // setHtmlContent(processedContent);
+      setHtmlContent(template.content); // Perbarui state internal
+      if (onBodyChange) {
+        onBodyChange(template.content); // Beri tahu parent tentang perubahan konten
+      }
     }
   };
 

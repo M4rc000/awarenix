@@ -12,14 +12,17 @@ import (
 	"gorm.io/gorm"
 )
 
+const moduleNameSendingProfile = "Sending Profile"
+
 // CREATE
 func RegisterSendingProfile(c *gin.Context) {
 	var input models.CreateSendingProfileRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
+		services.LogActivity(config.DB, c, "Create", moduleNameSendingProfile, "", nil, input, "failed", "Invalid request body: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Status":  "error",
-			"Message": "Invalid request body: " + err.Error(),
-			"Data":    nil,
+			"status":  "error",
+			"message": "Invalid request body: " + err.Error(),
+			"data":    nil,
 		})
 		return
 	}
@@ -28,13 +31,13 @@ func RegisterSendingProfile(c *gin.Context) {
 	var existingSendingProfiles models.SendingProfiles
 	checkDuplicate := config.DB.Where("name = ?", input.Name).First(&existingSendingProfiles)
 	if checkDuplicate.Error == nil {
+		services.LogActivity(config.DB, c, "Create", moduleNameSendingProfile, "", nil, input, "failed", "Sending profile with this name already exists.")
 		c.JSON(http.StatusConflict, gin.H{
 			"status":  "error",
 			"message": "Sending profile with this name already exists",
 			"data":    nil,
 		})
 		return
-
 	}
 
 	sendingProfile := models.SendingProfiles{
@@ -72,10 +75,11 @@ func RegisterSendingProfile(c *gin.Context) {
 	})
 
 	if err != nil {
+		services.LogActivity(config.DB, c, "Create", moduleNameSendingProfile, "", nil, sendingProfile, "failed", "Failed to create sending profile and headers: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"Status":  "error",
-			"Message": "Failed to create sending profile and headers: " + err.Error(),
-			"Data":    nil,
+			"status":  "error",
+			"message": "Failed to create sending profile and headers: " + err.Error(),
+			"data":    nil,
 		})
 		return
 	}
@@ -84,10 +88,11 @@ func RegisterSendingProfile(c *gin.Context) {
 	// Pastikan sendingProfile di-preload sebelum dikirim sebagai respons
 	config.DB.Preload("EmailHeaders").First(&sendingProfile, sendingProfile.ID)
 
+	services.LogActivity(config.DB, c, "Create", moduleNameSendingProfile, strconv.FormatUint(uint64(sendingProfile.ID), 10), nil, sendingProfile, "success", "Sending profile created successfully")
 	c.JSON(http.StatusCreated, gin.H{
-		"Status":  "success",
-		"Message": "Sending profile created successfully",
-		"Data":    sendingProfile,
+		"status":  "success",
+		"message": "Sending profile created successfully",
+		"data":    sendingProfile,
 	})
 }
 
@@ -161,10 +166,10 @@ func GetEmailHeaderDetail(c *gin.Context) {
 	})
 }
 
-// UPDATE
 func UpdateSendingProfile(c *gin.Context) {
 	idStr := c.Param("id")
 	if idStr == "" {
+		services.LogActivity(config.DB, c, "Update", moduleNameSendingProfile, "", nil, nil, "failed", "ID parameter is required for update.")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "ID parameter is required",
@@ -175,6 +180,7 @@ func UpdateSendingProfile(c *gin.Context) {
 
 	var requestBody models.UpdateSendingProfileRequest
 	if err := c.ShouldBindJSON(&requestBody); err != nil {
+		services.LogActivity(config.DB, c, "Update", moduleNameSendingProfile, idStr, nil, requestBody, "failed", "Invalid request payload: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": err.Error(),
@@ -184,11 +190,11 @@ func UpdateSendingProfile(c *gin.Context) {
 	}
 
 	var sendingProfile models.SendingProfiles
-
 	result := config.DB.First(&sendingProfile, idStr)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
+			services.LogActivity(config.DB, c, "Update", moduleNameSendingProfile, idStr, nil, requestBody, "failed", "Sending profile not found.")
 			c.JSON(http.StatusNotFound, gin.H{
 				"status":  "error",
 				"message": "Sending profile not found",
@@ -196,7 +202,7 @@ func UpdateSendingProfile(c *gin.Context) {
 			})
 			return
 		}
-
+		services.LogActivity(config.DB, c, "Update", moduleNameSendingProfile, idStr, nil, requestBody, "failed", "Failed to retrieve sending profile: "+result.Error.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to retrieve sending profile",
@@ -204,6 +210,8 @@ func UpdateSendingProfile(c *gin.Context) {
 		})
 		return
 	}
+
+	oldSendingProfile := sendingProfile // Salin data lama untuk logging
 
 	// UPDATE DATA
 	updates := make(map[string]interface{})
@@ -221,6 +229,7 @@ func UpdateSendingProfile(c *gin.Context) {
 
 	// Lakukan update di database
 	if result := config.DB.Model(&sendingProfile).Updates(updates); result.Error != nil {
+		services.LogActivity(config.DB, c, "Update", moduleNameSendingProfile, idStr, oldSendingProfile, updates, "failed", "Failed to update sending profile details: "+result.Error.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to update sending profile",
@@ -229,6 +238,10 @@ func UpdateSendingProfile(c *gin.Context) {
 		return
 	}
 
+	// Muat ulang sendingProfile untuk mendapatkan data terbaru setelah update
+	config.DB.First(&sendingProfile, idStr)
+
+	services.LogActivity(config.DB, c, "Update", moduleNameSendingProfile, idStr, oldSendingProfile, sendingProfile, "success", "Sending profile updated successfully")
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Sending profile updated successfully",
@@ -236,23 +249,29 @@ func UpdateSendingProfile(c *gin.Context) {
 	})
 }
 
-// UPDATE EMAIL HEADERS
+// UPDATE
 func UpdateEmailHeadersForProfile(c *gin.Context) {
 	profileIDStr := c.Param("id")
 	profileID, err := strconv.ParseUint(profileIDStr, 10, 32)
 	if err != nil {
+		services.LogActivity(config.DB, c, "Update Email Headers", moduleNameSendingProfile, profileIDStr, nil, nil, "failed", "Invalid profile ID format: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid profile ID", "data": nil})
 		return
 	}
 
 	var newHeaders []models.EmailHeader
 	if err := c.ShouldBindJSON(&newHeaders); err != nil {
+		services.LogActivity(config.DB, c, "Update Email Headers", moduleNameSendingProfile, profileIDStr, nil, newHeaders, "failed", "Invalid request payload: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error(), "data": nil})
 		return
 	}
 
+	var oldHeaders []models.EmailHeader
+	config.DB.Where("sending_profile_id = ?", profileID).Find(&oldHeaders) // Ambil header lama untuk logging
+
 	// Hapus semua header lama untuk profile ini
 	if err := config.DB.Where("sending_profile_id = ?", profileID).Delete(&models.EmailHeader{}).Error; err != nil {
+		services.LogActivity(config.DB, c, "Update Email Headers", moduleNameSendingProfile, profileIDStr, oldHeaders, newHeaders, "failed", "Failed to clear old headers: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to clear old headers", "data": nil})
 		return
 	}
@@ -263,13 +282,17 @@ func UpdateEmailHeadersForProfile(c *gin.Context) {
 			newHeaders[i].SendingProfileID = uint(profileID)
 			newHeaders[i].CreatedAt = time.Now()
 			newHeaders[i].UpdatedAt = time.Now()
+			// Jika UpdatedBy tidak disediakan di input, gunakan CreatedBy dari SendingProfile atau default
+			// newHeaders[i].UpdatedBy = someUserDefinedID // Perlu diisi jika ada
 		}
 		if err := config.DB.Create(&newHeaders).Error; err != nil {
+			services.LogActivity(config.DB, c, "Update Email Headers", moduleNameSendingProfile, profileIDStr, oldHeaders, newHeaders, "failed", "Failed to add new headers: "+err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to add new headers: " + err.Error(), "data": nil})
 			return
 		}
 	}
 
+	services.LogActivity(config.DB, c, "Update Email Headers", moduleNameSendingProfile, profileIDStr, oldHeaders, newHeaders, "success", "Email headers updated successfully")
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Email headers updated successfully", "data": newHeaders})
 }
 
@@ -280,6 +303,7 @@ func DeleteSendingProfile(c *gin.Context) {
 	// VALIDATE Sending Profile ID
 	sendingProfileID, err := strconv.ParseUint(sendingProfileIDStr, 10, 32)
 	if err != nil {
+		services.LogActivity(config.DB, c, "Delete", moduleNameSendingProfile, sendingProfileIDStr, nil, nil, "failed", "Invalid Sending Profile ID format: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Invalid Sending Profile ID format. ID must be a valid number.",
@@ -288,26 +312,11 @@ func DeleteSendingProfile(c *gin.Context) {
 		return
 	}
 
-	err = config.DB.Transaction(func(tx *gorm.DB) error {
-		// 1. Hapus Email Headers terkait terlebih dahulu
-		if result := tx.Unscoped().Where("sending_profile_id = ?", sendingProfileID).Delete(&models.EmailHeader{}); result.Error != nil {
-			return result.Error
-		}
-
-		// 2. Hapus Sending Profile
-		var sendingProfileToDelete models.SendingProfiles
-		if result := tx.Unscoped().First(&sendingProfileToDelete, sendingProfileID); result.Error != nil {
-			return result.Error
-		}
-
-		if result := tx.Unscoped().Delete(&sendingProfileToDelete); result.Error != nil {
-			return result.Error
-		}
-		return nil
-	})
-
-	if err != nil {
+	var sendingProfileToDelete models.SendingProfiles
+	// Ambil data sending profile dan headers terkait sebelum dihapus untuk logging
+	if err := config.DB.Preload("EmailHeaders").First(&sendingProfileToDelete, sendingProfileID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
+			services.LogActivity(config.DB, c, "Delete", moduleNameSendingProfile, sendingProfileIDStr, nil, nil, "failed", "Sending Profile not found for deletion.")
 			c.JSON(http.StatusNotFound, gin.H{
 				"status":  "error",
 				"message": "Sending Profile not found. The specified profile does not exist.",
@@ -315,7 +324,32 @@ func DeleteSendingProfile(c *gin.Context) {
 			})
 			return
 		}
+		services.LogActivity(config.DB, c, "Delete", moduleNameSendingProfile, sendingProfileIDStr, nil, nil, "failed", "Failed to retrieve sending profile for deletion: "+err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to retrieve sending profile for deletion.",
+			"data":    nil,
+		})
+		return
+	}
 
+	oldSendingProfileData := sendingProfileToDelete // Salin data lama untuk logging
+
+	err = config.DB.Transaction(func(tx *gorm.DB) error {
+		// 1. Hapus Email Headers terkait terlebih dahulu
+		if result := tx.Unscoped().Where("sending_profile_id = ?", sendingProfileID).Delete(&models.EmailHeader{}); result.Error != nil {
+			return result.Error
+		}
+
+		// 2. Hapus Sending Profile
+		if result := tx.Unscoped().Delete(&sendingProfileToDelete); result.Error != nil {
+			return result.Error
+		}
+		return nil
+	})
+
+	if err != nil {
+		services.LogActivity(config.DB, c, "Delete", moduleNameSendingProfile, sendingProfileIDStr, oldSendingProfileData, nil, "failed", "Failed to delete sending profile and its associated headers: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to delete sending profile and its associated headers: " + err.Error(),
@@ -325,6 +359,7 @@ func DeleteSendingProfile(c *gin.Context) {
 	}
 
 	// SUCCESS RESPONSE
+	services.LogActivity(config.DB, c, "Delete", moduleNameSendingProfile, sendingProfileIDStr, oldSendingProfileData, nil, "success", "Sending profile and associated headers deleted successfully.")
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Sending profile and associated headers deleted successfully.",
@@ -338,7 +373,10 @@ func DeleteSendingProfile(c *gin.Context) {
 func SendTestEmail(c *gin.Context) {
 	var req models.SendTestEmailRequest
 	var existingSendingProfiles models.SendingProfiles
+
+	// Log activity for initial request binding
 	if err := c.ShouldBindJSON(&req); err != nil {
+		services.LogActivity(config.DB, c, "Send Test Email", moduleNameSendingProfile, "", nil, req, "failed", "Invalid request body: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": err.Error(),
@@ -347,9 +385,12 @@ func SendTestEmail(c *gin.Context) {
 		return
 	}
 
+	// If password is not provided in request, retrieve it from existing profile
 	if req.SendingProfile.Password == "" {
 		result := config.DB.Where("id = ?", req.SendingProfile.ID).First(&existingSendingProfiles)
 		if result.Error != nil {
+			logMessage := "Sending profile not found for test email: " + result.Error.Error()
+			services.LogActivity(config.DB, c, "Send Test Email", moduleNameSendingProfile, strconv.FormatUint(uint64(req.SendingProfile.ID), 10), nil, req, "failed", logMessage)
 			c.JSON(http.StatusNotFound, gin.H{
 				"status":  "error",
 				"message": "Sending profile not found",
@@ -357,7 +398,6 @@ func SendTestEmail(c *gin.Context) {
 			})
 			return
 		}
-
 		req.SendingProfile.Password = existingSendingProfiles.Password
 	}
 
@@ -371,22 +411,27 @@ func SendTestEmail(c *gin.Context) {
 		EmailHeaders:  req.SendingProfile.EmailHeaders,
 	}
 
+	// Call the service to send the email
 	err := services.SendTestEmail(
 		&sendingProfile,
 		req.Recipient.Email,
 		req.EmailBody,
-		"Test Email from Awakenix",
+		"Test Email from Awakenix", // Subject
 	)
 
 	if err != nil {
+		logMessage := "Failed to send test email: " + err.Error()
+		services.LogActivity(config.DB, c, "Send Test Email", moduleNameSendingProfile, strconv.FormatUint(uint64(req.SendingProfile.ID), 10), req, nil, "failed", logMessage)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
-			"message": "Failed to send test email: " + err.Error(),
+			"message": logMessage,
 			"data":    nil,
 		})
 		return
 	}
 
+	// Log activity for successful test email send
+	services.LogActivity(config.DB, c, "Send Test Email", moduleNameSendingProfile, strconv.FormatUint(uint64(req.SendingProfile.ID), 10), req, nil, "success", "Test email sent successfully to "+req.Recipient.Email)
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Test email sent successfully!",
