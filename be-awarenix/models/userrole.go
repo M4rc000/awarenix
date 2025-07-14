@@ -12,6 +12,26 @@ type Role struct {
 	UpdatedAt time.Time `gorm:"type:datetime;null" json:"updatedAt"`
 }
 
+type RoleMenuAccess struct {
+	ID        uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	RoleID    uint      `gorm:"not null" json:"roleId"`
+	Role      Role      `gorm:"foreignKey:RoleID" json:"-"`
+	MenuID    uint      `gorm:"not null" json:"menuId"`
+	Menu      Menu      `gorm:"foreignKey:MenuID" json:"-"`
+	CreatedAt time.Time `gorm:"type:datetime;null" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"type:datetime;null" json:"updatedAt"`
+}
+
+type RoleSubmenuAccess struct {
+	ID        uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	RoleID    uint      `gorm:"not null" json:"roleId"`
+	Role      Role      `gorm:"foreignKey:RoleID" json:"-"`
+	SubmenuID uint      `gorm:"not null" json:"submenuId"`
+	Submenu   Submenu   `gorm:"foreignKey:SubmenuID" json:"-"`
+	CreatedAt time.Time `gorm:"type:datetime;null" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"type:datetime;null" json:"updatedAt"` // Perbaiki tag gorm di sini, dari updatedBy menjadi updatedAt
+}
+
 type RoleResponse struct {
 	ID        uint      `json:"id"`
 	Name      string    `json:"name"`

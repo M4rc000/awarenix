@@ -6,6 +6,7 @@ import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
 import { useUserSession } from "../context/UserSessionContext";
+import { fetchUserPermissions } from "../../services/menuServices";
 import Swal from "../utils/AlertContainer";
 
 type LoginErrors = {
@@ -21,9 +22,9 @@ export default function SignInForm() {
   const [isChecked, setIsChecked] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Signing in...");
   const navigate = useNavigate();
   const { setUser } = useUserSession();
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,11 +39,16 @@ export default function SignInForm() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, status: isChecked ? "KeepMeLoggedIn" : "", }),
+          body: JSON.stringify({ 
+            email, 
+            password, 
+            status: isChecked ? "KeepMeLoggedIn" : "", 
+          }),
         }
       );
 
       const body = await res.json();
+      
       // validation / credentials error
       if (res.status === 400 || res.status === 401 || res.status == 500) {
         if (body.errors) {
@@ -63,19 +69,62 @@ export default function SignInForm() {
         throw new Error("Server error");
       }
 
-      // SAVE DATA LOGIN (SESSION)
+      // SAVE TOKEN AND EXPIRY
       localStorage.setItem("token", body.token);
       localStorage.setItem("token_expired", body.expires_at);
-      localStorage.setItem("user", JSON.stringify(body.user));
-      setUser(body.user);
-      navigate('/dashboard');
+
+      // PREPARE USER DATA
+      const userData = {
+        id: body.user.id,
+        name: body.user.name,
+        email: body.user.email,
+        role: body.user.role,
+        role_name: body.user.role_name,
+        position: body.user.position,
+        company: body.user.company,
+        country: body.user.country,
+        last_login: body.user.last_login,
+      };
+
+      // FETCH PERMISSIONS AND SAVE COMPLETE USER DATA
+      if (userData.role_name) {
+        try {
+          // Show loading indicator saat fetch permissions
+          setLoadingMessage("Loading permissions...");
+          const permissions = await fetchUserPermissions(userData.role_name);
+          
+          const userWithPermissions = {
+            ...userData,
+            allowed_menus: permissions.allowed_menus,
+            allowed_submenus: permissions.allowed_submenus,
+          };
+          
+          // Save complete user data dengan permissions
+          localStorage.setItem("user", JSON.stringify(userWithPermissions));
+          setUser(userWithPermissions);
+          
+          // Navigate ke dashboard setelah permissions berhasil di-fetch
+          navigate('/dashboard');
+          
+        } catch (permissionError) {
+          console.error('Error fetching permissions during login:', permissionError);
+          
+          // Fallback: simpan user tanpa permissions
+          localStorage.setItem("user", JSON.stringify(userData));
+          setUser(userData);
+          
+          // Tetap navigate ke dashboard, permissions akan di-fetch di UserSessionContext
+          navigate('/dashboard');
+        }
+      } else {
+        // Jika tidak ada role_name, simpan user tanpa permissions
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+        navigate('/dashboard');
+      }
+      
     } catch (err: unknown) {
       console.error(err);
-      // let errorMessage = "Login gagal";
-      // if (err instanceof Error) {
-      //   errorMessage = err.message;
-      // }
-      // setErrors({ general: errorMessage });
       Swal.fire({
         text: 'Login failed',
         icon: 'error',
@@ -83,6 +132,7 @@ export default function SignInForm() {
       });
     } finally {
       setLoading(false);
+      setLoadingMessage("Signing in...");
     }
   };
 
@@ -172,7 +222,7 @@ export default function SignInForm() {
               size="sm"
               disabled={loading}
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? loadingMessage : "Sign in"}
             </Button>
           </form>
         </div>

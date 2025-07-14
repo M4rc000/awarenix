@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func SeedUsers(db *gorm.DB) {
@@ -170,12 +171,12 @@ func SeedMenus(db *gorm.DB) {
 }
 
 func SeedSubmenus(db *gorm.DB) {
-	rolesToMenu := []models.Submenu{
+	submenusData := []models.Submenu{
 		{
 			MenuID:    1,
 			Name:      "Dashboard",
 			Icon:      "GridIcon",
-			Url:       "/admin/dashboard",
+			Url:       "/dashboard", // Perbaiki URL agar sesuai dengan frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -184,9 +185,9 @@ func SeedSubmenus(db *gorm.DB) {
 		},
 		{
 			MenuID:    1,
-			Name:      "Campaign",
+			Name:      "Campaign", // Sesuaikan dengan nama di frontend
 			Icon:      "CalenderIcon",
-			Url:       "/admin/campaign",
+			Url:       "/campaigns", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -197,18 +198,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "Role Management",
 			Icon:      "FaUserCog",
-			Url:       "/admin/role-management",
-			IsActive:  1,
-			CreatedAt: time.Now(),
-			CreatedBy: 0,
-			UpdatedAt: time.Now(),
-			UpdatedBy: 0,
-		},
-		{
-			MenuID:    1,
-			Name:      "Role Management",
-			Icon:      "FaUserCog",
-			Url:       "/admin/role-management",
+			Url:       "/role-management", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -219,7 +209,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "User Management",
 			Icon:      "User",
-			Url:       "/admin/user-management",
+			Url:       "/user-management", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -230,7 +220,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "Groups & Members",
 			Icon:      "GroupIcon",
-			Url:       "/admin/groups-members",
+			Url:       "/groups-members", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -241,7 +231,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "Email Templates",
 			Icon:      "MailIcon",
-			Url:       "/admin/email-templates",
+			Url:       "/email-templates", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -252,7 +242,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "Landing Pages",
 			Icon:      "TableIcon",
-			Url:       "/admin/landing-pages",
+			Url:       "/landing-pages", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -263,7 +253,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "Sending Profiles",
 			Icon:      "UserIcon",
-			Url:       "/admin/sending-profiles",
+			Url:       "/sending-profiles", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -274,7 +264,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    2,
 			Name:      "Phishing Emails",
 			Icon:      "MdOutlineAttachEmail",
-			Url:       "/phishing-simulation/phishing-emails",
+			Url:       "/phishing-emails", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -285,7 +275,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    2,
 			Name:      "Phishing Websites",
 			Icon:      "CgWebsite",
-			Url:       "/phishing-simulation/phishing-websites",
+			Url:       "/phishing-websites", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -296,7 +286,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    2,
 			Name:      "Training Modules",
 			Icon:      "IoIosBookmarks",
-			Url:       "/phishing-simulation/training-modules",
+			Url:       "/training-modules", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -307,7 +297,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    3,
 			Name:      "Account Settings",
 			Icon:      "IoSettingsOutline",
-			Url:       "/user/account-settings",
+			Url:       "/account-settings", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -316,9 +306,9 @@ func SeedSubmenus(db *gorm.DB) {
 		},
 		{
 			MenuID:    3,
-			Name:      "Subscription & Billing",
+			Name:      "Subscription & Billing", // Sesuaikan dengan nama di frontend
 			Icon:      "FaMoneyCheckAlt",
-			Url:       "/user/subscription-billing",
+			Url:       "/subscription-billing", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -329,7 +319,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    4,
 			Name:      "Logging Activity",
 			Icon:      "IoFootstepsOutline",
-			Url:       "/logging-monitoring/logging-activity",
+			Url:       "/logging-activity", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -338,9 +328,9 @@ func SeedSubmenus(db *gorm.DB) {
 		},
 		{
 			MenuID:    4,
-			Name:      "Environtment Check",
+			Name:      "Environtment Check", // Sesuaikan dengan nama di frontend
 			Icon:      "DiEnvato",
-			Url:       "/logging-monitoring/environment-check",
+			Url:       "/environtment-check", // Sesuaikan dengan URL di frontend
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -349,23 +339,25 @@ func SeedSubmenus(db *gorm.DB) {
 		},
 	}
 
-	for _, submenuData := range rolesToMenu {
-		var existingRole models.Submenu
-		err := db.Where("name = ?", submenuData.Name).First(&existingRole).Error
+	for _, submenuData := range submenusData {
+		// Menggunakan Upsert: Jika record dengan 'name' DAN 'url' yang sama sudah ada,
+		// maka update kolom-kolom lain. Jika tidak, insert baru.
+		err := db.Clauses(clause.OnConflict{
+			// Kriteria unik sekarang adalah kombinasi 'name' dan 'url'
+			Columns: []clause.Column{{Name: "name"}, {Name: "url"}}, // Perubahan di sini
+			DoUpdates: clause.Assignments(map[string]interface{}{
+				"menu_id":    submenuData.MenuID,
+				"icon":       submenuData.Icon, // Tambahkan update untuk icon juga
+				"is_active":  submenuData.IsActive,
+				"updated_at": time.Now(),
+				"updated_by": 0, // Atau user ID yang sesuai
+			}),
+		}).Create(&submenuData).Error
 
-		if err != nil && err == gorm.ErrRecordNotFound {
-			log.Printf("Seeding role '%s'...", submenuData.Name)
-
-			// Buat role di database
-			if err := db.Create(&submenuData).Error; err != nil {
-				log.Fatalf("Failed to seed role '%s': %v", submenuData.Name, err)
-			}
-			log.Printf("Role '%s' seeded successfully.", submenuData.Name)
-
-		} else if err != nil {
-			log.Fatalf("Error checking for role '%s': %v", submenuData.Name, err)
+		if err != nil {
+			log.Fatalf("Failed to upsert submenu '%s' (URL: %s): %v", submenuData.Name, submenuData.Url, err)
 		} else {
-			log.Printf("Role with name '%s' already exists. Seeder skipped.", submenuData.Name)
+			log.Printf("Submenu '%s' (URL: %s) upserted successfully.", submenuData.Name, submenuData.Url)
 		}
 	}
 }
@@ -2584,4 +2576,215 @@ func SeedLandingPages(db *gorm.DB) {
 			log.Printf("Landing page with name '%s' already exists. Seeder skipped.", landingPageData.Name)
 		}
 	}
+}
+
+func SeedRoleMenuAccess(db *gorm.DB) {
+	log.Println("Seeding Role Menu Access...")
+
+	superAdminRoleID, err := getRoleIDByName(db, "Super Admin")
+	if err != nil {
+		log.Fatalf("Error getting Super Admin Role ID: %v", err)
+	}
+	adminRoleID, err := getRoleIDByName(db, "Admin")
+	if err != nil {
+		log.Fatalf("Error getting Admin Role ID: %v", err)
+	}
+	engineerRoleID, err := getRoleIDByName(db, "Engineer")
+	if err != nil {
+		log.Fatalf("Error getting Engineer Role ID: %v", err)
+	}
+
+	// Definisi menu UTAMA yang diakses oleh setiap peran
+	// Mengacu pada kolom `name` di tabel `menus` Anda.
+	menuAccessRules := map[uint][]string{
+		superAdminRoleID: {
+			"Admin",
+			"Phishing Simulation",
+			"User",
+			"Logging & Monitoring",
+		},
+		adminRoleID: {
+			"Admin",
+			"Phishing Simulation",
+			"User",
+			"Logging & Monitoring",
+		},
+		engineerRoleID: {
+			// Engineer hanya punya akses ke menu utama Phishing Simulation, User, Logging & Monitoring
+			// Namun, berdasarkan RBAC.txt, Engineer hanya memiliki submenu di bawah menu utama tersebut.
+			// Jika menu utama perlu ditampilkan agar submenunya terlihat, maka menu utama juga harus diizinkan.
+			// Saya akan mengizinkan menu utama yang relevan agar submenunya bisa diakses.
+			"Phishing Simulation",
+			"User",
+			"Logging & Monitoring",
+		},
+	}
+
+	for roleID, menuNames := range menuAccessRules {
+		for _, menuName := range menuNames {
+			menuID, err := getMenuIDByName(db, menuName)
+			if err != nil {
+				log.Printf("Warning: Main Menu '%s' not found for role ID %d. Skipping.", menuName, roleID)
+				continue
+			}
+
+			var existingAccess models.RoleMenuAccess
+			err = db.Where("role_id = ? AND menu_id = ?", roleID, menuID).First(&existingAccess).Error
+
+			if err != nil && err == gorm.ErrRecordNotFound {
+				accessData := models.RoleMenuAccess{
+					RoleID:    roleID,
+					MenuID:    menuID,
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+				if err := db.Create(&accessData).Error; err != nil {
+					log.Fatalf("Failed to seed RoleMenuAccess for Role ID %d, Menu ID %d: %v", roleID, menuID, err)
+				}
+				log.Printf("RoleMenuAccess seeded: Role '%s' -> Main Menu '%s'.", getRoleNameByID(db, roleID), menuName)
+			} else if err != nil {
+				log.Fatalf("Error checking RoleMenuAccess for Role ID %d, Menu ID %d: %v", roleID, menuID, err)
+			} else {
+				log.Printf("RoleMenuAccess already exists for Role ID %d, Main Menu ID %d. Seeder skipped.", roleID, menuID)
+			}
+		}
+	}
+	log.Println("Role Menu Access seeding completed.")
+}
+
+// SeedRoleSubmenuAccess menginisialisasi data akses submenu untuk setiap peran
+func SeedRoleSubmenuAccess(db *gorm.DB) {
+	log.Println("Seeding Role Submenu Access...")
+
+	superAdminRoleID, err := getRoleIDByName(db, "Super Admin")
+	if err != nil {
+		log.Fatalf("Error getting Super Admin Role ID: %v", err)
+	}
+	adminRoleID, err := getRoleIDByName(db, "Admin")
+	if err != nil {
+		log.Fatalf("Error getting Admin Role ID: %v", err)
+	}
+	engineerRoleID, err := getRoleIDByName(db, "Engineer")
+	if err != nil {
+		log.Fatalf("Error getting Engineer Role ID: %v", err)
+	}
+
+	// Definisi submenu yang diakses oleh setiap peran
+	// Mengacu pada kolom `name` di tabel `submenus` Anda.
+	submenuAccessRules := map[uint][]string{
+		superAdminRoleID: {
+			"Dashboard",
+			"Campaigns",
+			"Role Management",
+			"User Management",
+			"Groups & Members",
+			"Email Templates",
+			"Landing Pages",
+			"Sending Profiles",
+			"Phishing Emails",
+			"Phishing Websites",
+			"Training Modules",
+			"Account Settings",
+			"Subscription & Billing",
+			"Logging Activity",
+			"Environtment Check",
+		},
+		adminRoleID: {
+			"Dashboard",
+			"Campaign",
+			"User Management",
+			"Groups & Members",
+			"Email Templates",
+			"Landing Pages",
+			"Sending Profiles",
+			"Phishing Emails",
+			"Phishing Websites",
+			"Training Modules",
+			"Account Settings",
+			"Subscription & Billing",
+			"Logging Activity",
+			"Environtment Check",
+		},
+		engineerRoleID: {
+			"Dashboard",
+			"Groups & Members",
+			"Email Templates",
+			"Landing Pages",
+			"Sending Profiles",
+			"Phishing Emails",
+			"Phishing Websites",
+			"Training Modules",
+			"Account Settings",
+			"Subscription & Billing",
+			"Logging Activity",
+			"Environtment Check",
+		},
+	}
+
+	for roleID, submenuNames := range submenuAccessRules {
+		for _, submenuName := range submenuNames {
+			submenuID, err := getSubmenuIDByName(db, submenuName)
+			if err != nil {
+				log.Printf("Warning: Submenu '%s' not found for role ID %d. Skipping.", submenuName, roleID)
+				continue
+			}
+
+			var existingAccess models.RoleSubmenuAccess
+			err = db.Where("role_id = ? AND submenu_id = ?", roleID, submenuID).First(&existingAccess).Error
+
+			if err != nil && err == gorm.ErrRecordNotFound {
+				accessData := models.RoleSubmenuAccess{
+					RoleID:    roleID,
+					SubmenuID: submenuID,
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+				if err := db.Create(&accessData).Error; err != nil {
+					log.Fatalf("Failed to seed RoleSubmenuAccess for Role ID %d, Submenu ID %d: %v", roleID, submenuID, err)
+				}
+				log.Printf("RoleSubmenuAccess seeded: Role '%s' -> Submenu '%s'.", getRoleNameByID(db, roleID), submenuName)
+			} else if err != nil {
+				log.Fatalf("Error checking RoleSubmenuAccess for Role ID %d, Submenu ID %d: %v", roleID, submenuID, err)
+			} else {
+				log.Printf("RoleSubmenuAccess already exists for Role ID %d, Submenu ID %d. Seeder skipped.", roleID, submenuID)
+			}
+		}
+	}
+	log.Println("Role Submenu Access seeding completed.")
+}
+
+// getRoleIDByName adalah fungsi helper untuk mendapatkan ID Role dari namanya
+func getRoleIDByName(db *gorm.DB, name string) (uint, error) {
+	var role models.Role
+	result := db.Where("name = ?", name).First(&role)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return role.ID, nil
+}
+
+// getMenuIDByName adalah fungsi helper untuk mendapatkan ID Menu dari namanya
+func getMenuIDByName(db *gorm.DB, name string) (uint, error) {
+	var menu models.Menu
+	result := db.Where("name = ?", name).First(&menu)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return menu.ID, nil
+}
+
+// getSubmenuIDByName adalah fungsi helper untuk mendapatkan ID Submenu dari namanya
+func getSubmenuIDByName(db *gorm.DB, name string) (uint, error) {
+	var submenu models.Submenu
+	result := db.Where("name = ?", name).First(&submenu)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return submenu.ID, nil
+}
+
+func getRoleNameByID(db *gorm.DB, id uint) string {
+	var role models.Role
+	db.First(&role, id)
+	return role.Name
 }

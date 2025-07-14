@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import {
-  ArrowUpIcon,
-  BoxIconLine,
+  // ArrowUpIcon,
+  // BoxIconLine,
 } from "../../icons";
-import Badge from "../ui/badge/Badge";
+// import Badge from "../ui/badge/Badge";
 import { SiMinutemailer } from "react-icons/si";
-import { TbArrowBigUpLine, TbArrowBigDownLine } from "react-icons/tb";
-import { CgArrowsExchange } from "react-icons/cg";
+// import { TbArrowBigUpLine, TbArrowBigDownLine } from "react-icons/tb";
+// import { CgArrowsExchange } from "react-icons/cg";
 
 export type CardHeaderEmailTemplatesProps = {
   reloadTrigger: number
@@ -14,8 +14,8 @@ export type CardHeaderEmailTemplatesProps = {
 
 export default function CardHeader({ reloadTrigger }: CardHeaderEmailTemplatesProps) {
   const [totalCampaigns, setTotalCampaigns] = useState(0);
-  const [daysSinceLastCampaign, setDaysSinceLastCampaign] = useState(0);
-  const [growthData, setGrowthData] = useState(null);
+  // const [daysSinceLastCampaign, setDaysSinceLastCampaign] = useState(0);
+  // const [growthData, setGrowthData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,32 +37,32 @@ export default function CardHeader({ reloadTrigger }: CardHeaderEmailTemplatesPr
         }
 
         // Fetch days since last campaign
-        const lastCampaignRes = await fetch(`${API_URL}/campaigns/last-campaign-date`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const lastCampaignData = await lastCampaignRes.json();
-        if (lastCampaignData.Success && lastCampaignData.data) {
-          const lastDate = new Date(lastCampaignData.data.last_campaign_date);
-          const today = new Date();
-          const diffTime = Math.abs(today.getTime() - lastDate.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          setDaysSinceLastCampaign(diffDays);
-        }
+        // const lastCampaignRes = await fetch(`${API_URL}/campaigns/last-campaign-date`, {
+        //   headers: {
+        //     Authorization: `Bearer ${token}`,
+        //   },
+        // });
+        // const lastCampaignData = await lastCampaignRes.json();
+        // if (lastCampaignData.Success && lastCampaignData.data) {
+        //   const lastDate = new Date(lastCampaignData.data.last_campaign_date);
+        //   const today = new Date();
+        //   const diffTime = Math.abs(today.getTime() - lastDate.getTime());
+        //   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        //   setDaysSinceLastCampaign(diffDays);
+        // }
 
         // Fetch growth data
-        const growthRes = await fetch(`${API_URL}/analytics/growth-percentage?type=campaigns`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-        });
-        const growthData = await growthRes.json();
-        if (growthData.success && growthData.data) {
-          setGrowthData(growthData.data);
-        }
+        // const growthRes = await fetch(`${API_URL}/analytics/growth-percentage?type=campaigns`, {
+        //   method: 'GET',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //     'Authorization': `Bearer ${token}`
+        //   },
+        // });
+        // const growthData = await growthRes.json();
+        // if (growthData.success && growthData.data) {
+          // setGrowthData(growthData.data);
+        // }
 
       } catch (error) {
         console.error("Failed to fetch campaign data:", error);
@@ -74,37 +74,37 @@ export default function CardHeader({ reloadTrigger }: CardHeaderEmailTemplatesPr
     fetchData();
   }, [reloadTrigger]);
 
-  const renderBadge = (growth: { growth_type: string; growth_percentage: number } | null) => {
-    if (!growth) return (
-      <Badge color="success" className="text-sm dark:text-gray-300">
-        <ArrowUpIcon className="size-4 mr-1" />
-        11.01%
-      </Badge>
-    );
+  // const renderBadge = (growth: { growth_type: string; growth_percentage: number } | null) => {
+  //   if (!growth) return (
+  //     <Badge color="success" className="text-sm dark:text-gray-300">
+  //       <ArrowUpIcon className="size-4 mr-1" />
+  //       11.01%
+  //     </Badge>
+  //   );
 
-    const icon =
-      growth.growth_type === "increase" ? (
-        <TbArrowBigUpLine className="mr-1" />
-      ) : growth.growth_type === "decrease" ? (
-        <TbArrowBigDownLine className="mr-1" />
-      ) : (
-        <CgArrowsExchange className="mr-1 rotate-180" />
-      );
+  //   const icon =
+  //     growth.growth_type === "increase" ? (
+  //       <TbArrowBigUpLine className="mr-1" />
+  //     ) : growth.growth_type === "decrease" ? (
+  //       <TbArrowBigDownLine className="mr-1" />
+  //     ) : (
+  //       <CgArrowsExchange className="mr-1 rotate-180" />
+  //     );
 
-    const color =
-      growth.growth_type === "increase"
-        ? "success"
-        : growth.growth_type === "decrease"
-        ? "error"
-        : "warning";
+  //   const color =
+  //     growth.growth_type === "increase"
+  //       ? "success"
+  //       : growth.growth_type === "decrease"
+  //       ? "error"
+  //       : "warning";
 
-    return (
-      <Badge color={color} className="text-sm dark:text-gray-300">
-        {icon}
-        {growth.growth_percentage.toFixed(2)}%
-      </Badge>
-    );
-  };
+  //   return (
+  //     <Badge color={color} className="text-sm dark:text-gray-300">
+  //       {icon}
+  //       {growth.growth_percentage.toFixed(2)}%
+  //     </Badge>
+  //   );
+  // };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 w-full">
@@ -124,12 +124,12 @@ export default function CardHeader({ reloadTrigger }: CardHeaderEmailTemplatesPr
           </h4>
         </div>
         <div className="flex justify-end mt-auto">
-          {renderBadge(growthData)}
+          {/* {renderBadge(growthData)} */}
         </div>
       </div>
 
       {/* ─── Since Last Campaign ─── */}
-      <div className="flex flex-col rounded-xl border border-gray-200 bg-white p-4 min-h-[120px] xl:w-[30rem] dark:border-gray-800 dark:bg-white/[0.03] hover:shadow-md hover:-translate-y-2 transition duration-300 ease-in-out cursor-pointer">
+      {/* <div className="flex flex-col rounded-xl border border-gray-200 bg-white p-4 min-h-[120px] xl:w-[30rem] dark:border-gray-800 dark:bg-white/[0.03] hover:shadow-md hover:-translate-y-2 transition duration-300 ease-in-out cursor-pointer">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3 flex-shrink-0">
             <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg dark:bg-gray-800 flex-shrink-0">
@@ -143,7 +143,7 @@ export default function CardHeader({ reloadTrigger }: CardHeaderEmailTemplatesPr
             {loading ? "..." : `${daysSinceLastCampaign} Day(s)`}
           </h4>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

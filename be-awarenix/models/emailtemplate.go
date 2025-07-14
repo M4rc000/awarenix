@@ -7,7 +7,7 @@ type EmailTemplate struct {
 	Name             string    `gorm:"type:varchar(30);not null" json:"name"`
 	Icon             string    `gorm:"type:varchar(30);null" json:"icon"`
 	EnvelopeSender   string    `gorm:"type:varchar(30);not null" json:"envelopeSender"`
-	Subject          string    `gorm:"type:varchar(30);not null" json:"subject"`
+	Subject          string    `gorm:"type:varchar(100);not null" json:"subject"`
 	Body             string    `gorm:"null;type=longtext" json:"bodyEmail"`
 	TrackerImage     int       `gorm:"type:tinyint(1)" json:"trackerImage"`
 	IsSystemTemplate int       `gorm:"type:tinyint(1);default:0" json:"isSystemTemplate"`

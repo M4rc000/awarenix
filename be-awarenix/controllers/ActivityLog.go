@@ -22,7 +22,7 @@ func GetActivityLogs(c *gin.Context) {
 	}
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit < 1 {
-		limit = 10
+		limit = 100000000
 	}
 	offset := (page - 1) * limit
 
@@ -47,7 +47,7 @@ func GetActivityLogs(c *gin.Context) {
 		Joins(`LEFT JOIN users AS user_name ON user_name.id = activity_logs.user_id`).
 		Joins(`LEFT JOIN users AS record_name ON record_name.id = activity_logs.record_id`).
 		Offset(offset).
-		Limit(limit).
+		// Limit(limit).
 		Order("timestamp DESC").
 		Find(&activityLogs).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

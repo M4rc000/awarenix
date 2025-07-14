@@ -254,14 +254,14 @@ func UpdateEmailHeadersForProfile(c *gin.Context) {
 	profileIDStr := c.Param("id")
 	profileID, err := strconv.ParseUint(profileIDStr, 10, 32)
 	if err != nil {
-		services.LogActivity(config.DB, c, "Update Email Headers", moduleNameSendingProfile, profileIDStr, nil, nil, "failed", "Invalid profile ID format: "+err.Error())
+		services.LogActivity(config.DB, c, "Update", moduleNameSendingProfile, profileIDStr, nil, nil, "failed", "Invalid profile ID format: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid profile ID", "data": nil})
 		return
 	}
 
 	var newHeaders []models.EmailHeader
 	if err := c.ShouldBindJSON(&newHeaders); err != nil {
-		services.LogActivity(config.DB, c, "Update Email Headers", moduleNameSendingProfile, profileIDStr, nil, newHeaders, "failed", "Invalid request payload: "+err.Error())
+		services.LogActivity(config.DB, c, "Update", moduleNameSendingProfile, profileIDStr, nil, newHeaders, "failed", "Invalid request payload: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error(), "data": nil})
 		return
 	}
@@ -271,7 +271,7 @@ func UpdateEmailHeadersForProfile(c *gin.Context) {
 
 	// Hapus semua header lama untuk profile ini
 	if err := config.DB.Where("sending_profile_id = ?", profileID).Delete(&models.EmailHeader{}).Error; err != nil {
-		services.LogActivity(config.DB, c, "Update Email Headers", moduleNameSendingProfile, profileIDStr, oldHeaders, newHeaders, "failed", "Failed to clear old headers: "+err.Error())
+		services.LogActivity(config.DB, c, "Update", moduleNameSendingProfile, profileIDStr, oldHeaders, newHeaders, "failed", "Failed to clear old headers: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to clear old headers", "data": nil})
 		return
 	}
@@ -286,13 +286,13 @@ func UpdateEmailHeadersForProfile(c *gin.Context) {
 			// newHeaders[i].UpdatedBy = someUserDefinedID // Perlu diisi jika ada
 		}
 		if err := config.DB.Create(&newHeaders).Error; err != nil {
-			services.LogActivity(config.DB, c, "Update Email Headers", moduleNameSendingProfile, profileIDStr, oldHeaders, newHeaders, "failed", "Failed to add new headers: "+err.Error())
+			services.LogActivity(config.DB, c, "Update", moduleNameSendingProfile, profileIDStr, oldHeaders, newHeaders, "failed", "Failed to add new headers: "+err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to add new headers: " + err.Error(), "data": nil})
 			return
 		}
 	}
 
-	services.LogActivity(config.DB, c, "Update Email Headers", moduleNameSendingProfile, profileIDStr, oldHeaders, newHeaders, "success", "Email headers updated successfully")
+	services.LogActivity(config.DB, c, "Update", moduleNameSendingProfile, profileIDStr, oldHeaders, newHeaders, "success", "Email headers updated successfully")
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Email headers updated successfully", "data": newHeaders})
 }
 

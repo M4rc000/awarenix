@@ -33,7 +33,7 @@ export default function NewCampaignModal({
           <DialogBackdrop className="fixed inset-0 bg-black/40 backdrop-filter backdrop-blur-xs"/>
         </Transition.Child>
 
-        <div className="fixed inset-0 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 flex items-center justify-center p-4 -mt-12" onClick={(e) => e.stopPropagation()}>
           {/* Panel with scale & slide-up animation */}
           <Transition.Child
             as={Fragment}
@@ -44,7 +44,7 @@ export default function NewCampaignModal({
             leaveFrom="translate-y-0 opacity-100 scale-100"
             leaveTo="translate-y-4 opacity-0 scale-95"
           >
-            <DialogPanel className="w-full xl:max-w-fit box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-visible dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5 z-[9999999999999]" onClick={(e) => e.stopPropagation()}>
+            <DialogPanel className="w-full xl:max-w-5xl box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-visible dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5 z-[9999999999999]" onClick={(e) => e.stopPropagation()}>
               {/* HEADER */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-300 dark:border-b-gray-700 flex-shrink-0">
                 <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">

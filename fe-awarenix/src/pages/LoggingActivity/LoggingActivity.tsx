@@ -363,12 +363,12 @@ const LoggingActivity = () => {
                     className="w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
                   >
                     <option value="all">All Actions</option>
-                    <option value="Send Email">Create</option>
-                    <option value="Send Test Email">Create</option>
                     <option value="Create">Create</option>
                     <option value="Update">Update</option>
                     <option value="Delete">Delete</option>
                     <option value="Login">Login</option>
+                    <option value="Send Email">Send Email</option>
+                    <option value="Send Test Email">Send Test Email</option>
                   </select>
                 </div>
 

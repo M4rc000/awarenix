@@ -4,3 +4,5 @@ node_modules
 /fe-awarenix/.env
 ./be-awarenix/.env
 /be-awarenix/.env
+./.vscode
+/.vscode

@@ -15,6 +15,9 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    allowedHosts: ["171494c5f7c0.ngrok-free.app"]
+  },
   // base: '/',
   build: {
     // Pastikan output directory adalah 'dist'

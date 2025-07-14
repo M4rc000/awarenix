@@ -15,7 +15,7 @@ import { MdOutlineNavigateNext } from "react-icons/md";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
 import SendTestEmailModal from "./SendTestEmailModal";
 
-interface TestRecipient {
+export interface TestRecipient {
   name: string;
   email: string;
   position: string;
@@ -186,16 +186,16 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
       // Body email sederhana untuk tes
       const testEmailBody = `<html><body>
         <h1>Halo ${recipient.name},</h1>
-        <p>Ini adalah email tes dari sistem pengiriman kami.</p>
-        <p>Detail penerima:</p>
+        <p>This is a test email from our delivery system.</p>
+        <p>Recipient details:</p>
         <ul>
-          <li>Nama: ${recipient.name}</li>
+          <li>Name: ${recipient.name}</li>
           <li>Email: ${recipient.email}</li>
-          <li>Posisi: ${recipient.position}</li>
+          <li>Position: ${recipient.position}</li>
         </ul>
-        <p>Profil pengiriman yang digunakan: ${profileName}</p>
-        <p>Terima kasih!</p>
-        <p><a href="{{.URL}}">Klik di sini untuk melacak</a></p>
+        <p>The shipping profile used: ${profileName}</p>
+        <p>Thank you!</p>
+        <p><a href="{{.URL}}">Click here to track</a></p>
       </body></html>`;
 
       const dataToSend = {
@@ -228,7 +228,7 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
           const errorData = await response.json();
           Swal.fire({
             icon: 'error',
-            text: errorData.message || 'Gagal mengirim email tes.',
+            text: errorData.message || 'Failed to send email test.',
             duration: 3000,
           });
           return;
@@ -236,15 +236,15 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
 
         Swal.fire({
           icon: 'success',
-          text: 'Email tes berhasil dikirim!',
+          text: 'The test email was sent successfully!',
           duration: 3000,
         });
         handleCloseTestEmailModal(); // Tutup modal setelah berhasil
       } catch (error: unknown) {
-        console.error("Terjadi kesalahan saat mengirim email tes: ", error);
+        console.error("An error occurred while sending the test email.: ", error);
         Swal.fire({
           icon: 'error',
-          text: 'Terjadi kesalahan jaringan atau server saat mengirim email tes.',
+          text: 'A network or server error occurred while sending the test email.',
           duration: 3000,
         });
       } finally {

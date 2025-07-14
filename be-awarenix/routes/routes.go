@@ -19,6 +19,11 @@ func SetupRoutes(router *gin.Engine) {
 	api := router.Group("/api/v1")
 	api.Use(middlewares.JWTAuth())
 	{
+		access := api.Group("/access")
+		{
+			access.GET("/permissions", controllers.GetUserAccessPermissions)
+		}
+
 		groups := api.Group("/groups")
 		{
 			groups.POST("/register", controllers.RegisterGroup) // CREATE

@@ -31,4 +31,6 @@ func RunSeeder() {
 	SeedSubmenus(DB)
 	SeedEmailTemplates(DB)
 	SeedLandingPages(DB)
+	SeedRoleMenuAccess(DB)
+	SeedRoleSubmenuAccess(DB)
 }
