@@ -5,8 +5,8 @@ import {
   DialogTitle,
   Transition,
 } from '@headlessui/react'
-import { Fragment } from 'react'
-import NewCampaignModalForm from './NewCampaignModalForm'
+import { Fragment, useRef } from 'react' // Import useRef
+import NewCampaignModalForm, { NewCampaignModalFormRef } from './NewCampaignModalForm' // Import NewCampaignModalFormRef
 
 export type NewGroupModalProps = {
   isOpen: boolean
@@ -17,6 +17,20 @@ export default function NewCampaignModal({
   isOpen,
   onClose,
 }: NewGroupModalProps) {
+  // Buat ref untuk mengakses metode dari NewCampaignModalForm
+  const campaignFormRef = useRef<NewCampaignModalFormRef>(null);
+
+  // Fungsi untuk menangani klik tombol Save
+  const handleSave = async () => {
+    if (campaignFormRef.current) {
+      // Panggil fungsi submitCampain dari form
+      const success = await campaignFormRef.current.submitCampain();
+      if (success) {
+        onClose(); // Tutup modal hanya jika pengiriman berhasil
+      }
+    }
+  };
+
   return (
     <Transition show={isOpen} as={Fragment}>
       <Dialog open={isOpen} onClose={()=>{}} className="relative z-[999]">
@@ -61,7 +75,8 @@ export default function NewCampaignModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <NewCampaignModalForm />
+                {/* Teruskan ref ke NewCampaignModalForm */}
+                <NewCampaignModalForm ref={campaignFormRef} onSuccess={onClose} />
               </div>
 
               {/* FOOTER */}
@@ -73,9 +88,7 @@ export default function NewCampaignModal({
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    onClose()
-                  }}
+                  onClick={handleSave} // Panggil fungsi handleSave saat tombol Save diklik
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
                   Save

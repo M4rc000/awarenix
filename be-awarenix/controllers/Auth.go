@@ -79,7 +79,7 @@ func AuthLogin(c *gin.Context) {
 		Select(`users.*, roles.name AS role_name`).
 		Joins(`LEFT JOIN roles ON roles.id = users.role`).
 		Where("users.email = ?", input.Email).
-		First(&fullUserData).Error // Ini akan mengisi fullUserData
+		First(&fullUserData).Error
 
 	if err != nil {
 		log.Printf("Database error during login (fullUserData fetch): %v", err)
@@ -123,6 +123,31 @@ func AuthLogin(c *gin.Context) {
 		return
 	}
 
+	// Ambil izin menu dan submenu berdasarkan role user
+	var allowedMenus []models.Menu
+	config.DB.Table("menus").
+		Joins("JOIN role_menu_accesses rma ON menus.id = rma.menu_id").
+		Where("rma.role_id = ?", fullUserData.Role).
+		Find(&allowedMenus)
+
+	var allowedSubmenus []models.Submenu
+	config.DB.Table("submenus").
+		Joins("JOIN role_submenu_accesses rsa ON submenus.id = rsa.submenu_id").
+		Where("rsa.role_id = ?", fullUserData.Role).
+		Find(&allowedSubmenus)
+
+	// Kumpulkan URL submenu untuk frontend
+	var allowedSubmenuUrls []string
+	for _, sm := range allowedSubmenus {
+		allowedSubmenuUrls = append(allowedSubmenuUrls, sm.Url)
+	}
+
+	// Kumpulkan nama menu untuk frontend (opsional, jika Anda ingin mengirim nama menu juga)
+	var allowedMenuNames []string
+	for _, m := range allowedMenus {
+		allowedMenuNames = append(allowedMenuNames, m.Name)
+	}
+
 	token, exp, err := services.GenerateJWT(fullUserData.ID, fullUserData.Email, input.Status)
 	if err != nil {
 		services.LogActivity(config.DB, c, "Login", "Auth", fmt.Sprintf("%v", fullUserData.ID), nil, input, "failed", "Could not create token: "+err.Error())
@@ -142,15 +167,17 @@ func AuthLogin(c *gin.Context) {
 
 	// Siapkan data untuk response
 	userdata := map[string]interface{}{
-		"id":         fullUserData.ID,
-		"name":       fullUserData.Name,
-		"email":      fullUserData.Email,
-		"position":   fullUserData.Position,
-		"role":       fullUserData.Role,
-		"role_name":  fullUserData.RoleName,
-		"company":    fullUserData.Company,
-		"country":    fullUserData.Country,
-		"last_login": fullUserData.LastLogin,
+		"id":               fullUserData.ID,
+		"name":             fullUserData.Name,
+		"email":            fullUserData.Email,
+		"position":         fullUserData.Position,
+		"role":             fullUserData.Role,
+		"role_name":        fullUserData.RoleName,
+		"company":          fullUserData.Company,
+		"country":          fullUserData.Country,
+		"last_login":       fullUserData.LastLogin,
+		"allowed_menus":    allowedMenuNames,
+		"allowed_submenus": allowedSubmenuUrls,
 	}
 
 	userid := int(fullUserData.ID)

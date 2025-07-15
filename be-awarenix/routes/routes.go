@@ -98,5 +98,29 @@ func SetupRoutes(router *gin.Engine) {
 		{
 			activityLogs.GET("/all", controllers.GetActivityLogs) // READ
 		}
+
+		campaigns := api.Group("/campaigns")
+		{
+			campaigns.POST("/create", controllers.RegisterCampaign)
+			campaigns.GET("/all", controllers.GetCampaigns)
+			campaigns.GET("/:id", controllers.GetCampaignDetail)
+			campaigns.PUT("/:id", controllers.UpdateCampaign)
+			campaigns.DELETE("/:id", controllers.DeleteCampaign)
+		}
+
 	}
+
+	// TRACKING CAMPAIGN
+	track := router.Group("/track")
+	{
+		track.GET("/open", controllers.HandleOpenTracker)
+		track.GET("/click", controllers.HandleClickTracker)
+		track.POST("/submit", controllers.HandleSubmitTracker)
+		track.GET("/report", controllers.HandleReportTracker)
+	}
+
+	// SHOW LANDING PAGE REDIRECT FROM EMAIL
+	// Landing page body juga public tapi butuh rid
+	router.StaticFile("/pixel.gif", "./public/pixel.gif")
+	router.GET("/landing-page/:id/body", controllers.GetLandingPageBody)
 }

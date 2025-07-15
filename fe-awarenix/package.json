@@ -25,6 +25,7 @@
     "clsx": "^2.1.1",
     "dompurify": "^3.2.6",
     "flatpickr": "^4.6.13",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.514.0",
     "react": "^19.0.0",
     "react-apexcharts": "^1.7.0",

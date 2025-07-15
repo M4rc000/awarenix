@@ -1,108 +1,113 @@
-// src/contexts/UserSessionContext.tsx
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { fetchUserPermissions } from "../../services/menuServices";
+// components/context/UserSessionContext.tsx
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { jwtDecode } from 'jwt-decode'; // Pastikan Anda menginstal jwt-decode
+// import { fetchUserPermissions } from '../../services/menuServices'; // Ini kemungkinan tidak lagi dibutuhkan jika izin dikirim saat login
 
-// 1. Tipe data user session yang diperbarui
-export type SessionUser = {
+interface UserData {
   id: number;
   name: string;
   email: string;
-  role: number;
-  role_name: string; // Penting untuk filter di frontend
-  position: string;
-  company: string;
-  country: string;
+  role: number; // role_id
+  role_name: string;
+  position?: string;
+  company?: string;
+  country?: string;
   last_login?: string;
-  // Ini akan disimpan di localStorage dan diakses oleh AppSidebar
-  allowed_menus?: string[];
-  allowed_submenus?: string[];
-};
+  allowed_menus: string[]; // array nama menu (opsional, untuk UI)
+  allowed_submenus: string[]; // array URL submenu (penting untuk otorisasi frontend)
+}
 
-// 2. Tipe context
-type UserSessionContextType = {
-  user: SessionUser | null;
-  setUser: (user: SessionUser | null) => void;
-  isLoadingPermissions: boolean; // Tambahkan loading state
-};
+interface UserSessionContextType {
+  user: UserData | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  setUser: (userData: UserData | null) => void;
+  logout: () => void;
+}
 
-// 3. Context default value
-const UserSessionContext = createContext<UserSessionContextType>({
-  user: null,
-  setUser: () => {},
-  isLoadingPermissions: false,
-});
+const UserSessionContext = createContext<UserSessionContextType | undefined>(undefined);
 
-// 4. Hook pemanggil context
-export const useUserSession = () => useContext(UserSessionContext);
+export const UserSessionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUserState] = useState<UserData | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
-// 5. Provider
-export const UserSessionProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<SessionUser | null>(null);
-  const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
+  const checkSession = useCallback(() => {
+    const token = localStorage.getItem('token');
+    const userString = localStorage.getItem('user');
 
-  // 6. Inisialisasi pertama dari localStorage dan fetch permissions
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    if (token && userString) {
       try {
-        const parsedUser: SessionUser = JSON.parse(storedUser);
-        
-        // Cek apakah permissions sudah ada di localStorage
-        if (parsedUser.allowed_menus && parsedUser.allowed_submenus) {
-          // Jika permissions sudah ada, langsung set user
-          setUser(parsedUser);
-          console.log("User loaded from localStorage with permissions:", parsedUser);
-        } else if (parsedUser.role_name) {
-          // Jika permissions belum ada, fetch dari API
-          console.log("Fetching permissions for role:", parsedUser.role_name);
-          setIsLoadingPermissions(true);
-          
-          fetchUserPermissions(parsedUser.role_name)
-            .then(permissions => {
-              // Update user object dengan permissions yang baru difetch
-              const updatedUser = {
-                ...parsedUser,
-                allowed_menus: permissions.allowed_menus,
-                allowed_submenus: permissions.allowed_submenus,
-              };
-              
-              setUser(updatedUser);
-              // Update localStorage dengan permissions yang baru
-              localStorage.setItem("user", JSON.stringify(updatedUser));
-              console.log("Permissions fetched and user updated:", updatedUser);
-            })
-            .catch(error => {
-              console.error("Error fetching permissions:", error);
-              // Tetap set user tanpa permissions jika fetch gagal
-              setUser(parsedUser);
-            })
-            .finally(() => {
-              setIsLoadingPermissions(false);
-            });
-        } else {
-          // Jika tidak ada role_name, set user tanpa permissions
-          console.log("User loaded without role_name:", parsedUser);
-          setUser(parsedUser);
-        }
-      } catch (err) {
-        console.error("Failed to parse stored user:", err);
-        localStorage.removeItem("user");
-      }
-    }
-  }, []); // [] agar hanya berjalan sekali saat komponen di-mount
+        const decodedToken: any = jwtDecode(token);
+        const expiresAt = decodedToken.exp * 1000; // Konversi ke milidetik
 
-  // 7. Sinkronisasi user -> localStorage (hanya jika user sudah complete)
-  useEffect(() => {
-    if (user && user.allowed_menus && user.allowed_submenus) {
-      localStorage.setItem("user", JSON.stringify(user));
-    } else if (user === null) {
-      localStorage.removeItem("user");
+        if (expiresAt > Date.now()) {
+          const storedUser: UserData = JSON.parse(userString);
+          setUserState(storedUser);
+          setIsAuthenticated(true);
+        } else {
+          // Token expired
+          localStorage.removeItem('token');
+          localStorage.removeItem('token_expired');
+          localStorage.removeItem('user');
+          setUserState(null);
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Error decoding token or parsing user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('token_expired');
+        localStorage.removeItem('user');
+        setUserState(null);
+        setIsAuthenticated(false);
+      }
+    } else {
+      setUserState(null);
+      setIsAuthenticated(false);
     }
-  }, [user]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
+
+  const setUser = (userData: UserData | null) => {
+    setUserState(userData);
+    setIsAuthenticated(!!userData);
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData));
+    } else {
+      localStorage.removeItem('user');
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('token_expired');
+    localStorage.removeItem('user');
+    setUserState(null);
+    setIsAuthenticated(false);
+    // Optionally, call logout API
+    fetch("http://localhost:3000/api/v1/auth/logout", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${localStorage.getItem('token')}` }
+    }).then(res => {
+      if (!res.ok) console.error("Logout API call failed");
+    }).catch(err => console.error("Error during logout API call", err));
+  };
 
   return (
-    <UserSessionContext.Provider value={{ user, setUser, isLoadingPermissions }}>
+    <UserSessionContext.Provider value={{ user, isAuthenticated, loading, setUser, logout }}>
       {children}
     </UserSessionContext.Provider>
   );
+};
+
+export const useUserSession = () => {
+  const context = useContext(UserSessionContext);
+  if (context === undefined) {
+    throw new Error('useUserSession must be used within a UserSessionProvider');
+  }
+  return context;
 };

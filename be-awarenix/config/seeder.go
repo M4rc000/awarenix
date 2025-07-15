@@ -2,13 +2,21 @@ package config
 
 import (
 	"be-awarenix/models"
-	"be-awarenix/services"
 	"log"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
+
+func HashPassword(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
+}
 
 func SeedUsers(db *gorm.DB) {
 	usersToSeed := []models.User{
@@ -41,7 +49,7 @@ func SeedUsers(db *gorm.DB) {
 			log.Printf("Seeding user '%s'...", userData.Name)
 
 			// Hash password mentah dari data slice
-			hashedPassword, hashErr := services.HashPassword(userData.PasswordHash)
+			hashedPassword, hashErr := HashPassword(userData.PasswordHash)
 			if hashErr != nil {
 				log.Fatalf("Failed to hash password for seeder: %v", hashErr)
 			}

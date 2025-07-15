@@ -1,13 +1,19 @@
 package services
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	"net"
 	"net/smtp"
+	"os"
 	"strings"
+	"text/template"
 
-	"be-awarenix/models" // Untuk mengakses model SendingProfiles
+	"be-awarenix/config"
+	"be-awarenix/models"
+
+	"github.com/gophish/gomail"
 )
 
 func SendTestEmail(profile *models.SendingProfiles, recipientEmail, body, subject string) error {
@@ -98,4 +104,80 @@ func SendTestEmail(profile *models.SendingProfiles, recipientEmail, body, subjec
 	client.Quit() // Penting untuk mengakhiri sesi SMTP
 
 	return nil
+}
+
+func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
+	// Domains
+	backendBase := os.Getenv("APP_URL")
+	if backendBase == "" {
+		backendBase = "http://127.0.0.1:3000"
+	}
+	frontendDomain := os.Getenv("FRONTEND_URL")
+	if frontendDomain == "" {
+		frontendDomain = "http://127.0.0.1:5173"
+	}
+
+	// 1. Render email body
+	tpl, _ := template.New("email").Parse(camp.EmailTemplate.Body)
+	var buf bytes.Buffer
+	data := map[string]interface{}{
+		"Name": rec.Email,
+		"LandingURL": fmt.Sprintf(
+			"%s/lander?rid=%s&campaign=%d&page=%d",
+			frontendDomain, rec.UID, camp.ID, camp.LandingPageID,
+		),
+	}
+	tpl.Execute(&buf, data)
+	body := buf.String()
+
+	// 2. Sisipkan tracking pixel (opened)
+	pixel := fmt.Sprintf(
+		`<img src="%s/track/open?rid=%s&campaign=%d" style="display:none"/>`,
+		backendBase, rec.UID, camp.ID,
+	)
+	body += pixel
+
+	// 3. Tambahkan tombol “Laporkan Email Ini”
+	reportLink := fmt.Sprintf(`
+      <div style="text-align:center; margin:24px 0;">
+        <a href="%s/track/report?rid=%s&campaign=%d"
+           style="
+             display:inline-block;
+             padding:10px 20px;
+             background-color:#e74c3c;
+             color:#ffffff;
+             text-decoration:none;
+             border-radius:4px;
+             font-family:Arial, sans-serif;
+             font-size:14px;
+           ">
+          Laporkan Email Ini
+        </a>
+      </div>`,
+		backendBase, rec.UID, camp.ID,
+	)
+	body += reportLink
+
+	// 4. Rewrite click links
+	body = RewriteLinks(body, rec.UID, camp.ID, camp.LandingPageID, frontendDomain)
+
+	// 5. SMTP send
+	m := gomail.NewMessage()
+	m.SetHeader("From", camp.SendingProfile.SmtpFrom)
+	m.SetHeader("To", rec.Email)
+	m.SetHeader("Subject", camp.EmailTemplate.Subject)
+	m.SetBody("text/html", body)
+
+	d := gomail.NewDialer(
+		camp.SendingProfile.Host,
+		camp.SendingProfile.Port,
+		camp.SendingProfile.Username,
+		camp.SendingProfile.Password,
+	)
+
+	if err := d.DialAndSend(m); err != nil {
+		config.DB.Model(&rec).Updates(models.Recipient{Status: "failed", Error: err.Error()})
+		return
+	}
+	config.DB.Model(&rec).Update("status", "sent")
 }

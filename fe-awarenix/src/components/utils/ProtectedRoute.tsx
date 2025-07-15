@@ -1,41 +1,67 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useEffect, useState } from "react";
-import SessionChecker from "./SessionChecker";
+// components/utils/ProtectedRoute.tsx
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useUserSession } from '../context/UserSessionContext';
+import { useEffect, useState } from 'react';
 
-function isTokenValid(token: string | null): boolean {
-  if (!token) return false;
-  try {
-    const [, payloadBase64] = token.split(".");
-    const payload = JSON.parse(atob(payloadBase64));
-    const now = Math.floor(Date.now() / 1000);   
-    return payload.exp && payload.exp > now;
-  } catch (err) {
-    console.log("Token parsing error:", err);
-    return false;
-  }
-}
-
-export default function ProtectedRoute() {
-  const [checking, setChecking] = useState(true);
-  const [authorized, setAuthorized] = useState(false);
-  const token = localStorage.getItem("token");
-  const user = localStorage.getItem("user");
+const ProtectedRoute = () => {
+  const { user, isAuthenticated, loading: userSessionLoading } = useUserSession();
+  const location = useLocation();
+  const [hasCheckedPermissions, setHasCheckedPermissions] = useState(false);
 
   useEffect(() => {
-    // if (isTokenValid(token)) {
-    if (isTokenValid(token) && user) {
-      setAuthorized(true);
-    } else {
-      localStorage.removeItem("token_expired");
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      setAuthorized(false);
+    // Tunggu hingga user session dimuat
+    if (!userSessionLoading) {
+      setHasCheckedPermissions(true);
     }
+  }, [userSessionLoading]);
 
-    setChecking(false);
-  }, []);
+  if (!isAuthenticated) {
+    // Jika tidak terautentikasi, redirect ke login
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-  if (checking) return <SessionChecker />;
+  // Tampilkan loading atau null sementara data user sedang dimuat dari context
+  if (userSessionLoading || !hasCheckedPermissions) {
+    return (
+      <div className="flex items-center justify-center h-screen text-lg font-semibold text-gray-700">
+        Loading user permissions...
+      </div>
+    );
+  }
 
-  return authorized ? <Outlet /> : <Navigate to="/login" replace />;
-}
+  // Jika user dan allowed_submenus sudah dimuat
+  if (user && user.allowed_submenus) {
+    // Daftar path yang selalu diizinkan, terlepas dari role, karena mereka adalah bagian dari struktur aplikasi dasar.
+    // Misalnya, halaman profil atau dashboard default yang mungkin bisa diakses semua user yang login.
+    const alwaysAllowedPaths = [
+      '/profile',
+      '/dashboard', // Dashboard dasar yang mungkin berbeda per role
+      '/account-settings', // Akun settings user itu sendiri
+      // Tambahkan path lain yang dianggap "public" untuk user yang terautentikasi di sini
+    ];
+
+    // Cek apakah path yang diakses saat ini ada di daftar allowed_submenus user
+    const isPathAllowedByRole = user.allowed_submenus.includes(location.pathname);
+
+    // Cek apakah path yang diakses selalu diizinkan
+    const isAlwaysAllowed = alwaysAllowedPaths.includes(location.pathname);
+
+    // Jika path tidak diizinkan oleh role DAN tidak termasuk dalam path yang selalu diizinkan
+    if (!isPathAllowedByRole && !isAlwaysAllowed) {
+      // Redirect ke halaman tidak berwenang (misal: 403 Forbidden)
+      console.warn(`User with role ${user.role_name} attempted to access unauthorized path: ${location.pathname}`);
+      return <Navigate to="/unauthorized" replace />; // Anda perlu membuat komponen/page Unauthorized
+    }
+  } else {
+    // Ini seharusnya tidak terjadi jika userSessionLoading sudah false dan isAuthenticated true
+    // Tapi sebagai fallback, jika user objeknya sendiri tidak ada allowed_submenus-nya
+    console.error("User object or allowed_submenus is missing in session context.");
+    // Bisa redirect ke halaman error umum atau login lagi
+    return <Navigate to="/login" replace />;
+  }
+
+  // Jika semua pengecekan lolos, lanjutkan ke route yang diminta
+  return <Outlet />;
+};
+
+export default ProtectedRoute;

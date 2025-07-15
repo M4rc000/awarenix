@@ -279,7 +279,12 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
       const token = localStorage.getItem("token");
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       const createdBy = userData?.id || 0; 
-      const response = await fetch(`${API_URL}/users/register`, {
+
+      // Pastikan LaunchDate dan SendEmailBy diformat dengan benar untuk backend Go
+      const formattedLaunchDate = campaign.launchDate ? new Date(campaign.launchDate).toISOString() : "";
+      const formattedSendEmailBy = campaign.sendEmailBy ? new Date(campaign.sendEmailBy).toISOString() : undefined;
+
+      const response = await fetch(`${API_URL}/campaigns/create`, { // Mengubah endpoint ke /campaigns/create
         method: 'POST',
         headers: {
           "Content-Type": "application/json",
@@ -287,28 +292,39 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
         },
         body: JSON.stringify({
           name: campaign.name,
-          launchDate: campaign.launchDate,
-          sendEmailBy: campaign.sendEmailBy,
+          launch_date: formattedLaunchDate, // Menggunakan launch_date sesuai model Go
+          send_email_by: formattedSendEmailBy, // Menggunakan send_email_by sesuai model Go
           url: campaign.url,
-          group: campaign.group,
-          emailTemplate: campaign.emailTemplate,
-          landingPage: campaign.landingPage,
-          sendingProfile: campaign.sendingProfile,
-          createdBy: createdBy
+          group_id: parseInt(campaign.group), // Menggunakan group_id dan konversi ke integer
+          email_template_id: parseInt(campaign.emailTemplate), // Menggunakan email_template_id
+          landing_page_id: parseInt(campaign.landingPage), // Menggunakan landing_page_id
+          sending_profile_id: parseInt(campaign.sendingProfile), // Menggunakan sending_profile_id
+          created_by: createdBy // Menggunakan created_by
         }),
       });
+
+      console.log('Body: ', {
+        name: campaign.name,
+        launch_date: formattedLaunchDate, // Menggunakan launch_date sesuai model Go
+        send_email_by: formattedSendEmailBy, // Menggunakan send_email_by sesuai model Go
+        url: campaign.url,
+        group_id: parseInt(campaign.group), // Menggunakan group_id dan konversi ke integer
+        email_template_id: parseInt(campaign.emailTemplate), // Menggunakan email_template_id
+        landing_page_id: parseInt(campaign.landingPage), // Menggunakan landing_page_id
+        sending_profile_id: parseInt(campaign.sendingProfile), // Menggunakan sending_profile_id
+        created_by: createdBy // Menggunakan created_by
+      });
+      
 
       if (!response.ok) {
         let errorMessage = 'Failed to create campaign';
         
-        // Cek content type sebelum parsing
         const contentType = response.headers.get('content-type');
         
         if (contentType && contentType.includes('application/json')) {
           try {
             const errorData = await response.json();
               if (errorData.status === "error") {
-                // SET ERRORS KE FORM FIELD JIKA ADA
                 if (errorData.fields && typeof errorData.fields === "object") {
                   setErrors(errorData.fields);
                 }
@@ -319,7 +335,6 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
             errorMessage = `Server error: ${response.status} ${response.statusText}`;
           }
         } else {
-          // Jika bukan JSON, jangan coba parse sebagai JSON
           errorMessage = `Server error: ${response.status} ${response.statusText}`;
         }
         
@@ -351,14 +366,12 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
     } catch (error) {
       console.error('Error creating campaign:', error);
       
-      // Set error message untuk campaign
       if (error instanceof Error) {
-        // Cek jika error terkait network
         if (error.message.includes('fetch')) {
           setErrors({
             name: 'Connection error. Please check if server is running.',
           });
-        } else if (error.message.toLowerCase().includes('launchDate')) {
+        } else if (error.message.toLowerCase().includes('launchdate')) {
           setErrors({
             launchDate: error.message,
           });
@@ -370,15 +383,15 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
           setErrors({
             url: error.message,
           });
-        } else if (error.message.toLowerCase().includes('emailTemplate')) {
+        } else if (error.message.toLowerCase().includes('emailtemplate')) {
           setErrors({
             emailTemplate: error.message,
           });
-        } else if (error.message.toLowerCase().includes('landingPage')) {
+        } else if (error.message.toLowerCase().includes('landingpage')) {
           setErrors({
             landingPage: error.message,
           });
-        } else if (error.message.toLowerCase().includes('sendingProfile')) {
+        } else if (error.message.toLowerCase().includes('sendingprofile')) {
           setErrors({
             sendingProfile: error.message,
           });
@@ -422,6 +435,7 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
     }
   };
 
+
   // Handle form submit (untuk prevent default jika ada)
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -429,54 +443,19 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
 
   // SEND TEST EMAIL HANDLE
   const handleOpenTestEmailModal = () => {
-  // Validasi sebelum membuka modal
-
-  if (!validateForm()) {
-    if(errors.name) {
-      Swal.fire({
-        icon: 'error',
-        text: errors.name,
-        duration: 3000,
-      });
+    // Validasi sebelum membuka modal
+    if (!validateForm()) {
+      if(errors.name) {
+        Swal.fire({
+          icon: 'error',
+          text: errors.name,
+          duration: 3000,
+        });
+      }
+      // Tambahkan validasi lain jika diperlukan
+      return;
     }
-    // if(errors.interfaceType) {
-    //   Swal.fire({
-    //     icon: 'error',
-    //     text: errors.interfaceType,
-    //     duration: 3000,
-    //   });
-    // }
-    // if(errors.smtpFrom) {
-    //   Swal.fire({
-    //     icon: 'error',
-    //     text: errors.smtpFrom,
-    //     duration: 3000,
-    //   });
-    // }
-    // if(errors.host) {
-    //   Swal.fire({
-    //     icon: 'error',
-    //     text: errors.host,
-    //     duration: 3000,
-    //   });
-    // }
-    // if(errors.username) {
-    //   Swal.fire({
-    //     icon: 'error',
-    //     text: errors.username,
-    //     duration: 3000,
-    //   });
-    // }
-    // if(errors.password) {
-    //   Swal.fire({
-    //     icon: 'error',
-    //     text: errors.password,
-    //     duration: 3000,
-    //   });
-    // }
-    return;
-  }
-  setShowTestEmailModal(true);
+    setShowTestEmailModal(true);
   };
 
   const handleCloseTestEmailModal = () => {
@@ -489,37 +468,61 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
     const API_URL = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem('token');
 
-    // Body email sederhana untuk tes
-    // const testEmailBody = `<html><body>
-    //   <h1>Halo ${recipient.name},</h1>
-    //   <p>Ini adalah email tes dari sistem pengiriman kami.</p>
-    //   <p>Detail penerima:</p>
-    //   <ul>
-    //     <li>Nama: ${recipient.name}</li>
-    //     <li>Email: ${recipient.email}</li>
-    //     <li>Posisi: ${recipient.position}</li>
-    //   </ul>
-    //   <p>Profil pengiriman yang digunakan: ${profileName}</p>
-    //   <p>Terima kasih!</p>
-    //   <p><a href="{{.URL}}">Klik di sini untuk melacak</a></p>
-    // </body></html>`;
+    // Anda perlu mengisi dataToSend dengan informasi yang relevan dari campaign
+    // Misalnya, ambil ID sendingProfile yang dipilih
+    const selectedSendingProfileId = campaign.sendingProfile;
+
+    // Anda mungkin perlu mengambil detail sending profile dari state atau melakukan fetch ulang
+    // Untuk contoh ini, saya akan asumsikan Anda memiliki akses ke data profil pengiriman yang lengkap
+    // dari sendingProfileOptions. Anda bisa mencari profil berdasarkan ID.
+    const selectedSendingProfile = sendingProfileOptions.find(
+      (profile) => profile.value === selectedSendingProfileId
+    );
+
+    if (!selectedSendingProfile) {
+      Swal.fire({
+        icon: 'error',
+        text: 'Sending Profile tidak ditemukan untuk email tes.',
+        duration: 3000,
+      });
+      setIsSendingTestEmail(false);
+      return;
+    }
+
+    // Body email sederhana untuk tes - Anda bisa membuatnya lebih dinamis
+    const testEmailBody = `<html><body>
+      <h1>Halo,</h1>
+      <p>Ini adalah email tes dari sistem kampanye Anda.</p>
+      <p>Profil pengiriman yang digunakan: ${selectedSendingProfile.label}</p>
+      <p>URL Kampanye: ${campaign.url}</p>
+      <p>Terima kasih!</p>
+    </body></html>`;
 
     const dataToSend = {
-      // sendingProfile: {
-      //   name: profileName,
-      //   interfaceType: interfaceType,
-      //   smtpFrom: smtpFrom,
-      //   host: host,
-      //   username: username,
-      //   password: password,
-      //   emailHeaders: emailHeaders,
-      // },
-      // recipient: recipient,
-      // emailBody: testEmailBody, 
+      sendingProfile: {
+        id: parseInt(selectedSendingProfile.value), // ID profil pengiriman
+        name: selectedSendingProfile.label,
+        // Anda perlu menambahkan field lain yang diperlukan oleh SendTestEmailRequest di backend Go
+        // seperti interfaceType, smtpFrom, host, username, password, emailHeaders.
+        // Ini berarti Anda perlu menyimpan lebih banyak detail tentang sendingProfile di state
+        // atau melakukan fetch detail profil saat modal dibuka.
+        // Untuk contoh ini, saya akan menggunakan data dummy atau mengasumsikan Anda akan mengambilnya.
+        interfaceType: "SMTP", // Contoh
+        smtpFrom: "test@example.com", // Contoh
+        host: "smtp.example.com", // Contoh
+        username: "testuser", // Contoh
+        password: "testpassword", // Contoh
+        emailHeaders: [], // Contoh
+      },
+      recipient: {
+        name: "Test User",
+        email: "test@example.com",
+        position: "Tester",
+      },
+      emailBody: testEmailBody, 
     };
 
     try {
-      // Asumsi endpoint API untuk mengirim email tes
       const response = await fetch(`${API_URL}/sending-profile/send-test-email`, {
         method: "POST",
         credentials: 'include',
@@ -546,7 +549,7 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
         duration: 3000,
       });
       handleCloseTestEmailModal(); 
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("An error occurred while sending the test email: ", error);
       Swal.fire({
         icon: 'error',
@@ -581,11 +584,12 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
             <div>
               <Label required>Launch Date</Label>
               <DatePicker
-                id="date-picker"
+                id="launch-date-picker" // ID unik
                 mode="datetime"
                 placeholder="Select a date"
+                value={campaign.launchDate} // Mengikat nilai ke state
                 onChange={(dates, currentDateString) => {
-                  console.log({ dates, currentDateString });
+                  handleInputChange('launchDate', currentDateString);
                 }}
               />
               {errors.launchDate && (
@@ -596,11 +600,12 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
             <div>
               <LabelWithTooltip position="left" tooltip="If specified, This will send emails evenly between the campaign launch and this date.">Send Emails By</LabelWithTooltip>
               <DatePicker
-                id="date-picker"
+                id="send-email-by-date-picker" // ID unik
                 mode="datetime"
                 placeholder="Select a date"
+                value={campaign.sendEmailBy || ""} // Mengikat nilai ke state
                 onChange={(dates, currentDateString) => {
-                  console.log({ dates, currentDateString });
+                  handleInputChange('sendEmailBy', currentDateString);
                 }}
               />
               {errors.sendEmailBy && (
@@ -711,7 +716,5 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
     </form>
   );
 });
-
-NewCampaignModalForm.displayName = 'NewCampaignModalForm';
 
 export default NewCampaignModalForm;

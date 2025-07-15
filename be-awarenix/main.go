@@ -9,6 +9,7 @@ import (
 	"be-awarenix/config"
 	"be-awarenix/middlewares"
 	"be-awarenix/routes"
+	"be-awarenix/scheduler"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -51,5 +52,8 @@ func main() {
 		port = "3000"
 	}
 	log.Printf("Starting server on port %s...", port)
+
+	// SCHEDULER
+	scheduler.StartCampaignDispatcher()
 	app.Run(fmt.Sprintf("0.0.0.0:%s", port))
 }

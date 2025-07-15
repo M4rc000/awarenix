@@ -21,6 +21,7 @@ type SendingProfiles struct {
 	Username      string        `gorm:"type:varchar(50);null" json:"username"`
 	Password      string        `gorm:"type:varchar(128);null" json:"-"`
 	Host          string        `gorm:"type:varchar(50);null" json:"host"`
+	Port          int           `gorm:"type:int;not null;default:587"   json:"port"`
 	EmailHeaders  []EmailHeader `gorm:"foreignKey:SendingProfileID;references:ID" json:"emailHeaders"`
 	CreatedAt     time.Time     `gorm:"type:datetime;null" json:"createdAt"`
 	CreatedBy     int           `gorm:"type:tinyint(3);null" json:"createdBy"`
