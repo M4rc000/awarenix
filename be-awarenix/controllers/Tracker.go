@@ -4,8 +4,10 @@ import (
 	"be-awarenix/config"
 	"be-awarenix/models"
 	"be-awarenix/services"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,6 +30,25 @@ func HandleSubmitTracker(c *gin.Context) {
 func HandleReportTracker(c *gin.Context) {
 	rid := c.Query("rid")
 	services.LogEventByRID(c, rid, "reported")
+}
+
+func TrackAttachment(c *gin.Context) {
+	// uid := c.Query("uid")
+	campaign, _ := strconv.Atoi(c.Query("campaign"))
+	filename := c.Query("file")
+
+	// Log event “attachment_clicked”
+	e := models.Event{
+		// UID:        uid,
+		CampaignID: uint(campaign),
+		Type:       "attachment_clicked",
+		Timestamp:  time.Now(),
+		// Metadata:   collectMetadata(c.Request),
+	}
+	config.DB.Create(&e)
+
+	// Kirim file setelah logging
+	c.File(fmt.Sprintf("assets/attachments/%s", filename))
 }
 
 func GetLandingPageBody(c *gin.Context) {

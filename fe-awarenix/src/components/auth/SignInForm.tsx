@@ -142,9 +142,10 @@ export default function SignInForm() {
     if (!password) return setErrors({ password: "Password is required" });
 
     setLoading(true);
+    const API_URL = import.meta.env.VITE_API_URL;
     try {
       const res = await fetch(
-        "http://localhost:3000/api/v1/auth/login",
+        `${API_URL}/auth/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

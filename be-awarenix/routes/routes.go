@@ -92,6 +92,7 @@ func SetupRoutes(router *gin.Engine) {
 		analytics := api.Group("/analytics")
 		{
 			analytics.GET("/growth-percentage", controllers.GetGrowthPercentage)
+			analytics.GET("/dashboard-metrics", controllers.GetDashboardMetrics)
 		}
 
 		activityLogs := api.Group("/activity-logs")

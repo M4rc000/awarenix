@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import { IoIosSave } from "react-icons/io";
 import { HiOutlineMail } from "react-icons/hi";
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/20/solid'
 import { FaRegTrashAlt } from "react-icons/fa";
@@ -31,6 +32,7 @@ import ShowCampaignModal from "../../components/campaigns/ShowCampaignModal";
 import UpdateCampaignModal from "../../components/campaigns/UpdateCampaignModal";
 import DeleteCampaignModal from "../../components/campaigns/DeleteCampaignModal";
 
+// Definisi interface untuk Campaign, sesuai dengan respons dari backend
 export interface Campaign {
   id: number;
   name: string;
@@ -53,22 +55,21 @@ export interface Campaign {
   reported: number;
 }
 
+// Interface untuk parameter fetch (tidak lagi digunakan untuk pagination server-side)
 export interface FetchCampaignsParams {
-  // Parameter ini tidak lagi digunakan untuk fetch all data
-  // page?: number;
-  // limit?: number;
   search?: string;
   sortBy?: string;
   order?: 'asc' | 'desc';
 }
 
+// Interface untuk hasil fetch dari API
 export interface FetchCampaignsResult<T> {
   status: string;
   message: string;
-  data: T[]; // Sekarang akan berisi semua data
-  total: number; // Total data yang tidak difilter (opsional, bisa diabaikan jika selalu fetch semua)
-  page?: number; // Tidak lagi relevan untuk client-side pagination
-  limit?: number; // Tidak lagi relevan untuk client-side pagination
+  data: T[]; // Sekarang akan berisi semua data yang tidak difilter
+  total: number; // Total data yang tidak difilter dari backend
+  page?: number;
+  limit?: number;
 }
 
 export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrigger?: number, onReload?: () => void }){
@@ -82,16 +83,16 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
   const deferredSearch = useDeferredValue(search);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // campaignsData sekarang akan menyimpan semua data, bukan hanya satu halaman
+  // State untuk menyimpan semua data kampanye yang di-fetch
   const [campaignsData, setCampaignsData] = useState<Campaign[]>([]);
-  // totalCampaigns tidak lagi digunakan untuk pageCount, tapi bisa untuk display total keseluruhan
-  // const [totalCampaigns, setTotalCampaigns] = useState(0); 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // State untuk modal dan kampanye yang dipilih
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [activeModal, setActiveModal] = useState<'detail' | 'edit' | 'delete' | null>(null);
 
+  // Efek untuk menangani shortcut keyboard (Ctrl+K atau Cmd+K)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "k") {
@@ -107,25 +108,15 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
     };
   }, []);
 
-  // Fungsi untuk mengambil semua data dari API (client-side pagination)
+  // Fungsi untuk mengambil semua data dari API
   const fetchCampaigns = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Tidak ada query params untuk pagination di sini, karena kita fetch semua data
-      // const sortBy = sorting.length > 0 ? sorting[0].id : 'created_at';
-      // const order = sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : 'desc';
-      // const qs = new URLSearchParams({
-      //   ...(deferredSearch ? { search: deferredSearch } : {}),
-      //   sortBy: sortBy, // sortBy dan order akan digunakan oleh React Table
-      //   order: order,
-      // });
-
       const token = localStorage.getItem('token');
       const API_URL = import.meta.env.VITE_API_URL;
 
-      // Asumsi endpoint /campaigns/all tanpa parameter akan mengembalikan semua data
-      // Jika backend Anda memerlukan parameter tertentu untuk 'fetch all', sesuaikan di sini
+      // Panggil API tanpa parameter pagination, karena kita akan melakukan client-side pagination
       const res = await fetch(`${API_URL}/campaigns/all`, {
         method: 'GET',
         headers: {
@@ -140,47 +131,49 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
       }
 
       const result: FetchCampaignsResult<Campaign> = await res.json();
-      setCampaignsData(result.data); // result.data diharapkan berisi semua kampanye
-      // setTotalCampaigns(result.total); // totalCampaigns tidak lagi digunakan untuk pageCount
+      setCampaignsData(result.data); // Simpan semua data yang diterima
     } catch (err: any) {
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
-  }, []); // Dependensi kosong karena kita fetch semua data, sorting/search ditangani React Table
+  }, []); // Dependensi kosong karena kita fetch semua data, bukan berdasarkan parameter
 
+  // Efek untuk memicu fetch data saat komponen dimuat atau reloadTrigger berubah
+  // Juga menyertakan interval untuk refresh otomatis
   useEffect(() => {
-    fetchCampaigns();
+    fetchCampaigns(); // Panggil fetch saat pertama kali atau reloadTrigger berubah
 
     const intervalId = setInterval(() => {
-      fetchCampaigns();
+      fetchCampaigns(); // Panggil fetch setiap 5 detik untuk refresh otomatis
     }, 5000);
 
-    return () => clearInterval(intervalId);
-  }, [reloadTrigger, fetchCampaigns]);
-  
-  useEffect(() => {
-    fetchCampaigns();
-  }, [reloadTrigger]);
+    return () => clearInterval(intervalId); // Bersihkan interval saat komponen unmount
+  }, [fetchCampaigns, reloadTrigger]); // Tambahkan fetchCampaigns dan reloadTrigger sebagai dependensi
 
+  // Handler untuk membuka modal detail
   const handleDetailModal = (campaign: Campaign) =>{
     setSelectedCampaign(campaign);
     setActiveModal('detail');
   }
+  // Handler untuk membuka modal edit
   const handleEditModal = (campaign: Campaign) =>{
     setSelectedCampaign(campaign);
     setActiveModal('edit');
   }
+  // Handler untuk membuka modal delete
   const handleDeleteModal = (campaign: Campaign) =>{
     setSelectedCampaign(campaign);
     setActiveModal('delete');
   }
 
+  // Definisi kolom tabel menggunakan useMemo untuk optimasi
   const columns = useMemo<ColumnDef<Campaign>[]>(
     () => [
       {
         accessorKey: 'id',
         header: '#',
+        // Menghitung nomor urut berdasarkan index baris dan state pagination
         cell: info => info.row.index + 1 + (pagination.pageIndex * pagination.pageSize),
       },
       {
@@ -190,11 +183,24 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
       {
         accessorKey: 'launch_date',
         header: 'Schedule',
-        cell: info => new Date(info.getValue() as string).toLocaleDateString('id-ID', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }),
+        // Memformat tanggal menjadi format lokal Indonesia
+        cell: ({ getValue }) => {
+          const raw = getValue();
+          if (!raw || (typeof raw !== 'string' && typeof raw !== 'number' && !(raw instanceof Date))) return '-';
+
+          const date = new Date(raw);
+          if (isNaN(date.getTime())) return '-';
+          
+          return date.toLocaleString('en-US', {
+            timeZone: 'Asia/Jakarta',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          }).replace(' pukul ', ' ');
+        }
       },
       {
         accessorKey: 'type',
@@ -204,56 +210,27 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
       {
         accessorKey: 'email_sent',
         header: () => <HiOutlineMail className="text-xl text-green-600" />,
-        cell: info => {
-          if(info.getValue() == ''){
-            return 0
-          }
-          return info.getValue()
-        } 
+        cell: info => info.getValue() 
       },
       {
         accessorKey: 'email_opened',
         header: () => <HiOutlineMailOpen className="text-xl text-yellow-600" />,
-        cell: info => {
-          
-          if(info.getValue() == ''){
-            return 0
-          }
-          return info.getValue()
-        }
+        cell: info => info.getValue() 
       },
       {
         accessorKey: 'email_clicks',
         header: () => <LuMousePointerClick className="text-xl text-blue-600" />,
-        cell: info => {
-          
-          if(info.getValue() == ''){
-            return 0
-          }
-          return info.getValue()
-        }
+        cell: info => info.getValue() 
       },
       {
         accessorKey: 'email_reported',
         header: () => <BiError className="text-xl text-red-600" />,
-        cell: info => {
-          
-          if(info.getValue() == ''){
-            return 0
-          }
-          return info.getValue()
-        }
+        cell: info => info.getValue() 
       },
       {
         accessorKey: 'email_submitted',
-        header: () => <HiOutlineSpeakerphone className="text-xl text-cyan-600" />,
-        cell: info => {
-          
-          if(info.getValue() == ''){
-            return 0
-          }
-          return info.getValue()
-        }
+        header: () => <IoIosSave className="text-xl text-cyan-600" />,
+        cell: info => info.getValue() 
       },
       {
         accessorKey: 'status',
@@ -278,11 +255,12 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
         ),
       },
     ],
-    [pagination] // pagination tetap di sini untuk perhitungan index baris
+    [pagination] // Dependensi pagination agar nomor urut diperbarui saat halaman berubah
   );
 
+  // Inisialisasi React Table
   const table = useReactTable({
-    data: campaignsData,
+    data: campaignsData, // Data lengkap dari state
     columns,
     state: {
       globalFilter: deferredSearch,
@@ -291,13 +269,13 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
     },
     onGlobalFilterChange: setSearch,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(), // Diperlukan untuk client-side filtering
+    getPaginationRowModel: getPaginationRowModel(), // Diperlukan untuk client-side pagination
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onPaginationChange: setPagination,
-    // manualPagination: true, // Dihapus untuk client-side pagination
-    // pageCount: Math.ceil(totalCampaigns / pagination.pageSize), // Dihapus
+    // manualPagination: false secara default, jadi tidak perlu ditulis
+    // pageCount akan dihitung otomatis oleh React Table berdasarkan data yang difilter
   });
 
   return (
@@ -431,7 +409,7 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
                         </div>
                     </td>
                 </tr>
-            ) : table.getRowModel().rows.length === 0 ? ( // Menggunakan table.getRowModel().rows.length
+            ) : table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="relative h-[40px]">
                   <div className="absolute inset-0 flex items-center justify-center text-gray-500 italic">
@@ -458,8 +436,8 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
       <div className="flex items-center justify-between p-4 text-gray-600 dark:text-gray-500 text-sm">
         <div>
           Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
-          {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)}{' '} {/* Menggunakan getFilteredRowModel().rows.length */}
-          of {table.getFilteredRowModel().rows.length} entries {/* Menggunakan getFilteredRowModel().rows.length */}
+          {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)}{' '}
+          of {table.getFilteredRowModel().rows.length} entries
         </div>
         <div className="space-x-2">
           <div>
@@ -566,7 +544,7 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
           setSelectedCampaign(null);
         }}
         campaign={selectedCampaign}
-        onCampaignDeleted={() => {
+        onCampaignDeleted={() => { 
           fetchCampaigns();
           if (onReload) onReload();
         }}

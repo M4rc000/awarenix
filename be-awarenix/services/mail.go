@@ -108,12 +108,14 @@ func SendTestEmail(profile *models.SendingProfiles, recipientEmail, body, subjec
 func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 	// Domains
 	// backendBase := os.Getenv("APP_URL")
+	// log.Println(backendBase)
 	// if backendBase == "" {
-	backendBase := "http://192.1.6:3000"
+	backendBase := "localhost:3000"
 	// }
 	// frontendDomain := os.Getenv("FRONTEND_URL")
+	// log.Println(frontendDomain)
 	// if frontendDomain == "" {
-	frontendDomain := "http://192.1.6:5173"
+	frontendDomain := "localhost:5173"
 	// }
 
 	// 1. Render email body
@@ -122,7 +124,7 @@ func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 	data := map[string]interface{}{
 		"Name": rec.Email,
 		"LandingURL": fmt.Sprintf(
-			"%s/lander?rid=%s&campaign=%d&page=%d",
+			"http://%s/lander?rid=%s&campaign=%d&page=%d",
 			frontendDomain, rec.UID, camp.ID, camp.LandingPageID,
 		),
 	}
@@ -131,7 +133,7 @@ func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 
 	// 2. Sisipkan tracking pixel (opened)
 	pixel := fmt.Sprintf(
-		`<img src="%s/track/open?rid=%s&campaign=%d" style="display:none"/>`,
+		`<img src="http://%s/track/open?rid=%s&campaign=%d" style="display:none"/>`,
 		backendBase, rec.UID, camp.ID,
 	)
 	body += pixel
@@ -139,7 +141,7 @@ func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 	// 3. Tambahkan tombol “Laporkan Email Ini”
 	reportLink := fmt.Sprintf(`
       <div style="text-align:center; margin:24px 0;">
-        <a href="%s/track/report?rid=%s&campaign=%d"
+        <a href="http://%s/track/report?rid=%s&campaign=%d"
            style="
              display:inline-block;
              padding:10px 20px;

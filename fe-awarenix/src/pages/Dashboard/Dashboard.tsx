@@ -1,9 +1,6 @@
-import React from 'react';
-import { Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import {
   ResponsiveContainer,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -11,57 +8,55 @@ import {
   CartesianGrid,
   LineChart,
   Line,
-  PieChart as RechartsPieChart, // Rename to avoid conflict with local PieChart component
+  PieChart as RechartsPieChart,
   Pie,
   Cell
 } from 'recharts';
 import DashboardCard from '../../components/dashboard/DashboardCard';
 import MetricCard from '../../components/dashboard/MetricCard';
-import CircularProgress from '../../components/dashboard/CircularProgress';
 
 export default function Dashboard() {
-  const totalSent = 100;
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const campaignResults = [
-    { label: "Sent", value: totalSent, color: "#10B981", percentage: 100 },
-    { label: "Opened", value: 80, color: "#F59E0B", percentage: 80 },
-    { label: "Clicked", value: 40, color: "#EF4444", percentage: 40 },
-    { label: "Submitted", value: 15, color: "#DC2626", percentage: 15 },
-    { label: "Reported", value: 5, color: "#6B7280", percentage: 5 }
-  ];
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem('token'); 
+      const API_URL = import.meta.env.VITE_API_URL;
+      const response = await fetch(`${API_URL}/analytics/dashboard-metrics`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
-  // Data for Funnel Chart
-  const funnelData = [
-    { name: 'Email Sent', value: totalSent, fill: '#10B981' },
-    { name: 'Email Opened', value: campaignResults[1].value, fill: '#F59E0B' },
-    { name: 'Clicked Link', value: campaignResults[2].value, fill: '#EF4444' },
-    { name: 'Submitted Data', value: campaignResults[3].value, fill: '#DC2626' },
-  ];
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'failed to load data dashboard');
+      }
 
-  // Dummy data for CTR Over Time (misalnya per jam)
-  const ctrOverTimeData = [
-    { hour: '09:00', sent: 20, opened: 15, clicked: 5 },
-    { hour: '10:00', sent: 30, opened: 25, clicked: 12 },
-    { hour: '11:00', sent: 25, opened: 20, clicked: 10 },
-    { hour: '12:00', sent: 15, opened: 10, clicked: 3 },
-    { hour: '13:00', sent: 10, opened: 8, clicked: 2 },
-  ];
+      const result = await response.json();
+      if (result.status === 'success') {
+        setDashboardData(result.data);
+      } else {
+        throw new Error(result.message || 'API Response not successful');
+      }
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Dummy data for Top Clickers/Submitters
-  const topPerformers = [
-    { name: 'John Doe (IT Dept.)', clicks: 12, submits: 3 },
-    { name: 'Jane Smith (HR Dept.)', clicks: 8, submits: 2 },
-    { name: 'Robert Johnson (Sales)', clicks: 6, submits: 1 },
-    { name: 'Emily Davis (Marketing)', clicks: 5, submits: 1 },
-  ];
+  useEffect(() => {
+    fetchDashboardData();
+  }, []); // [] agar fetch hanya berjalan sekali saat komponen dimuat
 
-  // Dummy data for Browser/OS Breakdown
-  const browserData = [
-    { name: 'Chrome', value: 70, color: '#3B82F6' }, // blue-500
-    { name: 'Firefox', value: 15, color: '#F97316' }, // orange-500
-    { name: 'Edge', value: 10, color: '#0EA5E9' }, // sky-500
-    { name: 'Others', value: 5, color: '#9CA3AF' }, // gray-400
-  ];
   const RADIAN = Math.PI / 180;
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
@@ -75,65 +70,70 @@ export default function Dashboard() {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center">
+        <p className="text-lg">Memuat data dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center">
+        <p className="text-lg text-red-500">Error: {error}</p>
+        <button
+          onClick={fetchDashboardData}
+          className="ml-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
+          Coba Lagi
+        </button>
+      </div>
+    );
+  }
+
+  // Pastikan dashboardData tidak null sebelum diakses
+  if (!dashboardData) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center">
+        <p className="text-lg">Tidak ada data dashboard yang tersedia.</p>
+      </div>
+    );
+  }
+
+  const {
+    campaignResults,
+    ctrOverTimeData,
+    topPerformers,
+    browserData
+  } = dashboardData;
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-3 py-3 space-y-8">
         {/* Campaign Overview Metrics */}
         <DashboardCard title="Campaign Overview">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
             {campaignResults.map((result, index) => (
-              <MetricCard 
-                key={index} 
-                label={result.label} 
-                value={result.value} 
-                percentage={result.percentage} 
-                color={result.color} 
-              />
+              result.label !== "Campaign" ? (
+                <MetricCard
+                  key={index}
+                  label={`Total ${result.label}`}
+                  value={result.value}
+                  percentage={result.percentage}
+                  color={result.color}
+                />
+              ) : (
+                <MetricCard
+                  key={index}
+                  label={result.label} 
+                  value={result.value}
+                  color={result.color}
+                />
+              )
             ))}
           </div>
         </DashboardCard>
-
-        {/* Funnel Conversion & Circular Progress */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <DashboardCard title="Conversion Funnel">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                data={funnelData}
-                layout="vertical"
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" className="dark:stroke-gray-700" />
-                <XAxis type="number" hide />
-                <YAxis type="category" dataKey="name" width={120} tick={{ fill: 'currentColor' }} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'rgb(31 41 55)', border: 'none', borderRadius: '0.5rem' }} 
-                  labelStyle={{ color: '#E5E7EB' }} 
-                  itemStyle={{ color: '#D1D5DB' }} 
-                />
-                <Bar dataKey="value" fill="#8884d8" barSize={30}>
-                  {funnelData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-4">
-              Visualisasi alur konversi dari email terkirim hingga data terkirim.
-            </p>
-          </DashboardCard>
-
-          <DashboardCard title="Key Performance Gauges">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-8 mt-4">
-              {/* Menggunakan CircularProgress dari data campaignResults yang relevan */}
-              <CircularProgress value={campaignResults[0].value} total={totalSent} color={campaignResults[0].color} label="Email Sent" />
-              <CircularProgress value={campaignResults[1].value} total={totalSent} color={campaignResults[1].color} label="Email Opened" />
-              <CircularProgress value={campaignResults[2].value} total={totalSent} color={campaignResults[2].color} label="Clicked Link" />
-              <CircularProgress value={campaignResults[3].value} total={totalSent} color={campaignResults[3].color} label="Submitted Data" />
-              <CircularProgress value={campaignResults[4].value} total={totalSent} color={campaignResults[4].color} label="Email Reported" />
-            </div>
-          </DashboardCard>
-        </div>
 
         {/* CTR Over Time & Top Performers */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -146,10 +146,10 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" className="dark:stroke-gray-700" />
                 <XAxis dataKey="hour" tick={{ fill: 'currentColor' }} />
                 <YAxis tick={{ fill: 'currentColor' }} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'rgb(31 41 55)', border: 'none', borderRadius: '0.5rem' }} 
-                  labelStyle={{ color: '#E5E7EB' }} 
-                  itemStyle={{ color: '#D1D5DB' }} 
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'rgb(31 41 55)', border: 'none', borderRadius: '0.5rem' }}
+                  labelStyle={{ color: '#E5E7EB' }}
+                  itemStyle={{ color: '#D1D5DB' }}
                 />
                 <Legend />
                 <Line type="monotone" dataKey="sent" stroke="#10B981" name="Sent" />
@@ -158,7 +158,7 @@ export default function Dashboard() {
               </LineChart>
             </ResponsiveContainer>
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-4">
-              Menunjukkan jumlah email terkirim, dibuka, dan diklik setiap jam.
+              Shows the number of emails sent, opened, and typed per hour.
             </p>
           </DashboardCard>
 
@@ -200,7 +200,7 @@ export default function Dashboard() {
 
         {/* Browser/OS Breakdown & Campaign Timeline */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <DashboardCard title="Browser/OS Distribution">
+          <DashboardCard title="Browser Used">
             <ResponsiveContainer width="100%" height={300}>
               <RechartsPieChart>
                 <Pie
@@ -217,16 +217,15 @@ export default function Dashboard() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'rgb(31 41 55)', border: 'none', borderRadius: '0.5rem' }} 
-                  labelStyle={{ color: '#E5E7EB' }} 
-                  itemStyle={{ color: '#D1D5DB' }} 
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'rgb(31 41 55)', border: 'none', borderRadius: '0.5rem' }}
+                  labelStyle={{ color: '#E5E7EB' }}
+                  itemStyle={{ color: '#D1D5DB' }}
                 />
                 <Legend wrapperStyle={{ color: 'currentColor' }} />
               </RechartsPieChart>
             </ResponsiveContainer>
           </DashboardCard>
-
         </div>
       </div>
     </div>

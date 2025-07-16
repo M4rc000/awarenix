@@ -89,7 +89,8 @@ export const UserSessionProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setUserState(null);
     setIsAuthenticated(false);
     // Optionally, call logout API
-    fetch("http://localhost:3000/api/v1/auth/logout", {
+    const API_URL = import.meta.env.VITE_API_URL;
+    fetch(`${API_URL}/auth/logout`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${localStorage.getItem('token')}` }
     }).then(res => {
