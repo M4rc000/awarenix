@@ -92,38 +92,48 @@ func LogEventByRID(c *gin.Context, rid string, eventType string) {
 	// 9. Response: serve pixel / redirect / text
 	switch eventType {
 	case string(models.Opened):
+		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
 		c.File("pixel.gif")
 	case string(models.Clicked):
 		target, _ := url.QueryUnescape(c.Query("url"))
 		c.Redirect(302, target)
 	case string(models.Submitted):
 		c.Redirect(302, "https://real-site.com")
-	case "reported":
-		c.String(200, "Terima kasih telah melaporkan.")
+	case string(models.Reported):
+		c.String(200, "Thanks for reporting.")
 	default:
 		c.Status(204)
 	}
 }
 
-func RewriteLinks(
-	htmlStr string,
-	uid string,
-	campaignID uint,
-	pageID uint,
-	frontendDomain string,
-) string {
+func RewriteLinks(htmlStr string, uid string, campaignID uint, pageID uint, frontendDomain string) string {
 	doc, _ := html.Parse(strings.NewReader(htmlStr))
 	var rewrite func(*html.Node)
 	rewrite = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "a" {
-			for i, attr := range n.Attr {
-				if attr.Key == "href" {
-					orig := attr.Val
-					enc := url.QueryEscape(orig)
-					n.Attr[i].Val = fmt.Sprintf(
-						"http://%s/lander?rid=%s&campaign=%d&page=%d&url=%s",
-						frontendDomain, uid, campaignID, pageID, enc,
-					)
+			skip := false
+			for _, attr := range n.Attr {
+				// skip jika href sudah mengarah ke /track/report
+				if attr.Key == "href" && strings.Contains(attr.Val, "/track/report") {
+					skip = true
+					break
+				}
+				// optional: skip jika ada data-no-track
+				if attr.Key == "data-no-track" {
+					skip = true
+					break
+				}
+			}
+			if !skip {
+				for i, attr := range n.Attr {
+					if attr.Key == "href" {
+						orig := attr.Val
+						enc := url.QueryEscape(orig)
+						n.Attr[i].Val = fmt.Sprintf(
+							"http://%s/lander?rid=%s&campaign=%d&page=%d&url=%s",
+							frontendDomain, uid, campaignID, pageID, enc,
+						)
+					}
 				}
 			}
 		}
@@ -132,7 +142,6 @@ func RewriteLinks(
 		}
 	}
 	rewrite(doc)
-
 	var buf bytes.Buffer
 	html.Render(&buf, doc)
 	return buf.String()

@@ -1,4 +1,4 @@
-import { useState, useMemo, useDeferredValue, useRef, useEffect } from 'react';
+import { useState, useMemo, useDeferredValue, useRef, useEffect, useCallback } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -31,7 +31,47 @@ import ShowCampaignModal from "../../components/campaigns/ShowCampaignModal";
 import UpdateCampaignModal from "../../components/campaigns/UpdateCampaignModal";
 import DeleteCampaignModal from "../../components/campaigns/DeleteCampaignModal";
 
-export default function TableCampaigns() {
+export interface Campaign {
+  id: number;
+  name: string;
+  launch_date: string;
+  send_email_by?: string | null;
+  group_id: number;
+  email_template_id: number;
+  landing_page_id: number;
+  sending_profile_id: number;
+  url: string;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  status: string;
+  completed_date?: string | null;
+  email_sent: number;
+  email_opened: number;
+  clicks: number;
+  submitted: number;
+  reported: number;
+}
+
+export interface FetchCampaignsParams {
+  // Parameter ini tidak lagi digunakan untuk fetch all data
+  // page?: number;
+  // limit?: number;
+  search?: string;
+  sortBy?: string;
+  order?: 'asc' | 'desc';
+}
+
+export interface FetchCampaignsResult<T> {
+  status: string;
+  message: string;
+  data: T[]; // Sekarang akan berisi semua data
+  total: number; // Total data yang tidak difilter (opsional, bisa diabaikan jika selalu fetch semua)
+  page?: number; // Tidak lagi relevan untuk client-side pagination
+  limit?: number; // Tidak lagi relevan untuk client-side pagination
+}
+
+export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrigger?: number, onReload?: () => void }){
   const [search, setSearch] = useState('');
   const { isExpanded } = useSidebar();
   const [pagination, setPagination] = useState({
@@ -41,10 +81,17 @@ export default function TableCampaigns() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const deferredSearch = useDeferredValue(search);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [updateModalOpen, setUpdateModalOpen] = useState(false);
-  const [showModalOpen, setShowModalOpen] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  
+
+  // campaignsData sekarang akan menyimpan semua data, bukan hanya satu halaman
+  const [campaignsData, setCampaignsData] = useState<Campaign[]>([]);
+  // totalCampaigns tidak lagi digunakan untuk pageCount, tapi bisa untuk display total keseluruhan
+  // const [totalCampaigns, setTotalCampaigns] = useState(0); 
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [activeModal, setActiveModal] = useState<'detail' | 'edit' | 'delete' | null>(null);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "k") {
@@ -60,242 +107,153 @@ export default function TableCampaigns() {
     };
   }, []);
 
-  interface Campaign {
-    id: number;
-    name: string;
-    schedule: string;
-    type: string;
-    emailSent: number;
-    emailOpened: number;
-    clicks: number;
-    errors: number;
-    impressions: number;
-    status: string;
+  // Fungsi untuk mengambil semua data dari API (client-side pagination)
+  const fetchCampaigns = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Tidak ada query params untuk pagination di sini, karena kita fetch semua data
+      // const sortBy = sorting.length > 0 ? sorting[0].id : 'created_at';
+      // const order = sorting.length > 0 ? (sorting[0].desc ? 'desc' : 'asc') : 'desc';
+      // const qs = new URLSearchParams({
+      //   ...(deferredSearch ? { search: deferredSearch } : {}),
+      //   sortBy: sortBy, // sortBy dan order akan digunakan oleh React Table
+      //   order: order,
+      // });
+
+      const token = localStorage.getItem('token');
+      const API_URL = import.meta.env.VITE_API_URL;
+
+      // Asumsi endpoint /campaigns/all tanpa parameter akan mengembalikan semua data
+      // Jika backend Anda memerlukan parameter tertentu untuk 'fetch all', sesuaikan di sini
+      const res = await fetch(`${API_URL}/campaigns/all`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || `Failed to fetch campaigns: ${res.status}`);
+      }
+
+      const result: FetchCampaignsResult<Campaign> = await res.json();
+      setCampaignsData(result.data); // result.data diharapkan berisi semua kampanye
+      // setTotalCampaigns(result.total); // totalCampaigns tidak lagi digunakan untuk pageCount
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []); // Dependensi kosong karena kita fetch semua data, sorting/search ditangani React Table
+
+  useEffect(() => {
+    fetchCampaigns();
+
+    const intervalId = setInterval(() => {
+      fetchCampaigns();
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [reloadTrigger, fetchCampaigns]);
+  
+  useEffect(() => {
+    fetchCampaigns();
+  }, [reloadTrigger]);
+
+  const handleDetailModal = (campaign: Campaign) =>{
+    setSelectedCampaign(campaign);
+    setActiveModal('detail');
   }
-
-  const tableData: Campaign[] = [
-  {
-      id: 1,
-      name: "Testing SMTP",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 20,
-      emailOpened: 5,
-      clicks: 5,
-      errors: 1,
-      impressions: 10,
-      status: "Completed",
-    },
-    {
-      id: 2,
-      name: "Testing SMTP 2",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 20,
-      emailOpened: 15,
-      clicks: 5,
-      errors: 1,
-      impressions: 10,
-      status: "Pending",
-    },
-    {
-      id: 3,
-      name: "Testing 1",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 10,
-      emailOpened: 6,
-      clicks: 5,
-      errors: 1,
-      impressions: 5,
-      status: "Completed",
-    },
-    {
-      id: 4,
-      name: "Testing SMTP Mailtrap",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 20,
-      emailOpened: 10,
-      clicks: 5,
-      errors: 1,
-      impressions: 10,
-      status: "Pending",
-    },
-    {
-      id: 5,
-      name: "Testing Mailgun",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 10,
-      emailOpened: 4,
-      clicks: 7,
-      errors: 1,
-      impressions: 10,
-      status: "Completed",
-    },
-    {
-      id: 6,
-      name: "Testing Mailgun",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 10,
-      emailOpened: 4,
-      clicks: 7,
-      errors: 1,
-      impressions: 10,
-      status: "Completed",
-    },
-    {
-      id: 7,
-      name: "Testing Mailgun",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 10,
-      emailOpened: 4,
-      clicks: 7,
-      errors: 1,
-      impressions: 10,
-      status: "Completed",
-    },
-    {
-      id: 8,
-      name: "Testing Mailgun",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 10,
-      emailOpened: 4,
-      clicks: 7,
-      errors: 1,
-      impressions: 10,
-      status: "Completed",
-    },
-    {
-      id: 9,
-      name: "Testing Mailgun",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 10,
-      emailOpened: 4,
-      clicks: 7,
-      errors: 1,
-      impressions: 10,
-      status: "Completed",
-    },
-    {
-      id: 10,
-      name: "Testing Mailgun",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 10,
-      emailOpened: 4,
-      clicks: 7,
-      errors: 1,
-      impressions: 10,
-      status: "Completed",
-    },
-    {
-      id: 11,
-      name: "Testing Mailgun",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 10,
-      emailOpened: 4,
-      clicks: 7,
-      errors: 1,
-      impressions: 10,
-      status: "Completed",
-    },
-    {
-      id: 12,
-      name: "Testing Mailgun",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 10,
-      emailOpened: 4,
-      clicks: 7,
-      errors: 1,
-      impressions: 10,
-      status: "Completed",
-    },
-    {
-      id: 13,
-      name: "Testing Mailgun",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 10,
-      emailOpened: 4,
-      clicks: 7,
-      errors: 1,
-      impressions: 10,
-      status: "Completed",
-    },
-    {
-      id: 14,
-      name: "Testing Mailgun",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 10,
-      emailOpened: 4,
-      clicks: 7,
-      errors: 1,
-      impressions: 10,
-      status: "Completed",
-    },
-    {
-      id: 15,
-      name: "Testing Aja",
-      schedule: "01 March 2025",
-      type: "Phising ",
-      emailSent: 10,
-      emailOpened: 4,
-      clicks: 7,
-      errors: 1,
-      impressions: 10,
-      status: "Completed",
-    },
-  ];
-
-  const data = useMemo(() => tableData, []);
+  const handleEditModal = (campaign: Campaign) =>{
+    setSelectedCampaign(campaign);
+    setActiveModal('edit');
+  }
+  const handleDeleteModal = (campaign: Campaign) =>{
+    setSelectedCampaign(campaign);
+    setActiveModal('delete');
+  }
 
   const columns = useMemo<ColumnDef<Campaign>[]>(
     () => [
       {
         accessorKey: 'id',
         header: '#',
-        cell: info => info.row.index + 1,
+        cell: info => info.row.index + 1 + (pagination.pageIndex * pagination.pageSize),
       },
       {
         accessorKey: 'name',
         header: 'Campaign Name',
       },
       {
-        accessorKey: 'schedule',
+        accessorKey: 'launch_date',
         header: 'Schedule',
+        cell: info => new Date(info.getValue() as string).toLocaleDateString('id-ID', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
       },
       {
         accessorKey: 'type',
         header: 'Type',
+        cell: () => "Phishing",
       },
       {
-        accessorKey: 'emailSent',
+        accessorKey: 'email_sent',
         header: () => <HiOutlineMail className="text-xl text-green-600" />,
+        cell: info => {
+          if(info.getValue() == ''){
+            return 0
+          }
+          return info.getValue()
+        } 
       },
       {
-        accessorKey: 'emailOpened',
+        accessorKey: 'email_opened',
         header: () => <HiOutlineMailOpen className="text-xl text-yellow-600" />,
+        cell: info => {
+          
+          if(info.getValue() == ''){
+            return 0
+          }
+          return info.getValue()
+        }
       },
       {
-        accessorKey: 'clicks',
+        accessorKey: 'email_clicks',
         header: () => <LuMousePointerClick className="text-xl text-blue-600" />,
+        cell: info => {
+          
+          if(info.getValue() == ''){
+            return 0
+          }
+          return info.getValue()
+        }
       },
       {
-        accessorKey: 'errors',
+        accessorKey: 'email_reported',
         header: () => <BiError className="text-xl text-red-600" />,
+        cell: info => {
+          
+          if(info.getValue() == ''){
+            return 0
+          }
+          return info.getValue()
+        }
       },
       {
-        accessorKey: 'impressions',
+        accessorKey: 'email_submitted',
         header: () => <HiOutlineSpeakerphone className="text-xl text-cyan-600" />,
+        cell: info => {
+          
+          if(info.getValue() == ''){
+            return 0
+          }
+          return info.getValue()
+        }
       },
       {
         accessorKey: 'status',
@@ -305,26 +263,26 @@ export default function TableCampaigns() {
         id: 'actions',
         accessorKey: 'actions',
         header: 'Action',
-        cell: () => (
+        cell: (row) => (
           <div className="flex items-center space-x-2">
-            <Button size="xs" variant="info" onClick={()=>{setShowModalOpen(true)}}>
+            <Button size="xs" variant="info" onClick={() => { handleDetailModal(row.row.original) }}>
               <FaCircleInfo />
             </Button>
-            <Button size="xs" variant="warning" onClick={()=>{setUpdateModalOpen(true)}}>
+            <Button size="xs" variant="warning" onClick={() => { handleEditModal(row.row.original) }}>
               <BiSolidEditAlt />
             </Button>
-            <Button size="xs" variant="danger" onClick={()=>{setDeleteModalOpen(true)}}>
+            <Button size="xs" variant="danger" onClick={() => { handleDeleteModal(row.row.original) }}>
               <FaRegTrashAlt />
             </Button>
           </div>
         ),
       },
     ],
-    []
+    [pagination] // pagination tetap di sini untuk perhitungan index baris
   );
 
   const table = useReactTable({
-    data: data,
+    data: campaignsData,
     columns,
     state: {
       globalFilter: deferredSearch,
@@ -337,7 +295,9 @@ export default function TableCampaigns() {
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onPaginationChange: setPagination, 
+    onPaginationChange: setPagination,
+    // manualPagination: true, // Dihapus untuk client-side pagination
+    // pageCount: Math.ceil(totalCampaigns / pagination.pageSize), // Dihapus
   });
 
   return (
@@ -363,7 +323,7 @@ export default function TableCampaigns() {
               </div>
             </div>
             {/* SEARCH BAR */}
-            <div className={`relative ${isExpanded ? 'xl:mx-40' : 'xl:mx-74'}`}>
+            <div className={`relative ${isExpanded ? 'xl:mx-24' : 'xl:mx-30'}`}>
               <span className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
                 <svg
                   className="fill-gray-500 dark:fill-gray-400"
@@ -372,13 +332,13 @@ export default function TableCampaigns() {
                   viewBox="0 0 20 20"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  >
+                >
                   <path
                     fillRule="evenodd"
                     clipRule="evenodd"
                     d="M3.04175 9.37363C3.04175 5.87693 5.87711 3.04199 9.37508 3.04199C12.8731 3.04199 15.7084 5.87693 15.7084 9.37363C15.7084 12.8703 12.8731 15.7053 9.37508 15.7053C5.87711 15.7053 3.04175 12.8703 3.04175 9.37363ZM9.37508 1.54199C5.04902 1.54199 1.54175 5.04817 1.54175 9.37363C1.54175 13.6991 5.04902 17.2053 9.37508 17.2053C11.2674 17.2053 13.003 16.5344 14.357 15.4176L17.177 18.238C17.4699 18.5309 17.9448 18.5309 18.2377 18.238C18.5306 17.9451 18.5306 17.4703 18.2377 17.1774L15.418 14.3573C16.5365 13.0033 17.2084 11.2669 17.2084 9.37363C17.2084 5.04817 13.7011 1.54199 9.37508 1.54199Z"
                     fill=""
-                    />
+                  />
                 </svg>
               </span>
               <input
@@ -388,7 +348,7 @@ export default function TableCampaigns() {
                 className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-200 bg-transparent py-2.5 pl-12 pr-14 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[430px]"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                />
+              />
               <button className="absolute right-2.5 xl:px-3 xl:w-12 xl:left-92 top-1/2 inline-flex -translate-y-1/2 items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 px-[7px] py-[4.5px] text-xs -tracking-[0.2px] text-gray-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-400">
                 <span className='text-center'> ⌘ </span>
                 <span> K </span>
@@ -398,13 +358,13 @@ export default function TableCampaigns() {
         </form>
       </div>
 
-      <div className="max-w-full overflow-x-auto">
+      <div className="max-w-full overflow-x-auto xl:overflow-x-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => {
-                  const isSorted = header.column.getIsSorted();  // 'asc' | 'desc' | false
+                  const isSorted = header.column.getIsSorted();
                   const canSort = header.column.getCanSort();
 
                   return (
@@ -412,12 +372,12 @@ export default function TableCampaigns() {
                       key={header.id}
                       isHeader
                       className="
-                        relative 
+                        relative
                         px-5 py-3 pr-6
-                        text-start text-gray-500 text-sm 
+                        text-center text-gray-500 text-sm
                         cursor-pointer select-none
                       "
-                      >
+                    >
                       <div
                         onClick={header.column.getToggleSortingHandler()}>
                         {flexRender(header.column.columnDef.header, header.getContext())}
@@ -425,20 +385,20 @@ export default function TableCampaigns() {
                         {canSort && (
                           <div className="mt-1 w-1 text-xs">
                             <span
-                              className={
-                                isSorted === "asc"
+                              className={`
+                                ${isSorted === "asc"
                                   ? "text-gray-800"
-                                  : "text-gray-300"
-                              }
+                                  : "text-gray-300"}
+                              `}
                             >
                               ▲
                             </span>
                             <span
-                              className={
-                                isSorted === "desc"
+                              className={`mr-22
+                                ${isSorted === "desc"
                                   ? "text-gray-800"
                                   : "text-gray-300"
-                              }
+                                }`}
                             >
                               ▼
                             </span>
@@ -452,15 +412,44 @@ export default function TableCampaigns() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map(row => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map(cell => (
-                  <TableCell key={cell.id} className="px-5 py-3 text-sm text-gray-600">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            {isLoading ? (
+              <tr>
+                <td colSpan={columns.length} className="relative h-[40px]">
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-500 italic">
+                    <svg className="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+                    </svg>
+                  </div>
+                </td>
+              </tr>
+            ) : error ? (
+                <tr>
+                    <td colSpan={columns.length} className="relative h-[40px]">
+                        <div className="absolute inset-0 flex items-center justify-center text-red-500 italic">
+                            Error: {error}
+                        </div>
+                    </td>
+                </tr>
+            ) : table.getRowModel().rows.length === 0 ? ( // Menggunakan table.getRowModel().rows.length
+              <tr>
+                <td colSpan={columns.length} className="relative h-[40px]">
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-500 italic">
+                    No data available
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              table.getRowModel().rows.map(row => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map(cell => (
+                    <TableCell key={cell.id} className="px-5 py-3 text-sm text-gray-600 text-center">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -468,16 +457,11 @@ export default function TableCampaigns() {
       {/* PAGINATION */}
       <div className="flex items-center justify-between p-4 text-gray-600 dark:text-gray-500 text-sm">
         <div>
-          Showing {table.getState().pagination.pageIndex + 1} to {table.getState().pagination.pageSize}  of{' '}
-          {table.getPageCount()}
+          Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
+          {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)}{' '} {/* Menggunakan getFilteredRowModel().rows.length */}
+          of {table.getFilteredRowModel().rows.length} entries {/* Menggunakan getFilteredRowModel().rows.length */}
         </div>
         <div className="space-x-2">
-          {/* <Button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-            Previous
-          </Button>
-          <Button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-            Next
-          </Button> */}
           <div>
             <nav aria-label="Pagination" className="isolate inline-flex -space-x-px rounded-md shadow-xs">
               <a
@@ -490,7 +474,7 @@ export default function TableCampaigns() {
                 aria-disabled={!table.getCanPreviousPage()}
                 tabIndex={!table.getCanPreviousPage() ? -1 : 0}>
                 <span className="sr-only">Previous</span>
-                <ChevronLeftIcon aria-hidden="true" className="size-5" color='grey'/>
+                <ChevronLeftIcon aria-hidden="true" className="size-5" color='grey' />
               </a>
 
               {/* Page Numbers */}
@@ -498,38 +482,40 @@ export default function TableCampaigns() {
                 const currentPage = table.getState().pagination.pageIndex;
                 const totalPage = table.getPageCount();
 
-                // Only show first, last, current, current±1
                 if (
                   page === 0 ||
                   page === totalPage - 1 ||
-                  Math.abs(currentPage - page) <= 1
+                  (page >= currentPage - 1 && page <= currentPage + 1)
                 ) {
-                return (
-                  <a
-                    key={page}
-                    onClick={() => table.setPageIndex(page)}
-                    href="#"
-                    aria-current="page"
-                    className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-regular focus:z-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:text-grey-400 ${
-                      currentPage === page
-                        ? 'z-10 bg-indigo-600 text-white focus:outline-indigo-600 ring-gray-300 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
-                        : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:ring-gray-700 border-1 border-gray-600 dark:border-gray-700'
-                    }`}>
-                    {page + 1}
-                  </a>
-              );}
+                  return (
+                    <a
+                      key={page}
+                      onClick={() => table.setPageIndex(page)}
+                      href="#"
+                      aria-current="page"
+                      className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-regular focus:z-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:text-grey-400 ${
+                        currentPage === page
+                          ? 'z-10 bg-blue-600 text-white focus:outline-blue-600 ring-gray-300 dark:ring-gray-700 border-1 border-gray-400 dark:border-gray-700'
+                          : 'text-gray-600 ring-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:ring-gray-700 border-1 border-gray-300 dark:border-gray-700'
+                      }`}
+                    >
+                      {page + 1}
+                    </a>
+                  );
+                }
 
-              if (
-                page === currentPage - 2 ||
-                page === currentPage + 2
-              ) {
-                return (
-                <a
-                  href="#"
-                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-gray-300 dark:ring-gray-700 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
-                    ...
-                </a>
-                );
+                if (
+                  (page === currentPage - 2 && currentPage > 1) ||
+                  (page === currentPage + 2 && currentPage < totalPage - 2)
+                ) {
+                  return (
+                    <span
+                      key={page}
+                      className="relative inline-flex items-center px-4 py-2 text-sm font-regular text-gray-700 ring-1 ring-gray-300 dark:ring-gray-700"
+                    >
+                      ...
+                    </span>
+                  );
                 }
                 return null;
               })}
@@ -542,9 +528,9 @@ export default function TableCampaigns() {
                 aria-disabled={!table.getCanNextPage()}
                 href="#"
                 className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-gray-300 dark:ring-gray-700 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                >
-                <span className="sr-only">Previous</span>
-                <ChevronRightIcon aria-hidden="true" className="size-5" color='grey'/>
+              >
+                <span className="sr-only">Next</span>
+                <ChevronRightIcon aria-hidden="true" className="size-5" color='grey' />
               </a>
             </nav>
           </div>
@@ -554,18 +540,36 @@ export default function TableCampaigns() {
 
       {/* MODAL */}
       <ShowCampaignModal
-        isOpen={showModalOpen}
-        onClose={() => setShowModalOpen(false)}
+        isOpen={activeModal === 'detail'}
+        onClose={() => {
+          setActiveModal(null);
+          setSelectedCampaign(null);
+        }}
+        campaign={selectedCampaign}
       />
 
       <UpdateCampaignModal
-        isOpen={updateModalOpen}
-        onClose={() => setUpdateModalOpen(false)}
+        isOpen={activeModal === 'edit'}
+        onClose={() => {
+          setActiveModal(null);
+          setSelectedCampaign(null);
+          fetchCampaigns();
+          if (onReload) onReload();
+        }}
+        campaign={selectedCampaign}
       />
 
       <DeleteCampaignModal
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
+        isOpen={activeModal === 'delete'}
+        onClose={() => {
+          setActiveModal(null);
+          setSelectedCampaign(null);
+        }}
+        campaign={selectedCampaign}
+        onCampaignDeleted={() => {
+          fetchCampaigns();
+          if (onReload) onReload();
+        }}
       />
     </div>
   );

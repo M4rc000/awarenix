@@ -7,10 +7,13 @@ import {
 } from '@headlessui/react'
 import { Fragment } from 'react'
 import ShowCampaignModalForm from './ShowCampaignModalForm'
+import { Campaign } from './TableCampaigns'
 
 export type NewGroupModalProps = {
   isOpen: boolean
   onClose: () => void
+  campaign: Campaign | null
+  
 }
 
 export default function ShowCampaignModal({

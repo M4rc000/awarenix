@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/smtp"
-	"os"
 	"strings"
 	"text/template"
 
@@ -108,14 +107,14 @@ func SendTestEmail(profile *models.SendingProfiles, recipientEmail, body, subjec
 
 func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 	// Domains
-	backendBase := os.Getenv("APP_URL")
-	if backendBase == "" {
-		backendBase = "http://127.0.0.1:3000"
-	}
-	frontendDomain := os.Getenv("FRONTEND_URL")
-	if frontendDomain == "" {
-		frontendDomain = "http://127.0.0.1:5173"
-	}
+	// backendBase := os.Getenv("APP_URL")
+	// if backendBase == "" {
+	backendBase := "http://192.1.6:3000"
+	// }
+	// frontendDomain := os.Getenv("FRONTEND_URL")
+	// if frontendDomain == "" {
+	frontendDomain := "http://192.1.6:5173"
+	// }
 
 	// 1. Render email body
 	tpl, _ := template.New("email").Parse(camp.EmailTemplate.Body)

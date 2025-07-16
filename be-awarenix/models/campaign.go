@@ -55,6 +55,12 @@ type CampaignResponse struct {
 	UpdatedAt        time.Time  `json:"updated_at"`
 	Status           string     `json:"status"`
 	CompletedDate    *time.Time `json:"completed_date,omitempty"`
+	// Tambahan field untuk statistik kampanye
+	EmailSent      int `json:"email_sent"`
+	EmailOpened    int `json:"email_opened"`
+	EmailClicks    int `json:"email_clicks"`
+	EmailSubmitted int `json:"email_submitted"`
+	EmailReported  int `json:"email_reported"`
 }
 
 type NewCampaignResponse struct {

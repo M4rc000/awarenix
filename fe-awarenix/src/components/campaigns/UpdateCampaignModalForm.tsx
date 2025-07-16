@@ -7,17 +7,7 @@ import Swal from "../utils/AlertContainer";
 import DatePicker from "../form/date-picker";
 import SendTestEmailModal from "../sendingprofiles/SendTestEmailModal";
 import { Button } from "@headlessui/react";
-// import { TestRecipient } from "../sendingprofiles/NewSendingProfilesModalForm";
-
-type Campaign = {
-  name: string;
-  launchDate: string;
-  sendEmailBy?: string;
-  group: string;
-  emailTemplate: string;
-  landingPage: string;
-  sendingProfile: string;
-}
+import { Campaign } from "./TableCampaigns";
 
 export type UpdateCampaignModalFormRef = {
   submitCampain: () => Promise<boolean>;

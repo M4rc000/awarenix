@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react'
 import {
   Dialog,
   DialogBackdrop,
@@ -6,21 +7,77 @@ import {
   Transition,
 } from '@headlessui/react'
 import { Fragment } from 'react'
-import DeleteCampaignModalForm from './DeleteCampaignModalForm'
+import DeleteCampaignModalForm, {DeleteCampaignModalFormRef} from './DeleteCampaignModalForm'
+import Swal from '../utils/AlertContainer'
+import { Campaign } from './TableCampaigns'
 
 export type DeleteCampaignModalProps = {
   isOpen: boolean
   onClose: () => void
+  campaign: Campaign | null
+  onSuccess?: () => void
+  onCampaignDeleted?: () => void
 }
 
 export default function DeleteCampaignModal({
   isOpen,
   onClose,
+  campaign,
+  onCampaignDeleted,
 }: DeleteCampaignModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string>('');
+  const formRef = useRef<DeleteCampaignModalFormRef>(null);
+
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem('token');
+  const handleDelete = async () => {
+    if (!campaign) return;
+    
+    setIsDeleting(true);
+    setError('');
+
+    try {
+      const res = await fetch(`${API_URL}/campaigns/${campaign.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      
+
+      if (!res.ok || data.status !== "success") {
+        setError(data.error || 'Failed to delete campaign');
+        Swal.fire({
+          text: 'Failed to delete campaign',
+          icon: 'error',
+          duration: 2000
+        });
+        return;
+      }
+      onCampaignDeleted?.(); 
+      onClose();         
+
+    } catch (err) {
+      setError('Unexpected error occurred');
+      console.log('Error: ', err);
+      
+      Swal.fire({
+        text: `Unexpected error occurred while deleting campaign`,
+        icon: 'error',
+        duration: 2000,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <Transition show={isOpen} as={Fragment}>
       <Dialog open={isOpen} onClose={()=>{}} className="relative z-[999]">
-        {/* Backdrop with fade animation */}
         <Transition.Child
           as={Fragment}
           enter="transition-opacity duration-300"
@@ -54,7 +111,13 @@ export default function DeleteCampaignModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <DeleteCampaignModalForm />
+                <DeleteCampaignModalForm
+                  campaign={campaign!}
+                  ref={formRef}
+                  onDelete={handleDelete}
+                  error={error}
+                  isDeleting={isDeleting}
+                />
               </div>
 
               {/* FOOTER */}
@@ -62,16 +125,47 @@ export default function DeleteCampaignModal({
                 <button
                   onClick={onClose}
                   className="px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-200 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isDeleting}
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    onClose()
+                  disabled={isDeleting}
+                  onClick={async () => {
+                    try {
+                      const success = await formRef.current?.submitDelete();
+                      
+                      if (success) {
+                        onClose();
+                        Swal.fire({
+                          text: 'Campaign deleted successfully',
+                          icon: "success",
+                          duration: 3000
+                        });
+                        
+                        // Panggil callback untuk refresh data
+                        if (onCampaignDeleted) {
+                          onCampaignDeleted();
+                        }
+                      } else {
+                        Swal.fire({
+                          text: 'Failed to delete campaign. Please try again!',
+                          icon: "error",
+                          duration: 3000
+                        })
+                      }
+                    } catch (error) {
+                      console.log('Error: ', error);
+                      Swal.fire({
+                        text: `An error occurred while deleting campaign!`,
+                        icon: "error",
+                        duration: 3000
+                      })
+                    }
                   }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Confirm
+                  {isDeleting ? 'Deleting...' : 'Confirm'}
                 </button>
               </div>
             </DialogPanel>

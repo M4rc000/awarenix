@@ -1,106 +1,45 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
 } from "../../icons";
 import { SiMinutemailer } from "react-icons/si";
 
-export type CardHeaderEmailTemplatesProps = {
+export type CardHeaderCampaignProps = {
   reloadTrigger: number
 }
 
-export default function CardHeader({ reloadTrigger }: CardHeaderEmailTemplatesProps) {
+export default function CardHeader({reloadTrigger}: CardHeaderCampaignProps) {
   const [totalCampaigns, setTotalCampaigns] = useState(0);
   // const [daysSinceLastCampaign, setDaysSinceLastCampaign] = useState(0);
   // const [growthData, setGrowthData] = useState(null);
-  const [loading, setLoading] = useState(true);
+
+  const fetchTotalCampaign = useCallback(async () => {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/campaigns/all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        setTotalCampaigns(data.total);
+      }
+    } catch (err) {
+      console.error("Failed to fetch total campaign:", err);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const API_URL = import.meta.env.VITE_API_URL;
-      const token = localStorage.getItem("token");
-
-      try {
-        // Fetch total campaigns
-        const campaignsRes = await fetch(`${API_URL}/campaigns/all`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const campaignsData = await campaignsRes.json();
-        if (campaignsData.Success && typeof campaignsData.Total === "number") {
-          setTotalCampaigns(campaignsData.Total);
-        }
-
-        // Fetch days since last campaign
-        // const lastCampaignRes = await fetch(`${API_URL}/campaigns/last-campaign-date`, {
-        //   headers: {
-        //     Authorization: `Bearer ${token}`,
-        //   },
-        // });
-        // const lastCampaignData = await lastCampaignRes.json();
-        // if (lastCampaignData.Success && lastCampaignData.data) {
-        //   const lastDate = new Date(lastCampaignData.data.last_campaign_date);
-        //   const today = new Date();
-        //   const diffTime = Math.abs(today.getTime() - lastDate.getTime());
-        //   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        //   setDaysSinceLastCampaign(diffDays);
-        // }
-
-        // Fetch growth data
-        // const growthRes = await fetch(`${API_URL}/analytics/growth-percentage?type=campaigns`, {
-        //   method: 'GET',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //     'Authorization': `Bearer ${token}`
-        //   },
-        // });
-        // const growthData = await growthRes.json();
-        // if (growthData.success && growthData.data) {
-          // setGrowthData(growthData.data);
-        // }
-
-      } catch (error) {
-        console.error("Failed to fetch campaign data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [reloadTrigger]);
-
-  // const renderBadge = (growth: { growth_type: string; growth_percentage: number } | null) => {
-  //   if (!growth) return (
-  //     <Badge color="success" className="text-sm dark:text-gray-300">
-  //       <ArrowUpIcon className="size-4 mr-1" />
-  //       11.01%
-  //     </Badge>
-  //   );
-
-  //   const icon =
-  //     growth.growth_type === "increase" ? (
-  //       <TbArrowBigUpLine className="mr-1" />
-  //     ) : growth.growth_type === "decrease" ? (
-  //       <TbArrowBigDownLine className="mr-1" />
-  //     ) : (
-  //       <CgArrowsExchange className="mr-1 rotate-180" />
-  //     );
-
-  //   const color =
-  //     growth.growth_type === "increase"
-  //       ? "success"
-  //       : growth.growth_type === "decrease"
-  //       ? "error"
-  //       : "warning";
-
-  //   return (
-  //     <Badge color={color} className="text-sm dark:text-gray-300">
-  //       {icon}
-  //       {growth.growth_percentage.toFixed(2)}%
-  //     </Badge>
-  //   );
-  // };
-
+      fetchTotalCampaign();
+      // fetchGrowthData();
+  
+      const intervalId = setInterval(() => {
+        fetchTotalCampaign();
+        // fetchGrowthData();
+      }, 3000); 
+  
+      return () => clearInterval(intervalId);
+  
+    }, [reloadTrigger, fetchTotalCampaign]); 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 w-full">
       {/* ─── Total Campaigns ─── */}

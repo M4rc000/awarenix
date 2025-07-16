@@ -54,8 +54,6 @@ export default function DeleteUserModal({
       });
 
       const data = await res.json();
-      console.log('Res: ', res);
-      console.log('Data: ', data);
       
 
       if (!res.ok || data.status !== "success") {
@@ -72,7 +70,7 @@ export default function DeleteUserModal({
 
     } catch (err) {
       setError('Unexpected error occurred');
-      console.log('Error: ', err);
+      console.error('Error: ', err);
       
       Swal.fire({
         text: `Unexpected error occurred while deleting user`,
@@ -178,7 +176,7 @@ export default function DeleteUserModal({
                     } catch (error) {
                       console.log('Error: ', error);
                       Swal.fire({
-                        text: `An error occurred while updating user!`,
+                        text: `An error occurred while deleting user!`,
                         icon: "error",
                         duration: 2000
                       })

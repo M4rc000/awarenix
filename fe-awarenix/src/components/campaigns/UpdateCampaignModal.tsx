@@ -7,15 +7,18 @@ import {
 } from '@headlessui/react'
 import { Fragment } from 'react'
 import UpdateCampaignModalForm from './UpdateCampaignModalForm'
+import { Campaign } from './TableCampaigns'
 
 export type NewGroupModalProps = {
   isOpen: boolean
   onClose: () => void
+  campaign: Campaign
 }
 
 export default function UpdateCampaignModal({
   isOpen,
   onClose,
+  campaign,
 }: NewGroupModalProps) {
   return (
     <Transition show={isOpen} as={Fragment}>
@@ -61,7 +64,7 @@ export default function UpdateCampaignModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <UpdateCampaignModalForm />
+                <UpdateCampaignModalForm campaign={campaign!}/>
               </div>
 
               {/* FOOTER */}

@@ -11,11 +11,13 @@ import NewCampaignModalForm, { NewCampaignModalFormRef } from './NewCampaignModa
 export type NewGroupModalProps = {
   isOpen: boolean
   onClose: () => void
+  onUserAdded: () => void
 }
 
 export default function NewCampaignModal({
   isOpen,
   onClose,
+  onUserAdded,
 }: NewGroupModalProps) {
   // Buat ref untuk mengakses metode dari NewCampaignModalForm
   const campaignFormRef = useRef<NewCampaignModalFormRef>(null);
@@ -26,7 +28,8 @@ export default function NewCampaignModal({
       // Panggil fungsi submitCampain dari form
       const success = await campaignFormRef.current.submitCampain();
       if (success) {
-        onClose(); // Tutup modal hanya jika pengiriman berhasil
+        onUserAdded();
+        onClose();
       }
     }
   };
