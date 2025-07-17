@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
@@ -77,7 +78,7 @@ const ShowSendingProfileModalForm = ({
           text: errorData.message || 'Failed to load email headers!',
           duration: 3000,
         });
-        setEmailHeaders([]); // Kosongkan jika gagal
+        setEmailHeaders([]);
         return;
       }
 

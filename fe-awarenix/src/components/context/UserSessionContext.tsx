@@ -1,7 +1,6 @@
 // components/context/UserSessionContext.tsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { jwtDecode } from 'jwt-decode'; // Pastikan Anda menginstal jwt-decode
-// import { fetchUserPermissions } from '../../services/menuServices'; // Ini kemungkinan tidak lagi dibutuhkan jika izin dikirim saat login
+import { jwtDecode } from 'jwt-decode'; 
 
 interface UserData {
   id: number;
@@ -13,8 +12,8 @@ interface UserData {
   company?: string;
   country?: string;
   last_login?: string;
-  allowed_menus: string[]; // array nama menu (opsional, untuk UI)
-  allowed_submenus: string[]; // array URL submenu (penting untuk otorisasi frontend)
+  allowed_menus: string[]; 
+  allowed_submenus: string[]; 
 }
 
 interface UserSessionContextType {

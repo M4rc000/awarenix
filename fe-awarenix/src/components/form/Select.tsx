@@ -14,9 +14,6 @@ interface SelectProps {
   value?: string;
   label?: string;
   required?: boolean;
-  // Jika Anda tetap ingin melewati modalScrollContainerRef,
-  // tambahkan kembali definisi di sini:
-  // modalScrollContainerRef?: React.RefObject<HTMLDivElement>;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -27,9 +24,6 @@ const Select: React.FC<SelectProps> = ({
   value = "",
   label,
   required = false
-  // Jika Anda tetap ingin melewati modalScrollContainerRef,
-  // terima kembali di sini:
-  // modalScrollContainerRef
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0, height: 0, positionType: 'relative' as 'relative' | 'fixed' });
@@ -46,10 +40,16 @@ const Select: React.FC<SelectProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Constants for dropdown height calculation
-  const OPTION_HEIGHT = 48; // Tinggi estimasi setiap item opsi
-  const DROPDOWN_VERTICAL_PADDING = 8; // Padding vertikal dropdown
-  const MAX_DROPDOWN_HEIGHT = 240; // Tinggi maksimum dropdown sebelum scroll
-  const SEARCH_INPUT_HEIGHT = 44; // Tinggi input pencarian (estimasi, termasuk padding/margin)
+  const OPTION_HEIGHT = 48;
+  const DROPDOWN_VERTICAL_PADDING = 8;
+  const MAX_DROPDOWN_HEIGHT = 240;
+  const SEARCH_INPUT_HEIGHT = 44;
+
+  // Update selected option when value prop changes (for controlled component)
+  useEffect(() => {
+    const newSelectedOption = options.find(opt => opt.value === value) || null;
+    setSelectedOption(newSelectedOption);
+  }, [value, options]);
 
   const calculateAndSetDropdownPosition = useCallback(() => {
     if (!selectRef.current) return;
@@ -61,20 +61,17 @@ const Select: React.FC<SelectProps> = ({
     const requiredDropdownContentHeight = (filteredOptions.length * OPTION_HEIGHT) + DROPDOWN_VERTICAL_PADDING;
     const dropdownActualHeight = Math.min(requiredDropdownContentHeight, MAX_DROPDOWN_HEIGHT);
     
-    // Tambahkan tinggi search input jika ada pencarian
     const totalDropdownHeight = dropdownActualHeight + SEARCH_INPUT_HEIGHT; 
     const dropdownWidth = rect.width;
 
     let newTop, newLeft;
-    const PADDING = 10; // Padding dari tepi viewport
+    const PADDING = 10;
 
-    // Default positioning: fixed ke tengah layar jika memungkinkan
-    const currentPositionType = 'fixed'; // Selalu gunakan fixed untuk portal
+    const currentPositionType = 'fixed';
 
     newTop = (viewportHeight / 2) - (totalDropdownHeight / 2);
     newLeft = (viewportWidth / 2) - (dropdownWidth / 2);
 
-    // Batasi agar tidak keluar dari viewport
     if (newTop < PADDING) newTop = PADDING;
     if (newLeft < PADDING) newLeft = PADDING;
     if (newTop + totalDropdownHeight > viewportHeight - PADDING) {
@@ -86,7 +83,6 @@ const Select: React.FC<SelectProps> = ({
       if (newLeft < PADDING) newLeft = PADDING; 
     }
     
-    // Logika untuk menempatkan di atas/bawah input jika lebih cocok
     const spaceBelow = viewportHeight - rect.bottom;
     const spaceAbove = rect.top;
 
@@ -96,26 +92,23 @@ const Select: React.FC<SelectProps> = ({
     } else if (spaceAbove >= totalDropdownHeight + PADDING && spaceAbove > spaceBelow) {
       newTop = rect.top - totalDropdownHeight - 4; 
       newLeft = rect.left;
-    } 
-    // Jika tidak ada cukup ruang di atas atau bawah, tetap pusatkan (sesuai perhitungan awal)
-    // dan biarkan overflow-y-auto bekerja jika opsi banyak
+    }
 
     setDropdownPosition({
       top: newTop,
       left: newLeft,
       width: dropdownWidth,
-      height: dropdownActualHeight, // Hanya tinggi konten opsi yang discroll
+      height: dropdownActualHeight,
       positionType: currentPositionType,
     });
-  }, [filteredOptions.length, options.length]); // Dependencies untuk useCallback
+  }, [filteredOptions.length, options.length]);
 
-  // Effect untuk menangani klik di luar, resize, dan scroll modal parent
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (selectRef.current && !selectRef.current.contains(event.target as Node) &&
           dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
-        setSearchTerm(""); // Reset search term on close
+        setSearchTerm("");
       }
     };
 
@@ -125,57 +118,29 @@ const Select: React.FC<SelectProps> = ({
       }
     };
 
-    // Ini adalah bagian penting untuk menutup dropdown saat modal parent di-scroll.
-    // Kita perlu mendengarkan event scroll pada elemen scrollable modal.
-    // const handleParentScroll = () => { // Komentar ini tetap ada sesuai permintaan
-    //   if (isOpen) {
-    //     setIsOpen(false);
-    //     setSearchTerm("");
-    //   }
-    // };
-
     document.addEventListener('mousedown', handleClickOutside);
     window.addEventListener('resize', handleResize);
-    // Jika Anda ingin mempertahankan fungsionalitas penutupan dropdown saat
-    // modal parent di-scroll, Anda perlu meneruskan 'modalScrollContainerRef'
-    // dari komponen induk ke sini. Bagian ini dikomentari berdasarkan kode terakhir Anda,
-    // yang tidak lagi menerima 'modalScrollContainerRef'.
-    /*
-    const modalParent = modalScrollContainerRef?.current;
-    if (modalParent) {
-      modalParent.addEventListener('scroll', handleParentScroll);
-    }
-    */
     
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('resize', handleResize);
-      /*
-      if (modalParent) {
-        modalParent.removeEventListener('scroll', handleParentScroll);
-      }
-      */
     };
-  }, [isOpen, calculateAndSetDropdownPosition]); // 'modalScrollContainerRef' dihapus dari dependencies jika tidak digunakan
+  }, [isOpen, calculateAndSetDropdownPosition]);
 
-  // Effect untuk filtering opsi berdasarkan searchTerm
   useEffect(() => {
-    setFilteredOptions(
-      options.filter(option =>
-        option.label.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
-    setFocusedIndex(-1); // Reset focused index on search
+    setFilteredOptions(options.filter(opt => {
+      const lbl = String(opt.label || "");
+      return lbl.toLowerCase().includes(searchTerm.toLowerCase());
+    }));
+    setFocusedIndex(-1);
   }, [searchTerm, options]);
 
-  // Effect untuk memfokuskan search input saat dropdown terbuka
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
       searchInputRef.current.focus();
     }
   }, [isOpen]);
 
-  // Effect untuk scroll to focused option
   useEffect(() => {
     if (focusedIndex !== -1 && dropdownListRef.current) {
       const focusedElement = dropdownListRef.current.children[focusedIndex] as HTMLElement;
@@ -189,7 +154,7 @@ const Select: React.FC<SelectProps> = ({
     setSelectedOption(option);
     onChange(option.value);
     setIsOpen(false);
-    setSearchTerm(""); // Reset search term after selection
+    setSearchTerm("");
   };
 
   const toggleDropdown = () => {
@@ -197,8 +162,8 @@ const Select: React.FC<SelectProps> = ({
       calculateAndSetDropdownPosition(); 
     }
     setIsOpen(!isOpen);
-    setSearchTerm(""); // Reset search term when opening
-    setFocusedIndex(-1); // Reset focused index
+    setSearchTerm("");
+    setFocusedIndex(-1);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -224,7 +189,6 @@ const Select: React.FC<SelectProps> = ({
         if (focusedIndex !== -1 && filteredOptions[focusedIndex]) {
           handleSelect(filteredOptions[focusedIndex]);
         } else if (filteredOptions.length === 1 && searchTerm && focusedIndex === -1) {
-          // If only one option left after typing and not yet focused, select it
           handleSelect(filteredOptions[0]);
         }
         break;
@@ -232,7 +196,7 @@ const Select: React.FC<SelectProps> = ({
         e.preventDefault();
         setIsOpen(false);
         setSearchTerm("");
-        selectRef.current?.focus(); // Kembali fokus ke tombol select
+        selectRef.current?.focus();
         break;
       default:
         break;
@@ -249,29 +213,30 @@ const Select: React.FC<SelectProps> = ({
       )}
       
       <div ref={selectRef} className="relative">
-        {/* Backdrop untuk menutup dropdown saat klik di luar */}
         {isOpen && (
           <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[9998]"
                onClick={() => setIsOpen(false)} />
         )}
         
-        {/* Select trigger button */}
+        {/* Select trigger button with enhanced selected state */}
         <button
           type="button"
           className={`
-            h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 pr-11 text-sm shadow-sm text-left
+            h-11 w-full appearance-none rounded-lg border bg-white px-4 py-2.5 pr-11 text-sm shadow-sm text-left
             hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20
-            dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:border-gray-500 dark:focus:border-blue-400
-            transition-all duration-200 ease-in-out
+            dark:bg-gray-900 dark:text-white dark:hover:border-gray-500 dark:focus:border-blue-400
+            transition-all duration-200 ease-in-out border-red-300 dark:border-gray-700
             ${isOpen ? 'border-blue-500 ring-2 ring-blue-500/20 dark:border-blue-400' : ''}
             ${className}
           `}
           onClick={toggleDropdown}
           onKeyDown={handleKeyDown} 
         >
-          <span className={selectedOption ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}>
-            {selectedOption ? selectedOption.label : placeholder}
-          </span>
+          <div className="flex items-center">
+            <span className={`flex-1 ${selectedOption ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+              {selectedOption ? selectedOption.label : placeholder}
+            </span>
+          </div>
           
           {/* Arrow icon */}
           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -316,48 +281,66 @@ const Select: React.FC<SelectProps> = ({
               />
             </div>
 
-            {/* Options List with custom scrollbar */}
+            {/* Options List with enhanced visual indicators */}
             <div 
               ref={dropdownListRef}
               className="overflow-y-auto p-1" 
               style={{ 
                 maxHeight: dropdownPosition.height,
-                // Custom Scrollbar Styles
-                scrollbarWidth: 'thin', // For Firefox
-                scrollbarColor: 'var(--scrollbar-thumb) var(--scrollbar-track)', // For Firefox
-                WebkitOverflowScrolling: 'touch' // For iOS smooth scrolling
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'var(--scrollbar-thumb) var(--scrollbar-track)',
+                WebkitOverflowScrolling: 'touch'
               }}
             >
               {filteredOptions.length > 0 ? (
-                filteredOptions.map((option, index) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`
-                      w-full px-4 mb-2 mt-1 py-3 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 
-                      transition-colors duration-150 ease-in-out rounded-lg
-                      ${selectedOption?.value === option.value 
-                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400' 
-                        : 'text-gray-900 dark:text-gray-100'
-                      }
-                      ${focusedIndex === index ? 'bg-blue-100 dark:bg-blue-800/50' : ''}
-                      ${index === 0 ? 'rounded-lg' : ''}
-                      ${index === filteredOptions.length - 1 ? 'rounded-lg' : ''}
-                    `}
-                    onClick={() => handleSelect(option)}
-                    onMouseEnter={() => setFocusedIndex(index)} 
-                    onMouseLeave={() => setFocusedIndex(-1)} 
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{option.label}</span>
-                      {selectedOption?.value === option.value && (
-                        <svg className="h-4 w-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
+                filteredOptions.map((option, index) => {
+                  const isSelected = selectedOption?.value === option.value;
+                  const isFocused = focusedIndex === index;
+                  
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={`
+                        w-full px-4 mb-2 mt-1 py-3 text-left text-sm transition-all duration-150 ease-in-out rounded-lg
+                        flex items-center justify-between group
+                        ${isSelected 
+                          ? 'bg-green-50 border border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-700 dark:text-green-200 shadow-sm' 
+                          : 'text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 border border-transparent'
+                        }
+                        ${isFocused && !isSelected ? 'bg-blue-50 border-blue-200 dark:bg-blue-800/30 dark:border-gray-600' : ''}
+                        ${isFocused && isSelected ? 'ring-2 ring-green-300 dark:ring-green-600' : ''}
+                      `}
+                      onClick={() => handleSelect(option)}
+                      onMouseEnter={() => setFocusedIndex(index)} 
+                      onMouseLeave={() => setFocusedIndex(-1)} 
+                    >
+                      <div className="flex items-center flex-1">
+                        {/* Check icon for selected option */}
+                        <div className={`mr-3 flex-shrink-0 transition-opacity duration-150 ${
+                          isSelected ? 'opacity-100' : 'opacity-0'
+                        }`}>
+                          <svg className="h-4 w-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        
+                        <span className={`${isSelected ? 'font-semibold' : 'font-normal'}`}>
+                          {option.label}
+                        </span>
+                      </div>
+                      
+                      {/* Selected badge */}
+                      {isSelected && (
+                        <div className="flex-shrink-0 ml-2">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200">
+                            Current
+                          </span>
+                        </div>
                       )}
-                    </div>
-                  </button>
-                ))
+                    </button>
+                  );
+                })
               ) : (
                 <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">No options found.</div>
               )}

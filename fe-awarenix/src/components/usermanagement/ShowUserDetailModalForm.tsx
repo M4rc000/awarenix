@@ -21,8 +21,6 @@ type User = {
 };
 
 type ShowUserDetailModalFormProps = {
-  // isOpen: boolean
-  // onClose: () => void
   user: User | null; 
 };
 

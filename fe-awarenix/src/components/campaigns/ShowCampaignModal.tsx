@@ -13,12 +13,12 @@ export type NewGroupModalProps = {
   isOpen: boolean
   onClose: () => void
   campaign: Campaign | null
-  
 }
 
 export default function ShowCampaignModal({
   isOpen,
   onClose,
+  campaign,
 }: NewGroupModalProps) {
   return (
     <Transition show={isOpen} as={Fragment}>
@@ -64,24 +64,16 @@ export default function ShowCampaignModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
-                <ShowCampaignModalForm />
+                <ShowCampaignModalForm campaign={campaign!}/>
               </div>
 
               {/* FOOTER */}
               <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 dark:bg-gray-900 flex-shrink-0">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-400 rounded dark:hover:bg-gray-600  dark:bg-gray-400"
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-200 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    onClose()
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Save
+                  Close
                 </button>
               </div>
             </DialogPanel>

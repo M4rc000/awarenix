@@ -23,7 +23,6 @@ import { BiSolidEditAlt } from "react-icons/bi";
 import { HiOutlineMailOpen } from "react-icons/hi";
 import { LuMousePointerClick } from "react-icons/lu";
 import { BiError } from "react-icons/bi";
-import { HiOutlineSpeakerphone } from "react-icons/hi";
 import { FaCircleInfo } from "react-icons/fa6";
 import Button from "../ui/button/Button";
 import type { SortingState } from '@tanstack/react-table';
@@ -32,12 +31,11 @@ import ShowCampaignModal from "../../components/campaigns/ShowCampaignModal";
 import UpdateCampaignModal from "../../components/campaigns/UpdateCampaignModal";
 import DeleteCampaignModal from "../../components/campaigns/DeleteCampaignModal";
 
-// Definisi interface untuk Campaign, sesuai dengan respons dari backend
 export interface Campaign {
   id: number;
   name: string;
-  launch_date: string;
-  send_email_by?: string | null;
+  launch_date: Date;
+  send_email_by: Date;
   group_id: number;
   email_template_id: number;
   landing_page_id: number;
@@ -53,21 +51,27 @@ export interface Campaign {
   clicks: number;
   submitted: number;
   reported: number;
+  groupName: string, 
+  emailTemplateName: string, 
+  landingPageName: string, 
+  sendingProfileName: string
+  createdAt: Date;
+  createdByName: string;
+  updatedAt: Date;
+  updatedByName: string;
 }
 
-// Interface untuk parameter fetch (tidak lagi digunakan untuk pagination server-side)
 export interface FetchCampaignsParams {
   search?: string;
   sortBy?: string;
   order?: 'asc' | 'desc';
 }
 
-// Interface untuk hasil fetch dari API
 export interface FetchCampaignsResult<T> {
   status: string;
   message: string;
-  data: T[]; // Sekarang akan berisi semua data yang tidak difilter
-  total: number; // Total data yang tidak difilter dari backend
+  data: T[]; 
+  total: number; 
   page?: number;
   limit?: number;
 }
@@ -116,7 +120,6 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
       const token = localStorage.getItem('token');
       const API_URL = import.meta.env.VITE_API_URL;
 
-      // Panggil API tanpa parameter pagination, karena kita akan melakukan client-side pagination
       const res = await fetch(`${API_URL}/campaigns/all`, {
         method: 'GET',
         headers: {
@@ -131,41 +134,77 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
       }
 
       const result: FetchCampaignsResult<Campaign> = await res.json();
-      setCampaignsData(result.data); // Simpan semua data yang diterima
-    } catch (err: any) {
-      setError(err.message);
+      setCampaignsData(result.data);
+    } catch (err: unknown) {
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, []); // Dependensi kosong karena kita fetch semua data, bukan berdasarkan parameter
+  }, []);
+
+  // Fungsi untuk menangani pagination setelah delete
+  const handlePaginationAfterDelete = useCallback((newDataLength: number) => {
+    const { pageIndex, pageSize } = pagination;
+    const newPageCount = Math.ceil(newDataLength / pageSize);
+    
+    // Jika halaman saat ini melebihi total halaman yang tersedia
+    if (pageIndex >= newPageCount && newPageCount > 0) {
+      setPagination(prev => ({
+        ...prev,
+        pageIndex: newPageCount - 1 // Pindah ke halaman terakhir yang tersedia
+      }));
+    }
+  }, [pagination]);
 
   // Efek untuk memicu fetch data saat komponen dimuat atau reloadTrigger berubah
-  // Juga menyertakan interval untuk refresh otomatis
   useEffect(() => {
-    fetchCampaigns(); // Panggil fetch saat pertama kali atau reloadTrigger berubah
+    fetchCampaigns();
 
     const intervalId = setInterval(() => {
-      fetchCampaigns(); // Panggil fetch setiap 5 detik untuk refresh otomatis
+      fetchCampaigns();
     }, 5000);
 
-    return () => clearInterval(intervalId); // Bersihkan interval saat komponen unmount
-  }, [fetchCampaigns, reloadTrigger]); // Tambahkan fetchCampaigns dan reloadTrigger sebagai dependensi
+    return () => clearInterval(intervalId);
+  }, [fetchCampaigns, reloadTrigger]);
 
   // Handler untuk membuka modal detail
   const handleDetailModal = (campaign: Campaign) =>{
     setSelectedCampaign(campaign);
     setActiveModal('detail');
   }
+
   // Handler untuk membuka modal edit
   const handleEditModal = (campaign: Campaign) =>{
     setSelectedCampaign(campaign);
     setActiveModal('edit');
   }
+
   // Handler untuk membuka modal delete
   const handleDeleteModal = (campaign: Campaign) =>{
     setSelectedCampaign(campaign);
     setActiveModal('delete');
   }
+
+  // Handler untuk campaign yang berhasil dihapus
+  const handleCampaignDeleted = useCallback(() => {
+    // Hitung data baru setelah filter diterapkan
+    const filteredData = campaignsData.filter(campaign => {
+      if (!deferredSearch) return true;
+      return campaign.name.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+             campaign.status.toLowerCase().includes(deferredSearch.toLowerCase());
+    });
+    
+    const newDataLength = filteredData.length - 1; // Kurangi 1 karena data akan terhapus
+    
+    // Tangani pagination
+    handlePaginationAfterDelete(newDataLength);
+    
+    // Fetch data terbaru
+    fetchCampaigns();
+    
+    // Trigger reload callback jika ada
+    if (onReload) onReload();
+  }, [campaignsData, deferredSearch, handlePaginationAfterDelete, fetchCampaigns, onReload]);
 
   // Definisi kolom tabel menggunakan useMemo untuk optimasi
   const columns = useMemo<ColumnDef<Campaign>[]>(
@@ -173,7 +212,6 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
       {
         accessorKey: 'id',
         header: '#',
-        // Menghitung nomor urut berdasarkan index baris dan state pagination
         cell: info => info.row.index + 1 + (pagination.pageIndex * pagination.pageSize),
       },
       {
@@ -183,7 +221,6 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
       {
         accessorKey: 'launch_date',
         header: 'Schedule',
-        // Memformat tanggal menjadi format lokal Indonesia
         cell: ({ getValue }) => {
           const raw = getValue();
           if (!raw || (typeof raw !== 'string' && typeof raw !== 'number' && !(raw instanceof Date))) return '-';
@@ -255,12 +292,12 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
         ),
       },
     ],
-    [pagination] // Dependensi pagination agar nomor urut diperbarui saat halaman berubah
+    [pagination]
   );
 
   // Inisialisasi React Table
   const table = useReactTable({
-    data: campaignsData, // Data lengkap dari state
+    data: campaignsData,
     columns,
     state: {
       globalFilter: deferredSearch,
@@ -269,13 +306,11 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
     },
     onGlobalFilterChange: setSearch,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(), // Diperlukan untuk client-side filtering
-    getPaginationRowModel: getPaginationRowModel(), // Diperlukan untuk client-side pagination
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onPaginationChange: setPagination,
-    // manualPagination: false secara default, jadi tidak perlu ditulis
-    // pageCount akan dihitung otomatis oleh React Table berdasarkan data yang difilter
   });
 
   return (
@@ -515,7 +550,6 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
         </div>
       </div>
 
-
       {/* MODAL */}
       <ShowCampaignModal
         isOpen={activeModal === 'detail'}
@@ -534,6 +568,10 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
           fetchCampaigns();
           if (onReload) onReload();
         }}
+        onUpdateSuccess={() => {
+          if (onReload) onReload();
+          fetchCampaigns()
+        }}
         campaign={selectedCampaign}
       />
 
@@ -544,10 +582,7 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
           setSelectedCampaign(null);
         }}
         campaign={selectedCampaign}
-        onCampaignDeleted={() => { 
-          fetchCampaigns();
-          if (onReload) onReload();
-        }}
+        onCampaignDeleted={handleCampaignDeleted}
       />
     </div>
   );

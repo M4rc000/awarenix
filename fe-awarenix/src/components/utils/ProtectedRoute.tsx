@@ -1,62 +1,82 @@
-// components/utils/ProtectedRoute.tsx
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useUserSession } from '../context/UserSessionContext';
+import { useUserSession } from '../context/UserSessionContext'; // Pastikan path ini benar
 import { useEffect, useState } from 'react';
 
 const ProtectedRoute = () => {
   const { user, isAuthenticated, loading: userSessionLoading } = useUserSession();
   const location = useLocation();
-  const [hasCheckedPermissions, setHasCheckedPermissions] = useState(false);
+  // State untuk melacak apakah pengecekan awal otentikasi telah selesai
+  const [initialAuthCheckComplete, setInitialAuthCheckComplete] = useState(false);
 
   useEffect(() => {
-    // Tunggu hingga user session dimuat
+    // Setelah userSessionLoading menjadi false, artinya sesi sudah dimuat
     if (!userSessionLoading) {
-      setHasCheckedPermissions(true);
+      setInitialAuthCheckComplete(true);
     }
   }, [userSessionLoading]);
 
-  if (!isAuthenticated) {
-    // Jika tidak terautentikasi, redirect ke login
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // Tampilkan loading screen sampai pengecekan awal selesai
+  if (!initialAuthCheckComplete) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="flex flex-col items-center">
+          {/* Spinner */}
+          <svg
+            className="animate-spin h-12 w-12 text-blue-600 dark:text-blue-400"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+            />
+          </svg>
+
+          {/* Text */}
+          <p className="mt-4 text-lg text-gray-700 dark:text-gray-300 font-medium">
+            Loading user session...
+          </p>
+        </div>
+      </div>
+
+    );
   }
 
-  // Tampilkan loading atau null sementara data user sedang dimuat dari context
-  if (userSessionLoading || !hasCheckedPermissions) {
-    return (
-      <div className="flex items-center justify-center h-screen text-lg font-semibold text-gray-700">
-        Loading user permissions...
-      </div>
-    );
+  // Jika tidak terautentikasi setelah pengecekan awal, redirect ke login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Jika user dan allowed_submenus sudah dimuat
   if (user && user.allowed_submenus) {
-    // Daftar path yang selalu diizinkan, terlepas dari role, karena mereka adalah bagian dari struktur aplikasi dasar.
-    // Misalnya, halaman profil atau dashboard default yang mungkin bisa diakses semua user yang login.
     const alwaysAllowedPaths = [
       '/profile',
-      '/dashboard', // Dashboard dasar yang mungkin berbeda per role
-      '/account-settings', // Akun settings user itu sendiri
-      // Tambahkan path lain yang dianggap "public" untuk user yang terautentikasi di sini
+      '/dashboard',
+      '/account-settings',
     ];
 
-    // Cek apakah path yang diakses saat ini ada di daftar allowed_submenus user
     const isPathAllowedByRole = user.allowed_submenus.includes(location.pathname);
-
-    // Cek apakah path yang diakses selalu diizinkan
     const isAlwaysAllowed = alwaysAllowedPaths.includes(location.pathname);
 
     // Jika path tidak diizinkan oleh role DAN tidak termasuk dalam path yang selalu diizinkan
     if (!isPathAllowedByRole && !isAlwaysAllowed) {
-      // Redirect ke halaman tidak berwenang (misal: 403 Forbidden)
       console.warn(`User with role ${user.role_name} attempted to access unauthorized path: ${location.pathname}`);
-      return <Navigate to="/unauthorized" replace />; // Anda perlu membuat komponen/page Unauthorized
+      return <Navigate to="/unauthorized" replace />;
     }
   } else {
-    // Ini seharusnya tidak terjadi jika userSessionLoading sudah false dan isAuthenticated true
-    // Tapi sebagai fallback, jika user objeknya sendiri tidak ada allowed_submenus-nya
-    console.error("User object or allowed_submenus is missing in session context.");
-    // Bisa redirect ke halaman error umum atau login lagi
+    // Ini adalah kasus fallback jika data user tidak lengkap setelah autentikasi
+    // Seharusnya jarang terjadi jika UserSessionContext berfungsi dengan baik.
+    console.error("User object or allowed_submenus is missing in session context after authentication.");
     return <Navigate to="/login" replace />;
   }
 

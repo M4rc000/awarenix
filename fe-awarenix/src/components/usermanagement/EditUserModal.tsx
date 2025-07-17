@@ -14,7 +14,7 @@ interface User {
   name: string;
   email: string;
   company: string;
-  role: string;
+  role: number;
   isActive: string;
   position: string;
   updatedAt: string;

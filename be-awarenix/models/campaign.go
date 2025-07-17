@@ -38,23 +38,31 @@ type CampaignRequest struct {
 	SendingProfileID uint    `json:"sending_profile_id" binding:"required"`
 	URL              string  `json:"url" binding:"required,url"`
 	CreatedBy        uint    `json:"created_by"`
+	UpdatedBy        uint    `json:"updated_by"`
 }
 
 type CampaignResponse struct {
-	ID               int        `json:"id"`
-	Name             string     `json:"name"`
-	LaunchDate       time.Time  `json:"launch_date"`
-	SendEmailBy      *time.Time `json:"send_email_by,omitempty"`
-	GroupID          int        `json:"group_id"`
-	EmailTemplateID  int        `json:"email_template_id"`
-	LandingPageID    int        `json:"landing_page_id"`
-	SendingProfileID int        `json:"sending_profile_id"`
-	URL              string     `json:"url"`
-	CreatedBy        int        `json:"created_by"`
-	CreatedAt        time.Time  `json:"created_at"`
-	UpdatedAt        time.Time  `json:"updated_at"`
-	Status           string     `json:"status"`
-	CompletedDate    *time.Time `json:"completed_date,omitempty"`
+	ID                 int        `json:"id"`
+	Name               string     `json:"name"`
+	LaunchDate         time.Time  `json:"launch_date"`
+	SendEmailBy        *time.Time `json:"send_email_by,omitempty"`
+	GroupID            int        `json:"group_id"`
+	EmailTemplateID    int        `json:"email_template_id"`
+	LandingPageID      int        `json:"landing_page_id"`
+	SendingProfileID   int        `json:"sending_profile_id"`
+	URL                string     `json:"url"`
+	CreatedAt          time.Time  `json:"createdAt"`
+	CreatedBy          int        `json:"createdBy"`
+	CreatedByName      string     `json:"createdByName"`
+	UpdatedAt          time.Time  `json:"updatedAt"`
+	UpdatedBy          int        `json:"updatedBy"`
+	UpdatedByName      string     `json:"updatedByName"`
+	Status             string     `json:"status"`
+	GroupName          string     `json:"groupName"`
+	EmailTemplateName  string     `json:"emailTemplateName"`
+	LandingPageName    string     `json:"landingPageName"`
+	SendingProfileName string     `json:"sendingProfileName"`
+	CompletedDate      *time.Time `json:"completed_date,omitempty"`
 	// Tambahan field untuk statistik kampanye
 	EmailSent      int `json:"email_sent"`
 	EmailOpened    int `json:"email_opened"`

@@ -41,9 +41,10 @@ type CTROverTime struct {
 }
 
 type TopPerformer struct {
-	Name    string `json:"name"`
-	Clicks  int    `json:"clicks"`
-	Submits int    `json:"submits"`
+	Name         string `json:"name"`
+	CampaignName string `json:"campaignName"`
+	Clicks       int    `json:"clicks"`
+	Submits      int    `json:"submits"`
 }
 
 type BrowserStats struct {
@@ -54,11 +55,11 @@ type BrowserStats struct {
 
 // GetDashboardMetrics mengembalikan semua data yang dibutuhkan untuk dashboard
 func GetDashboardMetrics(c *gin.Context) {
-	db := config.DB // Mengakses instance GORM DB dari config
+	db := config.DB
 
 	// 0
 	var totalCampaign int64
-	errCount := db.Model(&models.Campaign{}).Where("status = ?", "sent").Count(&totalCampaign).Error
+	errCount := db.Model(&models.Campaign{}).Count(&totalCampaign).Error
 	if errCount != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "failed to count total campaign"})
 		return
@@ -97,12 +98,12 @@ func GetDashboardMetrics(c *gin.Context) {
 	}
 
 	campaignResults := []CampaignResult{
-		{Label: "Campaign", Value: int(totalSent), Color: "#009ac9ff", Percentage: calculatePercentage(totalCampaign, totalCampaign)},
+		{Label: "Campaign", Value: int(totalCampaign), Color: "#009ac9ff", Percentage: calculatePercentage(totalCampaign, totalCampaign)},
 		{Label: "Sent", Value: int(totalSent), Color: "#10B981", Percentage: calculatePercentage(totalSent, totalSent)},
 		{Label: "Opened", Value: int(openedCount), Color: "#F59E0B", Percentage: calculatePercentage(openedCount, totalSent)},
-		{Label: "Clicked", Value: int(clickedCount), Color: "#EF4444", Percentage: calculatePercentage(clickedCount, totalSent)},
+		{Label: "Clicked", Value: int(clickedCount), Color: "#9b29ff", Percentage: calculatePercentage(clickedCount, totalSent)},
 		{Label: "Submitted", Value: int(submittedCount), Color: "#DC2626", Percentage: calculatePercentage(submittedCount, totalSent)},
-		{Label: "Reported", Value: int(reportedCount), Color: "#6B7280", Percentage: calculatePercentage(reportedCount, totalSent)},
+		{Label: "Reported", Value: int(reportedCount), Color: "#2934ff", Percentage: calculatePercentage(reportedCount, totalSent)},
 	}
 
 	// --- 3. Funnel Data ---
@@ -163,6 +164,9 @@ func GetDashboardMetrics(c *gin.Context) {
 		var recipient models.Recipient
 		db.Where("id = ?", tc.RecipientID).First(&recipient)
 
+		var campaign models.Campaign
+		db.Model(&models.Campaign{}).Where("id = ?", recipient.CampaignID).First(&campaign, recipient.CampaignID)
+
 		db.Model(&models.Event{}).
 			Where("recipient_id = ? AND type = ?", tc.RecipientID, models.Submitted).
 			Count(&submits)
@@ -172,13 +176,14 @@ func GetDashboardMetrics(c *gin.Context) {
 		// Jika Anda memiliki relasi Recipient ke User dan User memiliki nama, gunakan itu.
 		performerName := recipient.Email
 		if performerName == "" {
-			performerName = "Unknown Target" // Fallback jika email kosong
+			performerName = "Unknown Target"
 		}
 
 		topPerformers = append(topPerformers, TopPerformer{
-			Name:    performerName,
-			Clicks:  int(tc.Clicks),
-			Submits: int(submits),
+			Name:         performerName,
+			CampaignName: campaign.Name,
+			Clicks:       int(tc.Clicks),
+			Submits:      int(submits),
 		})
 	}
 

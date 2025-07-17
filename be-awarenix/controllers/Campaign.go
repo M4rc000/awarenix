@@ -16,9 +16,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// Catatan: Semua helper response SendSuccessResponse, SendErrorResponse, SendValidationErrorResponse
-// akan dihapus dari penggunaan dalam file ini, dan diganti dengan c.JSON langsung.
-
 // RegisterCampaign handles the creation of a new campaign
 func RegisterCampaign(c *gin.Context) {
 	var input models.CampaignRequest
@@ -109,6 +106,11 @@ func RegisterCampaign(c *gin.Context) {
 		return
 	}
 
+	// CHECK IF SEND EMAIL BY IS NULL
+	if sendEmailBy == nil {
+		sendEmailBy = &launchDate
+	}
+
 	campaign := models.Campaign{
 		Name:             input.Name,
 		LaunchDate:       launchDate,
@@ -169,7 +171,7 @@ func GetCampaigns(c *gin.Context) {
 	if err := db.Count(&total).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
-			"message": "Gagal menghitung total kampanye: " + err.Error(),
+			"message": "Failed to count total campaign: " + err.Error(),
 		})
 		return
 	}
@@ -183,7 +185,7 @@ func GetCampaigns(c *gin.Context) {
 		Find(&campaigns).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
-			"message": "Gagal mengambil kampanye: " + err.Error(),
+			"message": "Failed to get campaign data: " + err.Error(),
 		})
 		return
 	}
@@ -259,17 +261,18 @@ func GetCampaignDetail(c *gin.Context) {
 	id := c.Param("id")
 
 	var campaign models.Campaign
-	if err := config.DB.First(&campaign, id).Error; err != nil {
+	// Gunakan Preload untuk memuat data relasi Group, EmailTemplate, LandingPage, dan SendingProfile
+	if err := config.DB.Preload("Group").Preload("EmailTemplate").Preload("LandingPage").Preload("SendingProfile").First(&campaign, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
 				"status":  "error",
-				"message": "Kampanye tidak ditemukan",
+				"message": "Campaign not found",
 			})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
-			"message": "Gagal mengambil detail kampanye: " + err.Error(),
+			"message": "failed to fetch campaign detail: " + err.Error(),
 		})
 		return
 	}
@@ -303,28 +306,53 @@ func GetCampaignDetail(c *gin.Context) {
 	config.DB.Model(&models.Event{}).Where("campaign_id = ? AND type = ?", campaign.ID, models.Reported).Count(&reportedCount)
 	reported = int(reportedCount)
 
+	// Ambil nama pengguna berdasarkan CreatedBy dan UpdatedBy ID
+	createdByName := ""
+	updatedByName := ""
+
+	if campaign.CreatedBy != 0 { // Pastikan ID bukan nol
+		var createdByUser models.User // Asumsikan ada model User dengan field Name
+		if err := config.DB.Select("name").First(&createdByUser, campaign.CreatedBy).Error; err == nil {
+			createdByName = createdByUser.Name
+		}
+	}
+
+	if campaign.UpdatedBy != 0 { // Pastikan ID bukan nol
+		var updatedByUser models.User // Asumsikan ada model User dengan field Name
+		if err := config.DB.Select("name").First(&updatedByUser, campaign.UpdatedBy).Error; err == nil {
+			updatedByName = updatedByUser.Name
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
-		"message": "Detail kampanye berhasil diambil",
+		"message": "Detail campaign successfully retrieved",
 		"data": models.CampaignResponse{
-			ID:               int(campaign.ID),
-			Name:             campaign.Name,
-			LaunchDate:       campaign.LaunchDate,
-			SendEmailBy:      campaign.SendEmailBy,
-			GroupID:          int(campaign.GroupID),
-			EmailTemplateID:  int(campaign.EmailTemplateID),
-			LandingPageID:    int(campaign.LandingPageID),
-			SendingProfileID: int(campaign.SendingProfileID),
-			URL:              campaign.URL,
-			CreatedBy:        campaign.CreatedBy,
-			CreatedAt:        campaign.CreatedAt,
-			UpdatedAt:        campaign.UpdatedAt,
-			Status:           campaign.Status,
-			EmailSent:        emailSent,
-			EmailOpened:      emailOpened,
-			EmailClicks:      clicks,
-			EmailSubmitted:   submitted,
-			EmailReported:    reported,
+			ID:                 int(campaign.ID),
+			Name:               campaign.Name,
+			LaunchDate:         campaign.LaunchDate,
+			SendEmailBy:        campaign.SendEmailBy,
+			GroupID:            int(campaign.GroupID),
+			GroupName:          campaign.Group.Name,
+			EmailTemplateID:    int(campaign.EmailTemplateID),
+			EmailTemplateName:  campaign.EmailTemplate.Name,
+			LandingPageID:      int(campaign.LandingPageID),
+			LandingPageName:    campaign.LandingPage.Name,
+			SendingProfileID:   int(campaign.SendingProfileID),
+			SendingProfileName: campaign.SendingProfile.Name,
+			URL:                campaign.URL,
+			Status:             campaign.Status,
+			CreatedAt:          campaign.CreatedAt,
+			CreatedBy:          campaign.CreatedBy,
+			CreatedByName:      createdByName,
+			UpdatedAt:          campaign.UpdatedAt,
+			UpdatedBy:          campaign.UpdatedBy,
+			UpdatedByName:      updatedByName,
+			EmailSent:          emailSent,
+			EmailOpened:        emailOpened,
+			EmailClicks:        clicks,
+			EmailSubmitted:     submitted,
+			EmailReported:      reported,
 		},
 	})
 }
@@ -445,6 +473,7 @@ func UpdateCampaign(c *gin.Context) {
 	existingCampaign.SendingProfileID = input.SendingProfileID
 	existingCampaign.URL = input.URL
 	existingCampaign.UpdatedAt = time.Now()
+	existingCampaign.UpdatedBy = int(input.UpdatedBy)
 	// CreatedBy tidak diubah saat update, UpdatedBy bisa ditambahkan jika ada di struct
 
 	if err := config.DB.Save(&existingCampaign).Error; err != nil {
@@ -506,7 +535,7 @@ func DeleteCampaign(c *gin.Context) {
 
 	if err := tx.Where("campaign_id = ?", campaign.ID).Delete(&models.Recipient{}).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Gagal menghapus Recipient"})
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "failed to delete Recipient"})
 		return
 	}
 
