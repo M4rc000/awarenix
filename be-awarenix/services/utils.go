@@ -98,27 +98,34 @@ func LogEventByRID(c *gin.Context, rid string, eventType string) {
 		target, _ := url.QueryUnescape(c.Query("url"))
 		c.Redirect(302, target)
 	case string(models.Submitted):
-		c.Redirect(302, "https://real-site.com")
+		c.Redirect(302, "http://localhost:5173/dashboard")
 	case string(models.Reported):
-		c.String(200, "Thanks for reporting.")
+		frontendDomain := "localhost:5173"
+		c.Redirect(302, fmt.Sprintf("http://%s/report-thanks", frontendDomain))
 	default:
 		c.Status(204)
 	}
 }
 
-func RewriteLinks(htmlStr string, uid string, campaignID uint, pageID uint, frontendDomain string) string {
+func RewriteLinks(
+	htmlStr string,
+	uid string,
+	campaignID uint,
+	pageID uint,
+	frontendDomain string,
+	name string,
+	email string,
+) string {
 	doc, _ := html.Parse(strings.NewReader(htmlStr))
 	var rewrite func(*html.Node)
 	rewrite = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "a" {
 			skip := false
 			for _, attr := range n.Attr {
-				// skip jika href sudah mengarah ke /track/report
 				if attr.Key == "href" && strings.Contains(attr.Val, "/track/report") {
 					skip = true
 					break
 				}
-				// optional: skip jika ada data-no-track
 				if attr.Key == "data-no-track" {
 					skip = true
 					break
@@ -142,7 +149,15 @@ func RewriteLinks(htmlStr string, uid string, campaignID uint, pageID uint, fron
 		}
 	}
 	rewrite(doc)
+
+	// Ambil hasil render link-tracking
 	var buf bytes.Buffer
 	html.Render(&buf, doc)
-	return buf.String()
+	result := buf.String()
+
+	// Ganti placeholder templating jika ada
+	result = strings.ReplaceAll(result, "{{.Name}}", name)
+	result = strings.ReplaceAll(result, "{{.Email}}", email)
+
+	return result
 }

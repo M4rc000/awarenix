@@ -27,6 +27,19 @@ type Member struct {
 	UpdatedBy int       `gorm:"type:tinyint(3);null" json:"updatedBy"`
 }
 
+type GroupMember struct {
+	ID        uint   `gorm:"primaryKey"`
+	GroupID   uint   `gorm:"not null;index"`
+	UserID    uint   `gorm:"not null;index"`
+	Name      string `gorm:"type:varchar(100);not null"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+
+	// (Optional) Relasi untuk preload jika Anda butuh data Group/User lebih lengkap
+	Group Group `gorm:"foreignKey:GroupID"`
+	User  User  `gorm:"foreignKey:UserID"`
+}
+
 type MemberInput struct {
 	Name     string `json:"name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`

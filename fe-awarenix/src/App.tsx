@@ -11,6 +11,7 @@ import { AlertContainer } from "./components/utils/AlertContainer";
 import AuthWatcher from "./components/utils/AuthWatcher";
 import { UserSessionProvider } from "./components/context/UserSessionContext";
 import { AccountSettings } from "./pages/AccountSettings/AccountSettings";
+import ThankYouReport from "./pages/OtherPage/ThanksReport";
 
 // Lazy-load komponen halaman
 const Lander = lazy(() => import("./pages/LandingPages/Lander"));
@@ -72,6 +73,7 @@ export default function App() {
               
               {/* Lander Routes */}
               <Route path="/lander" element={<Lander />} />
+              <Route path="/report-thanks" element={<ThankYouReport />} />
 
               {/* Auth Routes */}
               <Route
