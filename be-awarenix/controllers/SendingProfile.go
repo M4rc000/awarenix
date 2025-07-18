@@ -221,6 +221,7 @@ func UpdateSendingProfile(c *gin.Context) {
 	updates["host"] = requestBody.Host
 	updates["username"] = requestBody.Username
 	updates["updated_at"] = time.Now()
+	updates["updated_by"] = requestBody.UpdatedBy
 
 	// Logika update password: hanya update jika password baru diberikan
 	if requestBody.Password != "" {
@@ -416,7 +417,7 @@ func SendTestEmail(c *gin.Context) {
 		&sendingProfile,
 		req.Recipient.Email,
 		req.EmailBody,
-		"Test Email from Awakenix", // Subject
+		"Test Email from Awarenix",
 	)
 
 	if err != nil {

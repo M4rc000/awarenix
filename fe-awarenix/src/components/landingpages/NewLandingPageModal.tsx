@@ -28,8 +28,6 @@ export default function NewLandingPageModal({
     try {
       setIsSubmitting(true);
       const success = await formRef.current.submitLandingPage();
-      console.log('Success: ', success);
-      
       
       if (success) {
         onLandingPageAdded(); 

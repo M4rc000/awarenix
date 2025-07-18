@@ -105,8 +105,7 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         body: JSON.stringify(payload),
       });
 
-      console.log('Payload: ', payload);
-      
+    
       if (!response.ok) {
         let errorMessage = 'Failed to create email template';
         

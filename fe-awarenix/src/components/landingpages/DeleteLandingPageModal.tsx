@@ -36,7 +36,6 @@ export default function DeleteLandingPageModal({
 }: DeleteLandingPagesModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string>('');
-  // const [isLoading, setIsLoading] = useState(false);
   const formRef = useRef<DeleteLandingPageFormRef>(null);
 
 
@@ -58,7 +57,7 @@ export default function DeleteLandingPageModal({
 
       const data = await res.json();
 
-      if (!res.ok || !data.success) {
+      if (data.status !== "success") {
         console.log('Data Error: ', data.error);
         setError(data.error || 'Failed to delete landing page');
         Swal.fire({

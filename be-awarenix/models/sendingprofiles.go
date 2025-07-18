@@ -36,6 +36,7 @@ type UpdateSendingProfileRequest struct {
 	Host          string `json:"host" binding:"required"`
 	Username      string `json:"username" binding:"required"`
 	Password      string `json:"password"`
+	UpdatedBy     int    `gorm:"type:tinyint(3);null" json:"updatedBy"`
 }
 
 type CreateSendingProfileRequest struct {
@@ -63,7 +64,7 @@ type TestRecipient struct {
 
 type SendTestEmailRequest struct {
 	SendingProfile struct {
-		ID            uint          `json:"id" binding:"required"`
+		ID            uint          `json:"id"`
 		Name          string        `json:"name" binding:"required"`
 		InterfaceType string        `json:"interfaceType" binding:"required"`
 		SmtpFrom      string        `json:"smtpFrom" binding:"required,email"`

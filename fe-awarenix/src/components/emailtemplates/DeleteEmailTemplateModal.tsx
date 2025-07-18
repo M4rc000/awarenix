@@ -54,8 +54,8 @@ export default function DeleteEmailTemplateModal({
       });
 
       const data = await res.json();
-
-      if (!res.ok || !data.success) {
+      
+      if (data.status !== "success") {
         setError(data.error || 'Failed to delete email template');
         Swal.fire({
           text: 'Failed to delete email template',
@@ -64,7 +64,7 @@ export default function DeleteEmailTemplateModal({
         });
         return;
       }
-      onClose();         // ❎ close modal
+      onClose();         
       if (onEmailTemplateDeleted) {
         onEmailTemplateDeleted();
       }
