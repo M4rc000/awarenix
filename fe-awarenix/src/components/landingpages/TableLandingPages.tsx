@@ -19,6 +19,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/20/solid'
 import { FaRegTrashAlt } from "react-icons/fa";
 import { BiSolidEditAlt } from "react-icons/bi";
 import { FaCircleInfo } from "react-icons/fa6";
+import { IoIosCopy } from "react-icons/io";
 import Button from "../ui/button/Button";
 import type { SortingState } from '@tanstack/react-table';
 import { useSidebar } from "../../context/SidebarContext";
@@ -26,6 +27,7 @@ import Swal from '../utils/AlertContainer';
 import ShowLandingPageModal from './ShowLandingPageModal';
 import EditLandingPageModal from './EditLandingPageModal';
 import DeleteLandingPageModal from './DeleteLandingPageModal';
+import DuplicateLandingPageModal from './DuplicateLandingPageModal';
 
 interface LandingPage{
   id: number;
@@ -52,7 +54,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
   const deferredSearch = useDeferredValue(search);
   const inputRef = useRef<HTMLInputElement>(null);
   const [data, setData] = useState<LandingPage[]>([]);
-  const [activeModal, setActiveModal] = useState<'detail' | 'edit' | 'delete' | null>(null);
+  const [activeModal, setActiveModal] = useState< 'duplicate' | 'detail' | 'edit' | 'delete' | null>(null);
   const [selectedLandingPage, setSelectedLandingPage] = useState<LandingPage | null>(null);
     
   useEffect(() => {
@@ -121,6 +123,12 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
     fetchData();
   }
   }, [reloadTrigger, fetchData]);
+
+  
+  const onDuplicate = (landingPage: LandingPage) => {
+    setSelectedLandingPage(landingPage);
+    setActiveModal('duplicate');
+  }
 
   const onShowDetail = (landingPage: LandingPage) => {
     setSelectedLandingPage(landingPage);
@@ -197,6 +205,9 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         header: 'Action',
         cell: (row) => (
           <div className="flex items-center justify-center space-x-2">
+            <Button size="xs" variant="success" onClick={() => onDuplicate(row.row.original)}>
+              <IoIosCopy />
+            </Button>
             <Button size="xs" variant="info" onClick={() => onShowDetail(row.row.original)}>
               <FaCircleInfo />
             </Button>
@@ -231,7 +242,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
   });
 
   return (
-    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] dark:border-gray-800 dark:border-1 border-gray-200 border-1">
+    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] dark:border-gray-800 dark:border-1 border-gray-200 border-1 mx-4">
       <div className="p-4 rounded-lg bg-white dark:bg-white/[0.03]">
         <form onSubmit={(e) => e.preventDefault()}>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -455,6 +466,19 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
           </div>
         </div>
       </div>
+
+      {/* DUPLICATE MODAL */}
+      <DuplicateLandingPageModal 
+        isOpen={activeModal === 'duplicate'}
+        onClose={() => {
+          setActiveModal(null);
+          setSelectedLandingPage(null);
+        }}
+        landingPage={selectedLandingPage}
+        onLandingPageUpdated={() => {
+          fetchData()
+        }}     
+      />
 
       {/* SHOW MODAL */}
       <ShowLandingPageModal 

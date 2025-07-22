@@ -12,6 +12,7 @@ type LandingPage = {
   id: number;
   name: string;
   body: string;
+  isSystemTemplate: number;
   createdAt: string;
   createdBy: number;
   createdByName: string;

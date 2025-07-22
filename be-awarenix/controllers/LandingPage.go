@@ -116,7 +116,7 @@ func RegisterLandingPage(c *gin.Context) {
 	// CEK DUPLIKASI LANDING PAGE
 	var existingLandingPage models.LandingPage
 	if err := config.DB.
-		Where("name = ? ", input.Name).
+		Where("name = ? AND created_by = ?", input.Name, input.CreatedBy).
 		First(&existingLandingPage).Error; err == nil {
 		services.LogActivity(config.DB, c, "Create", moduleNameLandingPage, "", nil, input, "error", "Landing Page with this name already registered.")
 		c.JSON(http.StatusConflict, gin.H{
@@ -152,18 +152,33 @@ func RegisterLandingPage(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "Landing Page created successfully",
-		"data":    newLandingPage, // Mengembalikan objek yang baru dibuat
+		"data":    newLandingPage,
 	})
 }
 
 // READ
 func GetLandingPages(c *gin.Context) {
-	query := config.DB.Table("landing_pages").
-		Select(`landing_pages.*, 
-            created_by_user.name AS created_by_name, 
-            updated_by_user.name AS updated_by_name`).
-		Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = landing_pages.created_by`).
-		Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = landing_pages.updated_by`)
+	userIDScope, roleScope, errorStatus := services.GetRoleScope(c)
+	if !errorStatus {
+		return
+	}
+
+	var query *gorm.DB
+	if roleScope == 1 {
+		query = config.DB.Table("landing_pages").
+			Select(`landing_pages.*, 
+				created_by_user.name AS created_by_name, 
+				updated_by_user.name AS updated_by_name`).
+			Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = landing_pages.created_by`).
+			Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = landing_pages.updated_by`)
+	} else {
+		query = config.DB.Table("landing_pages").
+			Select(`landing_pages.*, 
+				created_by_user.name AS created_by_name, 
+				updated_by_user.name AS updated_by_name`).
+			Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = landing_pages.created_by`).
+			Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = landing_pages.updated_by`).Where("landing_pages.created_by = ? OR landing_pages.is_system_template = ?", userIDScope, 1)
+	}
 
 	var total int64
 	query.Count(&total)

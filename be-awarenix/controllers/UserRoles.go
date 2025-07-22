@@ -138,18 +138,17 @@ func GetRoles(c *gin.Context) {
 	if err := query.
 		Scan(&data).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"Success": false,
-			"Message": "Failed to fetch user role",
-			"Error":   err.Error(),
+			"status":  "error",
+			"message": "Failed to fetch user role" + err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"Success": true,
-		"Message": "User Role data retrieved successfully",
-		"Data":    data,
-		"Total":   total,
+		"status":  "success",
+		"message": "User Role data retrieved successfully",
+		"data":    data,
+		"total":   total,
 	})
 }
 
@@ -162,9 +161,8 @@ func UpdateRole(c *gin.Context) {
 	if tx.Error != nil {
 		services.LogActivity(config.DB, c, "Update", "Role", id, nil, nil, "failed", "Failed to start transaction: "+tx.Error.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"Success": false,
-			"Message": "Failed to start transaction",
-			"Error":   tx.Error.Error(),
+			"status":  "error",
+			"message": "Failed to start transaction" + tx.Error.Error(),
 		})
 		return
 	}
@@ -183,21 +181,19 @@ func UpdateRole(c *gin.Context) {
 	if err := tx.First(&role, id).Error; err != nil {
 		services.LogActivity(config.DB, c, "Update", "Role", id, nil, nil, "failed", "Role not found for update: "+err.Error())
 		c.JSON(http.StatusNotFound, gin.H{
-			"Success": false,
-			"Message": "Role not found",
-			"Error":   err.Error(),
+			"status":  "error",
+			"message": err.Error() + "Role not found",
 		})
 		return
 	}
-	oldRoleValue = role // Salin nilai lama sebelum modifikasi
+	oldRoleValue = role
 
 	var updatedData models.UpdateRoleInput
 	if err := c.ShouldBindJSON(&updatedData); err != nil {
 		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, nil, "failed", "Invalid request for update: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Success": false,
-			"Message": "Invalid request",
-			"Error":   err.Error(),
+			"status":  "error",
+			"message": "Invalid request" + err.Error(),
 		})
 		return
 	}
@@ -233,9 +229,8 @@ func UpdateRole(c *gin.Context) {
 	if err := tx.Save(&role).Error; err != nil {
 		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, role, "failed", "Failed to update role in DB: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"Success": false,
-			"Message": "Failed to update role",
-			"Error":   err.Error(),
+			"status":  "error",
+			"message": "Failed to update role" + err.Error(),
 		})
 		return
 	}
@@ -244,9 +239,8 @@ func UpdateRole(c *gin.Context) {
 	if err := tx.Commit().Error; err != nil {
 		services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, role, "failed", "Failed to commit update transaction: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"Success": false,
-			"Message": "Failed to commit transaction",
-			"Error":   err.Error(),
+			"status":  "success",
+			"message": "Failed to commit transaction" + err.Error(),
 		})
 		return
 	}
@@ -255,9 +249,9 @@ func UpdateRole(c *gin.Context) {
 	services.LogActivity(config.DB, c, "Update", "Role", id, oldRoleValue, role, "success", "Role updated successfully")
 
 	c.JSON(http.StatusOK, gin.H{
-		"Success": true,
-		"Message": "Role updated successfully",
-		"Data": gin.H{
+		"status":  "success",
+		"message": "Role updated successfully",
+		"data": gin.H{
 			"id":        role.ID,
 			"name":      role.Name,
 			"updatedAt": role.UpdatedAt,

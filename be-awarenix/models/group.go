@@ -4,7 +4,7 @@ import "time"
 
 type Group struct {
 	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name         string    `gorm:"type:varchar(30);uniqueIndex;not null" json:"name"`
+	Name         string    `gorm:"type:varchar(30);not null" json:"name"`
 	DomainStatus string    `gorm:"type:varchar(50);not null" json:"domainStatus"`
 	CreatedAt    time.Time `gorm:"type:datetime;null" json:"createdAt"`
 	CreatedBy    int       `gorm:"type:tinyint(3);null" json:"createdBy"`

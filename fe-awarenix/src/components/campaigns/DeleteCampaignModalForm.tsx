@@ -5,8 +5,8 @@ import Input from "../form/input/InputField";
 type CampaignData = {
   id: number;
   name: string;
-  launch_date: string; 
-  send_email_by?: string | null;
+  launch_date: Date; 
+  send_email_by?: Date | null;
   group_id: number;
   email_template_id: number;
   landing_page_id: number;

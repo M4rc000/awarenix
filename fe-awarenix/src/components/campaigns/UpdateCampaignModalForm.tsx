@@ -232,7 +232,7 @@ const UpdateCampaignModalForm = forwardRef<
           <DatePicker
             id="send-email-by"
             mode="datetime"
-            value={sendEmailBy}
+            value={sendEmailBy ?? undefined}
             onChange={(_, dateStr) => setScheduleAt(dateStr)}
           />
         </div>

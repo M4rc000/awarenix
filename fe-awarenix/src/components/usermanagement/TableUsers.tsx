@@ -36,7 +36,7 @@ interface User {
   email: string;
   position: string;
   company: string;
-  role: string;
+  role: number;
   roleName: string;
   isActive: string;
   createdAt: string;

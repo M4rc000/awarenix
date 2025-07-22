@@ -190,8 +190,6 @@ const NewGroupModalForm = forwardRef<NewGroupModalFormRef, NewGroupModalFormProp
         setSearchTerm("");
         return true;
       } else {
-        console.log('HTTP Response Failed:', response);
-        console.error('Error data from server:', data); 
 
         let errorMessage = 'Failed to save group and members.'; 
 

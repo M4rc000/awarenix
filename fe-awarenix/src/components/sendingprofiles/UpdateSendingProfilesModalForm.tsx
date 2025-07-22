@@ -32,13 +32,12 @@ type SendingProfile = {
   username: string;
   password: string;
   host: string;
-  CreatedAt: string;
-  CreatedBy: number;
-  CreatedByName: string;
-  UpdatedAt: string;
-  UpdatedBy: number;
-  UpdatedByName: string;
-  // senderAddress: string; // Dihapus
+  createdAt: string;
+  createdBy: number;
+  createdByName: string;
+  updatedAt: string;
+  updatedBy: number;
+  updatedByName: string;
   EmailHeaders: string; // Ini akan berupa JSON string dari array header
 };
 
@@ -365,12 +364,12 @@ const UpdateSendingProfileModalForm = forwardRef<
       password: password, // Mengembalikan password yang ada di state (bisa kosong)
       host: host,
       EmailHeaders: JSON.stringify(emailHeaders), // Kembalikan sebagai string
-      CreatedAt: initialSendingProfile?.CreatedAt || "",
-      CreatedBy: initialSendingProfile?.CreatedBy || 0,
-      CreatedByName: initialSendingProfile?.CreatedByName || "",
-      UpdatedAt: initialSendingProfile?.UpdatedAt || "",
-      UpdatedBy: initialSendingProfile?.UpdatedBy || 0,
-      UpdatedByName: initialSendingProfile?.UpdatedByName || "",
+      createdAt: initialSendingProfile?.createdAt || "",
+      createdBy: initialSendingProfile?.createdBy || 0,
+      createdByName: initialSendingProfile?.createdByName || "",
+      updatedAt: initialSendingProfile?.updatedAt || "",
+      updatedBy: initialSendingProfile?.updatedBy || 0,
+      updatedByName: initialSendingProfile?.updatedByName || "",
     },
   }));
 

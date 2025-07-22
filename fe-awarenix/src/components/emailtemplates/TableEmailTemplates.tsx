@@ -18,11 +18,13 @@ import {
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/20/solid'
 import { FaRegTrashAlt } from "react-icons/fa";
 import { BiSolidEditAlt } from "react-icons/bi";
+import { IoIosCopy } from "react-icons/io";
 import { FaCircleInfo } from "react-icons/fa6";
 import Button from "../ui/button/Button";
 import type { SortingState } from '@tanstack/react-table';
 import { useSidebar } from "../../context/SidebarContext";
 import Swal from '../utils/AlertContainer';
+import DuplicateEmailTemplateModal from './DuplicateEmailTemplateModal';
 import ShowEmailTemplateDetailModal from './ShowEmailTemplateDetailModal';
 import EditEmailTemplateModal from './EditEmailTemplateModal';
 import DeleteEmailTemplateModal from './DeleteEmailTemplateModal';
@@ -54,7 +56,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
   const deferredSearch = useDeferredValue(search);
   const inputRef = useRef<HTMLInputElement>(null);
   const [data, setData] = useState<EmailTemplate[]>([]);
-  const [activeModal, setActiveModal] = useState<'detail' | 'edit' | 'delete' | null>(null);
+  const [activeModal, setActiveModal] = useState< 'duplicate' | 'detail' | 'edit' | 'delete' | null>(null);
   const [selectedEmailTemplate, setSelectedEmailTemplate] = useState<EmailTemplate | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -118,6 +120,11 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
    }, [reloadTrigger, fetchData]);
 
   // ACTIVATE FUNCTION MODAL
+  const onDuplicate = (emailTemplate: EmailTemplate) => {
+    setSelectedEmailTemplate(emailTemplate);
+    setActiveModal('duplicate');
+  }
+  
   const onShowDetail = (emailTemplate: EmailTemplate) => {
     setSelectedEmailTemplate(emailTemplate);
     setActiveModal('detail');
@@ -200,6 +207,9 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         header: 'Action',
         cell: (row) => (
           <div className="flex items-center space-x-2">
+            <Button size="xs" variant="success" onClick={() => onDuplicate(row.row.original)}>
+              <IoIosCopy />
+            </Button>
             <Button size="xs" variant="info" onClick={() => onShowDetail(row.row.original)}>
               <FaCircleInfo />
             </Button>
@@ -244,7 +254,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
   }, [reloadTrigger]);
 
   return (
-    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] dark:border-gray-800 dark:border-1 border-gray-200 border-1">
+    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] dark:border-gray-800 dark:border-1 border-gray-200 border-1 mx-4">
       <div className="p-4 rounded-lg bg-white dark:bg-white/[0.03]">
         <form onSubmit={(e) => e.preventDefault()}>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -469,6 +479,16 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         </div>
       </div>
 
+      {/* DUPLICATE MODAL */}
+      <DuplicateEmailTemplateModal 
+        isOpen={activeModal === 'duplicate'}
+        onClose={() => {
+          setActiveModal(null);
+          setSelectedEmailTemplate(null);
+        }}
+        emailTemplate={selectedEmailTemplate}
+      />
+      
       {/* SHOW MODAL */}
       <ShowEmailTemplateDetailModal 
         isOpen={activeModal === 'detail'}
@@ -487,7 +507,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
           setSelectedEmailTemplate(null);
         }}
         emailTemplate={selectedEmailTemplate}
-        onUserUpdated={() => {
+        onEmailTemplateUpdated={() => {
           fetchData()
         }}     
       />

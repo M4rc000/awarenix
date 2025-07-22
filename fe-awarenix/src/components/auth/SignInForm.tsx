@@ -25,116 +25,6 @@ export default function SignInForm() {
   const navigate = useNavigate();
   const { setUser } = useUserSession();
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setErrors({});
-  //   if (!email) return setErrors({ email: "Email is required" });
-  //   if (!password) return setErrors({ password: "Password is required" });
-
-  //   setLoading(true);
-  //   try {
-  //     const res = await fetch(
-  //       "http://localhost:3000/api/v1/auth/login",
-  //       {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({ 
-  //           email, 
-  //           password, 
-  //           status: isChecked ? "KeepMeLoggedIn" : "", 
-  //         }),
-  //       }
-  //     );
-
-  //     const body = await res.json();
-      
-  //     // validation / credentials error
-  //     if (res.status === 400 || res.status === 401 || res.status == 500) {
-  //       if (body.errors) {
-  //         setErrors(body.errors);
-  //       } else if (body.error) {
-  //         Swal.fire({
-  //           text: body.error || 'Username or Password invalid',
-  //           icon: 'error',
-  //           duration: 2000
-  //         })
-  //       } else {
-  //         setErrors({ general: "Login gagal" });
-  //       }
-  //       return;
-  //     }
-
-  //     if (!res.ok) {
-  //       throw new Error("Server error");
-  //     }
-
-  //     // SAVE TOKEN AND EXPIRY
-  //     localStorage.setItem("token", body.token);
-  //     localStorage.setItem("token_expired", body.expires_at);
-
-  //     // PREPARE USER DATA
-  //     const userData = {
-  //       id: body.user.id,
-  //       name: body.user.name,
-  //       email: body.user.email,
-  //       role: body.user.role,
-  //       role_name: body.user.role_name,
-  //       position: body.user.position,
-  //       company: body.user.company,
-  //       country: body.user.country,
-  //       last_login: body.user.last_login,
-  //     };
-
-  //     // FETCH PERMISSIONS AND SAVE COMPLETE USER DATA
-  //     if (userData.role_name) {
-  //       try {
-  //         // Show loading indicator saat fetch permissions
-  //         setLoadingMessage("Loading permissions...");
-  //         const permissions = await fetchUserPermissions(userData.role_name);
-          
-  //         const userWithPermissions = {
-  //           ...userData,
-  //           allowed_menus: permissions.allowed_menus,
-  //           allowed_submenus: permissions.allowed_submenus,
-  //         };
-          
-  //         // Save complete user data dengan permissions
-  //         localStorage.setItem("user", JSON.stringify(userWithPermissions));
-  //         setUser(userWithPermissions);
-          
-  //         // Navigate ke dashboard setelah permissions berhasil di-fetch
-  //         navigate('/dashboard');
-          
-  //       } catch (permissionError) {
-  //         console.error('Error fetching permissions during login:', permissionError);
-          
-  //         // Fallback: simpan user tanpa permissions
-  //         localStorage.setItem("user", JSON.stringify(userData));
-  //         setUser(userData);
-          
-  //         // Tetap navigate ke dashboard, permissions akan di-fetch di UserSessionContext
-  //         navigate('/dashboard');
-  //       }
-  //     } else {
-  //       // Jika tidak ada role_name, simpan user tanpa permissions
-  //       localStorage.setItem("user", JSON.stringify(userData));
-  //       setUser(userData);
-  //       navigate('/dashboard');
-  //     }
-      
-  //   } catch (err: unknown) {
-  //     console.error(err);
-  //     Swal.fire({
-  //       text: 'Login failed',
-  //       icon: 'error',
-  //       duration: 2000
-  //     });
-  //   } finally {
-  //     setLoading(false);
-  //     setLoadingMessage("Signing in...");
-  //   }
-  // };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -177,14 +67,13 @@ export default function SignInForm() {
       if (!res.ok) {
         throw new Error("Server error");
       }
-      console.log('Body: ', body);
       
       // PREPARE USER DATA DENGAN MENERIMA allowed_menus dan allowed_submenus LANGSUNG DARI LOGIN API
       const userData = {
         id: body.user.id,
         name: body.user.name,
         email: body.user.email,
-        role: body.user.role_id, 
+        role: body.user.role, 
         role_name: body.user.role_name,
         position: body.user.position,
         company: body.user.company,
@@ -193,14 +82,13 @@ export default function SignInForm() {
         allowed_menus: body.user.allowed_menus || [],
         allowed_submenus: body.user.allowed_submenus || [],
       };
-      
+
       // Save complete user data
       localStorage.setItem("user", JSON.stringify(userData));
       localStorage.setItem("token", body.token);
       localStorage.setItem("token_expired", body.expires_at);
       setUser(userData);
       
-      // Navigate ke dashboard setelah izin berhasil dimuat
       navigate('/dashboard');
       
     } catch (err: unknown) {

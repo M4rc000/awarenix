@@ -14,6 +14,7 @@ type EmailTemplate = {
   id: number;
   name: string;
   envelopeSender: string;
+  isSystemTemplate: number;
   subject: string;
   bodyEmail: string;
   trackerImage: number;
@@ -23,13 +24,13 @@ export type EditEmailTemplateModalProps = {
   isOpen: boolean
   emailTemplate: EmailTemplate | null;
   onClose: () => void
-  onUserUpdated?: () => void;
+  onEmailTemplateUpdated?: () => void;
 }
 
 export default function EditEmailTemplateModal({
   isOpen,
   onClose,
-  onUserUpdated,
+  onEmailTemplateUpdated,
   emailTemplate,
 }: EditEmailTemplateModalProps) {
   const formRef = useRef<EditEmailTemplateModalFormRef>(null);
@@ -107,12 +108,12 @@ export default function EditEmailTemplateModal({
                         })
                         
                         // Panggil callback untuk refresh data
-                        if (onUserUpdated) {
-                          onUserUpdated();
+                        if (onEmailTemplateUpdated) {
+                          onEmailTemplateUpdated();
                         }
                       } else {
                         Swal.fire({
-                          text: 'Failed to update user. Please try again!',
+                          text: 'Failed to update email template. Please try again!',
                           icon: "error",
                           duration: 2000
                         })
@@ -120,7 +121,7 @@ export default function EditEmailTemplateModal({
                     } catch (error) {
                       console.log('Error: ', error);
                       Swal.fire({
-                        text: 'An error occurred while updating user!',
+                        text: 'An error occurred while updating email template!',
                         icon: "error",
                         duration: 2000
                       })

@@ -6,7 +6,6 @@ import Input from "../form/input/InputField";
 import Select from "../form/Select";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
 
-// --- Type Definitions ---
 export type EditUserModalFormRef = {
   submitUsers: () => Promise<boolean>;
 };
@@ -160,8 +159,7 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
       newErrors.position = "Position is required";
     }
 
-    // Validasi role: pastikan role tidak kosong dan ada di dalam roleOptions yang tersedia
-    if (!formData.role.trim() || !roleOptions.some(option => option.value === formData.role)) {
+    if (formData.role === null || !roleOptions.some(option => String(option.value) === String(formData.role))) {
       newErrors.role = "Role is required and must be a valid option";
     }
 
@@ -205,8 +203,8 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
       try {
         const API_URL = import.meta.env.VITE_API_URL;
         const token = localStorage.getItem("token");
-        const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
-        const updatedBy = currentUserData?.id || 0;
+          const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
+          const updatedBy = currentUserData?.id || 0;
 
         const payload: {
           name: string;
@@ -242,19 +240,27 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
         });
 
         const data = await res.json();
+        
+        if(data.status == "error"){
+          const newErrors: Partial<Record<keyof UserFormData, string>> = {};
 
-        if (updatedBy === formData.id) {
-          localStorage.setItem('user', JSON.stringify(data.data));
-          setUser(data.data); 
+          newErrors.email = data.message
+          setErrors(newErrors)
+          return false;
+        } else {
+          if (updatedBy === formData.id) {
+            localStorage.setItem('user', JSON.stringify(data.data));
+            setUser(data.data); 
+          }
+          return true;
         }
-        return true;
       } catch (err: unknown) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'an unexpected error occurred.';
-        Swal.fire({
-          icon: 'error',
-          text: errorMessage,
-        });
+        console.error('error: ', err);
+          Swal.fire({
+            icon: 'error',
+            text: 'an unexpected error occurred',
+            duration: 3000,
+          });
         return false;
       } finally {
         setIsSubmitting(false);

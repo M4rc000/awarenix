@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Swal from "../utils/AlertContainer";
-import { useRef } from "react";
 import Checkbox from "../form/input/Checkbox";
-
+import Select from "../form/Select"; 
 
 const EMAIL_TEMPLATES_STATIC: { name: string; content: string }[] = [];
 
@@ -16,7 +15,6 @@ type EmailBodyEditorTemplateProps = {
   onTrackerChange?: (trackerValue: number) => void;
 };
 
-// MENGGANTI TAG A HREF TO {{ .URL }}
 const replaceLinksWithUrlPlaceholder = (htmlString: string): string => {
   const linkRegex = /(<a\s+(?:[^>]*?\s+)?href=["']?)([^"'>]+)(["']?[^>]*>)/gi;
   return htmlString.replace(linkRegex, `$1{{.URL}}$3`);
@@ -41,11 +39,11 @@ const EmailBodyEditorTemplate = ({
   const [activeTab, setActiveTab] = useState(0);
   const [availableTemplates, setAvailableTemplates] = useState(EMAIL_TEMPLATES_STATIC);
 
+  // ⭐ Inisialisasi state htmlContent dan selectedTemplate di sini
+  // Ini akan dijalankan sekali saat komponen pertama kali di-mount
   const [htmlContent, setHtmlContent] = useState<string>(() => {
-    // Inisialisasi awal htmlContent dengan memproses initialContent dari props
     let contentToUse = initialContent;
     if (initialContent === "") {
-      // Periksa apakah ada template default di antara EMAIL_TEMPLATES_STATIC
       const defaultTemplate = EMAIL_TEMPLATES_STATIC.find(t => t.name === "Welcome Email");
       contentToUse = defaultTemplate ? defaultTemplate.content : "";
     }
@@ -53,13 +51,12 @@ const EmailBodyEditorTemplate = ({
   });
 
   const [selectedTemplate, setSelectedTemplate] = useState<string>(() => {
-    // Menentukan selectedTemplate berdasarkan initialContent
     const matchedTemplate = EMAIL_TEMPLATES_STATIC.find(template => template.content === initialContent);
     return matchedTemplate ? matchedTemplate.name : "Custom";
   });
   const [trackerImage, setTrackerImage] = useState(initialTrackerValue);
 
-  // GET DEFAULT TEMPLATE API
+  // GET DEFAULT TEMPLATE API (tidak berubah)
   async function getEmailTemplates() {
     const token = localStorage.getItem("token");
     const API_URL = import.meta.env.VITE_API_URL;
@@ -109,18 +106,40 @@ const EmailBodyEditorTemplate = ({
   }
 
   // Effect untuk mengambil template dari API dan memperbarui availableTemplates
+  // Juga untuk sinkronisasi awal `selectedTemplate` setelah template dimuat
   useEffect(() => {
     getEmailTemplates().then((result) => {
       if (result.status === 'success' && result.data) {
-        // Gabungkan template statis dengan template dari API
-        // Filter out existing static templates to avoid duplicates if names overlap
         const newTemplates = result.data
           .filter((apiT: { name: string; }) => !EMAIL_TEMPLATES_STATIC.some(staticT => staticT.name === apiT.name))
           .map((apiT: FetchedEmailTemplate) => ({
             name: apiT.name,
             content: apiT.body,
           }));
-        setAvailableTemplates([...EMAIL_TEMPLATES_STATIC, ...newTemplates]);
+        
+        // Gabungkan statis dan dari API, lalu set
+        const allTemplates = [...EMAIL_TEMPLATES_STATIC, ...newTemplates];
+        setAvailableTemplates(allTemplates);
+
+        // ⭐ Set initial selectedTemplate dan htmlContent HANYA jika initialContent kosong
+        // atau jika initialContent sesuai dengan salah satu template yang baru dimuat
+        if (initialContent === "") {
+          const defaultTemplate = allTemplates.find(t => t.name === "Welcome Email");
+          if (defaultTemplate) {
+            setHtmlContent(replaceLinksWithUrlPlaceholder(defaultTemplate.content));
+            setSelectedTemplate(defaultTemplate.name);
+          } else if (allTemplates.length > 0) {
+            // Jika tidak ada "Welcome Email" tapi ada template lain, set yang pertama
+            setHtmlContent(replaceLinksWithUrlPlaceholder(allTemplates[0].content));
+            setSelectedTemplate(allTemplates[0].name);
+          }
+        } else {
+            // Jika initialContent sudah ada dari prop, cek apakah cocok dengan template yang ada
+            const matchedInitial = allTemplates.find(t => t.content === initialContent);
+            setSelectedTemplate(matchedInitial ? matchedInitial.name : "Custom");
+            setHtmlContent(replaceLinksWithUrlPlaceholder(initialContent));
+        }
+
       } else {
         console.error('Failed to fetch email templates:', result.message);
         Swal.fire({
@@ -128,76 +147,53 @@ const EmailBodyEditorTemplate = ({
           icon: 'error',
           duration: 3000,
         });
+        // Opsional: jika fetch gagal, mungkin Anda ingin kembali ke template statis atau kosong
+        setAvailableTemplates(EMAIL_TEMPLATES_STATIC);
+        setSelectedTemplate("Custom"); // Kembali ke custom jika gagal fetch
+        setHtmlContent(""); // Kosongkan konten
       }
     });
   }, []); // [] agar hanya berjalan sekali saat komponen di-mount
 
-  // Effect untuk mengirim nilai tracker image ke parent component
-  useEffect(() => {
-    if (onTrackerChange) {
-      onTrackerChange(trackerImage);
-    }
-  }, [trackerImage, onTrackerChange]); // Dependensi trackerImage dan onTrackerChange
-
-  // Effect untuk melakukan sinkronisasi htmlContent internal dengan initialContent dari parent
-  // Serta memperbarui selectedTemplate
-  useEffect(() => {
-    // Proses initialContent dari parent, pastikan link sudah diganti
-    // Gunakan availableTemplates yang sudah digabung
-    const contentToLoad = initialContent === "" 
-        ? (EMAIL_TEMPLATES_STATIC.find(t => t.name === "Welcome Email")?.content || "") // Default ke Welcome jika initialContent kosong
-        : initialContent;
-    
-    const processedInitialContent = replaceLinksWithUrlPlaceholder(contentToLoad);
-
-    // Hanya update state internal jika ada perbedaan setelah pemrosesan
-    // Ini mencegah loop tak terbatas jika parent selalu mengirimkan initialContent yang sama
-    if (htmlContent !== processedInitialContent) {
-      setHtmlContent(processedInitialContent);
-    }
-
-    // Perbarui selectedTemplate berdasarkan initialContent
-    const matchedTemplate = availableTemplates.find(template => template.content === initialContent); // Perbaikan: Gunakan .body
-    setSelectedTemplate(matchedTemplate ? matchedTemplate.name : "Custom");
-  }, [initialContent, availableTemplates]); // Dependensi pada initialContent dan availableTemplates
 
   // Effect untuk memanggil onBodyChange setiap kali htmlContent (state internal) berubah
   useEffect(() => {
     if (onBodyChange) {
       onBodyChange(htmlContent);
     }
-  }, [htmlContent, onBodyChange]); // Bergantung pada htmlContent dan onBodyChange
+  }, [htmlContent, onBodyChange]);
 
+  // Effect untuk mengirim nilai tracker image ke parent component
+  useEffect(() => {
+    if (onTrackerChange) {
+      onTrackerChange(trackerImage);
+    }
+  }, [trackerImage, onTrackerChange]);
 
-  const handleTemplateChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newTemplateName = event.target.value;
-    setSelectedTemplate(newTemplateName);
+  // ⭐ Gunakan useCallback untuk handleTemplateChange
+  const handleTemplateChange = useCallback((value: string) => {
+    const newTemplateName = value;
+    setSelectedTemplate(newTemplateName); // Set pilihan baru dari user
 
     if (newTemplateName === "Custom") {
-      // Jika "Custom" dipilih, biarkan pengguna mengedit manual.
-      // Anda bisa setHtmlContent('') jika ingin mengosongkan editor saat memilih "Custom".
-      setHtmlContent(""); // Mengosongkan editor saat memilih "Custom"
-      if (onBodyChange) {
-        onBodyChange(""); // Beri tahu parent bahwa konten dikosongkan
-      }
+      setHtmlContent("");
+      // Jangan langsung memanggil onBodyChange("") di sini, biarkan useEffect di atas yang menangani
+      // perubahan htmlContent
       return;
     }
 
-    // Cari di availableTemplates (yang sudah termasuk template API)
     const template = availableTemplates.find(t => t.name === newTemplateName);
     if (template) {
-      // Terapkan penggantian link saat memilih template bawaan
-      // const processedContent = replaceLinksWithUrlPlaceholder(template.content);
-      // setHtmlContent(processedContent);
-      setHtmlContent(template.content); // Perbarui state internal
-      if (onBodyChange) {
-        onBodyChange(template.content); // Beri tahu parent tentang perubahan konten
-      }
+      // ⭐ Pastikan konten yang diset ke htmlContent juga melalui replaceLinksWithUrlPlaceholder
+      setHtmlContent(replaceLinksWithUrlPlaceholder(template.content));
     }
-  };
+  }, [availableTemplates]); // Dependencies untuk useCallback: availableTemplates
+
+  // handleFileChange dan extractHtmlFromEml tidak berubah, tetapi pastikan mereka juga memanggil replaceLinksWithUrlPlaceholder
+  // handleFileChange sudah benar memanggil extractHtmlFromEml yang di dalamnya ada replaceLinksWithUrlPlaceholder
 
   const handleImportButtonClick = () => {
-    fileInputRef.current?.click(); // Memicu klik pada input file yang tersembunyi
+    fileInputRef.current?.click(); 
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,14 +202,12 @@ const EmailBodyEditorTemplate = ({
       return;
     }
 
-    // Validasi tipe file .eml
     if (file.type !== "message/rfc822" && !file.name.toLowerCase().endsWith(".eml")) {
       Swal.fire({
         text: "Please select a valid EML file (.eml).",
         icon: 'error',
         duration: 3000,
       });
-      // Bersihkan input file agar pengguna bisa memilih ulang file yang sama jika salah
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -223,10 +217,10 @@ const EmailBodyEditorTemplate = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       const emlContent = e.target?.result as string;
-      const extractedHtml = extractHtmlFromEml(emlContent); // Fungsi ini sudah memanggil replaceLinksWithUrlPlaceholder
+      const extractedHtml = extractHtmlFromEml(emlContent); 
 
       if (extractedHtml) {
-        setHtmlContent(extractedHtml); // Langsung set, karena sudah diproses di extractHtmlFromEml
+        setHtmlContent(extractedHtml); 
         setSelectedTemplate("Custom");
         Swal.fire({
           text: "EML file imported successfully!",
@@ -240,7 +234,6 @@ const EmailBodyEditorTemplate = ({
           duration: 4000,
         });
       }
-      // Bersihkan input file setelah pemrosesan
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -251,7 +244,6 @@ const EmailBodyEditorTemplate = ({
         icon: 'error',
         duration: 3000,
       });
-      // Bersihkan input file setelah error
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -259,23 +251,17 @@ const EmailBodyEditorTemplate = ({
     reader.readAsText(file);
   };
 
-  // Fungsi sederhana untuk mengekstrak bagian HTML dari file EML
-  // Catatan: Ini adalah implementasi dasar dan mungkin tidak mencakup semua struktur EML yang kompleks
   const extractHtmlFromEml = (emlString: string): string | null => {
-    // Mencari bagian Content-Type: text/html
     const htmlPartRegex = /Content-Type: text\/html;(?:\s*charset=["']?utf-8["']?)?(?:;.*)?\s*\r?\n\r?\n([\s\S]*?)(?=\r?\n--|$)/i;
     const match = emlString.match(htmlPartRegex);
 
     if (match && match[1]) {
-      // Mengecek Content-Transfer-Encoding
       const encodingMatch = emlString.match(/Content-Transfer-Encoding: (\S+)/i);
       const encoding = encodingMatch ? encodingMatch[1].toLowerCase() : '';
 
       let htmlContentPart = match[1].trim();
 
-      // Decode berdasarkan encoding
       if (encoding === 'quoted-printable') {
-        // Pastikan ini di-encode dengan benar
         htmlContentPart = htmlContentPart.replace(/=\r?\n/g, '').replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
       } else if (encoding === 'base64') {
         try {
@@ -285,15 +271,12 @@ const EmailBodyEditorTemplate = ({
           return null;
         }
       }
-      // Panggil fungsi untuk mengganti link setelah decoding
       return replaceLinksWithUrlPlaceholder(htmlContentPart);
     }
 
-    // Fallback: Jika tidak ada header Content-Type: text/html yang spesifik, coba cari tag <html>
     const fallbackHtmlRegex = /(<html[\s\S]*<\/html>)/i;
     const fallbackMatch = emlString.match(fallbackHtmlRegex);
     if (fallbackMatch && fallbackMatch[1]) {
-      // Panggil juga untuk fallback HTML
       return replaceLinksWithUrlPlaceholder(fallbackMatch[1]);
     }
 
@@ -302,64 +285,32 @@ const EmailBodyEditorTemplate = ({
 
   const tabs = ["HTML Editor", "Live Preview"];
 
+  // Persiapkan opsi untuk komponen Select kustom
+  const templateOptions = [
+    { value: "Custom", label: "Custom Template" },
+    ...availableTemplates.map(template => ({
+      value: template.name,
+      label: template.name
+    }))
+  ];
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Template Selector */}
         <div className="p-4">
-          <label htmlFor="email-template-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Default Email Template:
-          </label>
-          <div className="relative">
-            {/* Custom Select Component (if you choose to make one) */}
-            {/* If using your custom Select component, make sure it applies the styling */}
-            <select
-              id="email-template-select"
-              value={selectedTemplate}
-              onChange={handleTemplateChange}
-              className="
-                appearance-none
-                block w-full px-4 py-3
-                text-base
-                border border-gray-300 dark:border-gray-700
-                rounded-lg
-                bg-white dark:bg-gray-800
-                text-gray-900 dark:text-gray-100
-                shadow-sm
-                transition-all duration-200 ease-in-out
-                focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                dark:focus:ring-blue-400 dark:focus:border-blue-400
-                cursor-pointer
-                pr-10
-              "
-            >
-              <option value="Custom">Custom Template</option>
-              {availableTemplates.map((template) => (
-                <option key={template.name} value={template.name}>
-                  {template.name}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-              <svg
-                className="h-5 w-5"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.23 8.29a.75.75 0 010-1.08z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-          </div>
+          <Select
+            label="Default Email Template"
+            value={selectedTemplate}
+            options={templateOptions}
+            onChange={handleTemplateChange}
+            placeholder="Select a template"
+            required={false}
+          />
         </div>
 
         {/* Import Template Button and hidden file input */}
-        <div className="p-4 mx-5 flex items-end"> {/* Align button to the bottom if content above is taller */}
+        <div className="p-4 mx-5 flex items-end">
           <button
             onClick={handleImportButtonClick}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 w-full md:w-auto rounded-lg text-sm font-medium transition-colors duration-200 shadow-md flex items-center justify-center gap-2 h-12"
@@ -389,7 +340,6 @@ const EmailBodyEditorTemplate = ({
           />
         </div>
       </div>
-
 
       {/* Tab Navigation */}
       <div className="flex space-x-1 mx-4 bg-gray-100 dark:bg-gray-800 p-1 mb-0 rounded-lg">
@@ -421,7 +371,7 @@ const EmailBodyEditorTemplate = ({
                 value={htmlContent}
                 onChange={(e) => {
                   setHtmlContent(e.target.value);
-                  setSelectedTemplate("Custom"); // Set to custom when user starts typing
+                  setSelectedTemplate("Custom"); // Tetap set ke Custom jika user edit manual
                 }}
                 className="w-full h-96 p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 shadow-sm"
                 placeholder="Masukkan HTML content di sini..."
@@ -463,6 +413,7 @@ const EmailBodyEditorTemplate = ({
             <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-md shadow-inner">
               <strong className="block mb-1 text-gray-700 dark:text-gray-300">💡 Important Tips for Email HTML:</strong>
               <ul className="mt-1 space-y-1 list-disc list-inside">
+                <li><strong>Replacement:</strong> Use {`{{.Name}}`} or {`{{.Email}}`} for replacement user's information.</li>
                 <li><strong>Security:</strong> Link and script tags are disabled in the preview for security reasons.</li>
                 <li><strong>Layout:</strong> Always use a table-based layout for maximum email client compatibility.</li>
                 <li><strong>Styling:</strong> Prefer inline CSS for styling elements, as external stylesheets might not be supported.</li>

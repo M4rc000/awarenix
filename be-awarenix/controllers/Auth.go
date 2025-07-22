@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -148,6 +147,7 @@ func AuthLogin(c *gin.Context) {
 		allowedMenuNames = append(allowedMenuNames, m.Name)
 	}
 
+	// GENERATE TOKEN
 	token, exp, err := services.GenerateJWT(fullUserData.ID, fullUserData.Email, input.Status)
 	if err != nil {
 		services.LogActivity(config.DB, c, "Login", "Auth", fmt.Sprintf("%v", fullUserData.ID), nil, input, "failed", "Could not create token: "+err.Error())
@@ -159,11 +159,28 @@ func AuthLogin(c *gin.Context) {
 		return
 	}
 
-	fullUserData.LastLogin = time.Now()
-	if err := config.DB.Save(&fullUserData.User).Error; err != nil {
-		log.Printf("Failed to update last_login: %v", err)
-		services.LogActivity(config.DB, c, "Login", "Auth", fmt.Sprintf("%v", fullUserData.ID), nil, input, "warning", "Failed to update last_login: "+err.Error())
-	}
+	// // GENERATE REFRESH TOKEN
+	// refreshToken, refreshTokenExp, err := services.GenerateRefreshToken(fullUserData.ID)
+	// if err != nil {
+	// 	services.LogActivity(config.DB, c, "Login", "Auth", fmt.Sprintf("%v", fullUserData.ID), nil, input, "failed", "Could not create refresh token: "+err.Error())
+	// 	c.JSON(http.StatusInternalServerError, gin.H{
+	// 		"status":  "error",
+	// 		"message": "Could not create refresh token",
+	// 		"error":   err.Error(),
+	// 	})
+	// }
+
+	// // SAVE REFRESH TOKEN
+	// if err := services.SaveRefreshTokenToDB(config.DB, fullUserData.ID, refreshToken, refreshTokenExp); err != nil {
+	// 	log.Printf("Failed to save refresh token: %v", err)
+	// 	services.LogActivity(config.DB, c, "Login", "Auth", fmt.Sprintf("%v", fullUserData.ID), nil, input, "warning", "Failed to save refresh token: "+err.Error())
+	// }
+
+	// fullUserData.LastLogin = time.Now()
+	// if err := config.DB.Save(&fullUserData.User).Error; err != nil {
+	// 	log.Printf("Failed to update last_login: %v", err)
+	// 	services.LogActivity(config.DB, c, "Login", "Auth", fmt.Sprintf("%v", fullUserData.ID), nil, input, "warning", "Failed to update last_login: "+err.Error())
+	// }
 
 	// Siapkan data untuk response
 	userdata := map[string]interface{}{

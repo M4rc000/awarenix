@@ -35,12 +35,12 @@ interface SendingProfile {
 	username     : string;
 	password     : string;
 	host         : string;
-	CreatedAt    : string;
-	CreatedBy    : number;
-	CreatedByName    : string;
-	UpdatedAt    : string;
-	UpdatedBy    : number; 
-	UpdatedByName    : string; 
+	createdAt    : string;
+	createdBy    : number;
+	createdByName    : string;
+	updatedAt    : string;
+	updatedBy    : number; 
+	updatedByName    : string;   
   senderAddress: string;
 	EmailHeaders : string;
 }
@@ -245,7 +245,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
   });
 
   return (
-    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] dark:border-gray-800 dark:border-1 border-gray-200 border-1">
+    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] dark:border-gray-800 dark:border-1 border-gray-200 border-1 mx-4">
       <div className="p-4 rounded-lg bg-white dark:bg-white/[0.03]">
         <form onSubmit={(e) => e.preventDefault()}>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">

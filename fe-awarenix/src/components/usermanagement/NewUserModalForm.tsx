@@ -11,12 +11,11 @@ type User = {
   position: string;
   password: string;
   role: string;
-  company: string;
+  company: string; 
   isActive: string;
 }
 
 export type NewUserModalFormRef = {
-  // submitUsers: () => Promise<User | null>;
   submitUsers: () => Promise<boolean>;
   user: User | null;
 };
@@ -53,12 +52,23 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
     position: "",
     password: "",
     role: "",
-    company: "",
+    company: "", 
     isActive: "0",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof UserData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roleOptions, setRoleOptions] = useState<{ value: string; label: string }[]>([]);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem("user") || "{}");
+    const roleFromLocalStorage = userData?.role; 
+    
+    // Konversi role dari number ke string jika diperlukan (sesuai dengan backend yang mengirim role sebagai ID angka)
+    if (roleFromLocalStorage !== undefined && roleFromLocalStorage !== null) {
+      setCurrentUserRole(String(roleFromLocalStorage));
+    }
+  }, []);
 
   // Fetch Roles
   const fetchRoles = async () => {
@@ -81,15 +91,14 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
       const result = await response.json();
       
       if (result.Success && result.Data) {
-        // Transform API data to select options format
         const options = result.Data.map((role: RoleData) => ({
           value: String(role.id), 
           label: role.name,
         }));
-        
         setRoleOptions(options);
       } else {
         console.error('Failed to fetch roles:', result.Message);
+        // Fallback options jika API gagal
         setRoleOptions([
           { value: "1", label: "Super Admin"},
           { value: "2", label: "Admin"},
@@ -98,6 +107,7 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
       }
     } catch (error) {
       console.error('Error fetching roles:', error);
+      // Fallback options jika ada error jaringan atau lainnya
       setRoleOptions([
         { value: "1", label: "Super Admin"},
         { value: "2", label: "Admin"},
@@ -109,8 +119,7 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
   // Fetch roles on component mount
   useEffect(() => {
     fetchRoles();
-  }, []);
-
+  }, []); 
 
   // Validation function
   const validateForm = (): boolean => {
@@ -130,9 +139,15 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
       newErrors.position = "Position is required";
     }
 
-    if (!user.role.trim()) {
+    if (currentUserRole !== "1" && !user.role.trim()) {
       newErrors.role = "Role is required";
     }
+    // Jika current user bukan super admin dan role tidak diisi (otomatis di set default)
+    // Maka tidak perlu validasi role
+    if (currentUserRole === "1" && !user.role.trim()) {
+      newErrors.role = "Role is required"; // Super admin harus memilih role
+    }
+
 
     if (!user.password) {
       newErrors.password = "Password is required";
@@ -146,9 +161,13 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
 
   // Submit function dengan better error handling
   const submitUsers = async (): Promise<boolean> => {
-    
+    // ⭐ Jika current user bukan super admin, set role default ke "3" (Engineer)
+    // Ini memastikan field user.role tidak kosong saat dikirim ke backend
+    if (currentUserRole !== "1" && !user.role) {
+        setUser(prev => ({ ...prev, role: "3" })); // Set default role Engineer (ID 3)
+    }
+
     if (!validateForm()) {
-      // console.log('Validation failed');
       return false;
     }
 
@@ -159,6 +178,7 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
       const token = localStorage.getItem("token");
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       const createdBy = userData?.id || 0; 
+      
       const response = await fetch(`${API_URL}/users/register`, {
         method: 'POST',
         headers: {
@@ -168,9 +188,9 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
         body: JSON.stringify({
           name: user.name,
           email: user.email,
-          position: user.position,   
-          role: parseInt(user.role),   
-          isActive: user.isActive,   
+          position: user.position,  
+          role: parseInt(user.role), 
+          isActive: user.isActive,  
           password: user.password,    
           createdBy: createdBy
         }),
@@ -179,14 +199,12 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
       if (!response.ok) {
         let errorMessage = 'Failed to create user';
         
-        // Cek content type sebelum parsing
         const contentType = response.headers.get('content-type');
         
         if (contentType && contentType.includes('application/json')) {
           try {
             const errorData = await response.json();
               if (errorData.status === "error") {
-                // SET ERRORS KE FORM FIELD JIKA ADA
                 if (errorData.fields && typeof errorData.fields === "object") {
                   setErrors(errorData.fields);
                 }
@@ -197,7 +215,6 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
             errorMessage = `Server error: ${response.status} ${response.statusText}`;
           }
         } else {
-          // Jika bukan JSON, jangan coba parse sebagai JSON
           errorMessage = `Server error: ${response.status} ${response.statusText}`;
         }
         
@@ -218,7 +235,7 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
         email: "",
         position: "",
         password: "",
-        role: "",
+        role: currentUserRole !== "1" ? "3" : "", // ⭐ Set role default berdasarkan currentUserRole
         company: "",
         isActive: "0",
       });
@@ -229,9 +246,7 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
     } catch (error) {
       console.error('Error creating user:', error);
       
-      // Set error message untuk user
       if (error instanceof Error) {
-        // Cek jika error terkait network
         if (error.message.includes('fetch')) {
           setErrors({
             name: 'Connection error. Please check if server is running.',
@@ -261,7 +276,6 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
 
   // Handle input changes - dengan safety check
   const handleInputChange = (field: keyof UserData, value: string) => {
-    // Prevent submit trigger dari input change
     if (isSubmitting) {
       return;
     }
@@ -271,7 +285,6 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
       [field]: value
     }));
 
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -336,19 +349,36 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
               )}
             </div>
 
-            <div>
-              <LabelWithTooltip tooltip="Role on this system" required>Role</LabelWithTooltip>
-              <Select
-                value={user.role}
-                options={roleOptions}
-                onChange={(val) => handleInputChange('role', val)} 
-                placeholder={"Select role"}
-                required
-              />
-              {errors.role && (
-                <p className="text-red-500 text-sm mt-1">{errors.role}</p>
-              )}
-            </div>
+            {/* ⭐ Kondisi rendering untuk input Role */}
+            {currentUserRole === "1" ? ( // Hanya tampilkan jika user adalah Super Admin (role ID 1)
+              <div>
+                <LabelWithTooltip tooltip="Role on this system" required>Role</LabelWithTooltip>
+                <Select
+                  value={user.role}
+                  options={roleOptions}
+                  onChange={(val) => handleInputChange('role', val)} 
+                  placeholder={"Select role"}
+                  required
+                />
+                {errors.role && (
+                  <p className="text-red-500 text-sm mt-1">{errors.role}</p>
+                )}
+              </div>
+            ) : (
+              // ⭐ Jika bukan Super Admin, tampilkan teks non-editable
+              // Anda bisa menambahkan hidden input jika backend mutlak membutuhkan role di payload
+              // atau membiarkan backend yang menetapkan default role jika field ini tidak dikirim
+              <div>
+                <LabelWithTooltip tooltip="Role on this system">Role</LabelWithTooltip>
+                <Input
+                  value="Engineer" // Tampilkan default role Engineer
+                  disabled={true} // Tidak bisa diubah
+                  className="bg-gray-100 dark:bg-gray-700 cursor-not-allowed" // Styling untuk menunjukkan disabled
+                />
+                {/* Opsi: tambahkan hidden input untuk role jika backend memerlukannya */}
+                {/* <input type="hidden" name="role" value="3" /> */}
+              </div>
+            )}
             
             <div>
               <Label required>Password</Label>

@@ -10,12 +10,12 @@ type SendingProfileData = {
 	username     : string;
 	password     : string;
 	host         : string;
-	CreatedAt    : string;
-	CreatedBy    : number;
-	CreatedByName    : string;
-	UpdatedAt    : string;
-	UpdatedBy    : number; 
-	UpdatedByName    : string; 
+	createdAt    : string;
+	createdBy    : number;
+	createdByName    : string;
+	updatedAt    : string;
+	updatedBy    : number; 
+	updatedByName    : string; 
   senderAddress: string;
 	EmailHeaders : string;
 }

@@ -15,38 +15,53 @@ import (
 const moduleName = "Group"
 
 func GetGroups(c *gin.Context) {
-	query := config.DB.Model(&models.Group{}).Preload("Members")
-
-	var total int64
-	if err := query.Count(&total).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"Success": false,
-			"Message": "Failed to count group",
-			"Error":   err.Error(),
-		})
-		return
+	// Pastikan GetRoleScope mengembalikan ID pengguna dan role sebagai tipe yang sesuai
+	// userIDScope: uint atau int (sesuai models.User.ID)
+	// roleScope: string (sesuai models.User.Role)
+	// errorStatus: bool (true jika berhasil, false jika ada error dan sudah kirim JSON)
+	userIDScope, roleScope, errorStatus := services.GetRoleScope(c)
+	if !errorStatus {
+		return // GetRoleScope sudah menangani response error
 	}
 
-	query = config.DB.Table("groups").
+	var query *gorm.DB
+
+	baseQuery := config.DB.Model(&models.Group{}).
 		Select("groups.*, created_by_user.name AS created_by_name, updated_by_user.name AS updated_by_name").
 		Joins("LEFT JOIN users AS created_by_user ON created_by_user.id = groups.created_by").
 		Joins("LEFT JOIN users AS updated_by_user ON updated_by_user.id = groups.updated_by").
 		Preload("Members")
 
+	if roleScope == 1 {
+		query = baseQuery
+	} else {
+		query = baseQuery.Where("groups.created_by = ?", userIDScope)
+	}
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Success": false,
+			"Message": "Failed to count groups",
+			"Error":   err.Error(),
+		})
+		return
+	}
+
 	var groupsWithUserNames []models.GroupWithUserNames
 	if err := query.Find(&groupsWithUserNames).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"Success": false,
-			"Message": "Failed to fetch group",
+			"Message": "Failed to fetch groups",
 			"Error":   err.Error(),
 		})
 		return
 	}
 
 	var groupsResponse []models.GroupResponse
-	for _, groupData := range groupsWithUserNames { // Iterasi melalui struct gabungan
+	for _, groupData := range groupsWithUserNames {
 		var membersResponse []models.MemberResponse
-		for _, member := range groupData.Members { // Members di-preload ke groupData.Group.Members
+		for _, member := range groupData.Members {
 			membersResponse = append(membersResponse, models.MemberResponse{
 				ID:        member.ID,
 				Name:      member.Name,
@@ -74,40 +89,58 @@ func GetGroups(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"Success": true,
-		"Message": "Grup retrieved successfully",
+		"Message": "Groups retrieved successfully",
 		"Data":    groupsResponse,
 		"Total":   total,
 	})
 }
 
 func GetMembers(c *gin.Context) {
-	query := config.DB.Model(&models.Member{})
+	// 1. Ambil ID pengguna dan peran dari konteks
+	userIDScope, roleScope, errorStatus := services.GetRoleScope(c)
+	if !errorStatus {
+		return
+	}
 
+	// Inisialisasi base query
+	baseQuery := config.DB.Model(&models.Member{})
+
+	// 2. Terapkan filter berdasarkan peran
+	var finalQuery *gorm.DB
+	if roleScope == 1 {
+		finalQuery = baseQuery
+	} else {
+		finalQuery = baseQuery.Where("created_by = ?", userIDScope)
+	}
+
+	// 3. Hitung total anggota dengan filter yang diterapkan
 	var total int64
-	if err := query.Count(&total).Error; err != nil {
+	if err := finalQuery.Count(&total).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"Success": false,
-			"Message": "Failed to count groups",
-			"Error":   err.Error(),
+			"status":  "error",
+			"message": "Failed to count members",
+			"data":    nil,
 		})
 		return
 	}
 
+	// 4. Ambil daftar anggota dengan filter yang diterapkan
 	var members []models.Member
-	if err := query.Find(&members).Error; err != nil {
+	if err := finalQuery.Find(&members).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"Success": false,
-			"Message": "Failed to fetch members",
-			"Error":   err.Error(),
+			"status":  "error",
+			"message": "Failed to fetch members",
+			"data":    nil,
 		})
 		return
 	}
 
+	// 5. Kirim respons sukses
 	c.JSON(http.StatusOK, gin.H{
-		"Success": true,
-		"Message": "Members retrieved successfully",
-		"Data":    members,
-		"Total":   total,
+		"status":  "success",
+		"message": "Members retrieved successfully",
+		"data":    members,
+		"total":   total,
 	})
 }
 
@@ -211,7 +244,7 @@ func RegisterGroup(c *gin.Context) {
 	}
 
 	var existingGroup models.Group
-	if err := tx.Where("name = ?", input.Name).First(&existingGroup).Error; err == nil {
+	if err := tx.Where("name = ? AND created_by = ?", input.Name, input.CreatedBy).First(&existingGroup).Error; err == nil {
 		tx.Rollback()
 		errorMessage := "Group Name already exists"
 		services.LogActivity(config.DB, c, "Create", moduleName, "", nil, input, "error", errorMessage)
@@ -229,7 +262,7 @@ func RegisterGroup(c *gin.Context) {
 		services.LogActivity(config.DB, c, "Create", moduleName, "", nil, input, "error", errorMessage+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
-			"message": errorMessage,
+			"message": errorMessage + "iya",
 			"data":    err.Error(),
 		})
 		return
@@ -369,6 +402,20 @@ func UpdateGroup(c *gin.Context) {
 	}
 
 	var existingGroup models.Group
+
+	// CHECK DUPLICATE GROUP
+	if err := tx.Where("name = ? AND created_by = ?", req.GroupName, req.UpdatedBy).First(&existingGroup).Error; err == nil {
+		tx.Rollback()
+		errorMessage := "Group Name already exists"
+		services.LogActivity(config.DB, c, "Create", moduleName, "", nil, req, "error", errorMessage)
+		c.JSON(http.StatusConflict, gin.H{
+			"status":  "error",
+			"message": errorMessage,
+			"data":    nil,
+		})
+		return
+	}
+
 	// Find the group to update
 	if err := tx.First(&existingGroup, groupID).Error; err != nil {
 		tx.Rollback()

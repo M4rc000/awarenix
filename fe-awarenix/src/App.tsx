@@ -62,7 +62,7 @@ export default function App() {
                   <Route path="/phishing-emails" element={<PhishingEmail />} />
                   <Route path="/phishing-websites" element={<PhishingWebsite />} />
                   <Route path="/training-modules" element={<TrainingModules />} />
-                  <Route path="/subscription-billing" element={<CommingSoon />} />
+                  {/* <Route path="/subscription-billing" element={<CommingSoon />} /> */}
                   <Route path="/account-settings" element={<AccountSettings />} />
                   <Route path="/logging-activity" element={<LoggingActivity />} />
                   <Route path="/environtment-check" element={<CommingSoon />} />

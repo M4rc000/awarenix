@@ -2,12 +2,12 @@ package config
 
 import (
 	"be-awarenix/models"
+	"errors"
 	"log"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 func HashPassword(password string) (string, error) {
@@ -184,7 +184,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "Dashboard",
 			Icon:      "GridIcon",
-			Url:       "/dashboard", // Perbaiki URL agar sesuai dengan frontend
+			Url:       "/dashboard",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -193,9 +193,9 @@ func SeedSubmenus(db *gorm.DB) {
 		},
 		{
 			MenuID:    1,
-			Name:      "Campaign", // Sesuaikan dengan nama di frontend
+			Name:      "Campaign",
 			Icon:      "CalenderIcon",
-			Url:       "/campaigns", // Sesuaikan dengan URL di frontend
+			Url:       "/campaigns",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -206,7 +206,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "Role Management",
 			Icon:      "FaUserCog",
-			Url:       "/role-management", // Sesuaikan dengan URL di frontend
+			Url:       "/role-management",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -217,7 +217,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "User Management",
 			Icon:      "User",
-			Url:       "/user-management", // Sesuaikan dengan URL di frontend
+			Url:       "/user-management",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -228,7 +228,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "Groups & Members",
 			Icon:      "GroupIcon",
-			Url:       "/groups-members", // Sesuaikan dengan URL di frontend
+			Url:       "/groups-members",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -239,7 +239,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "Email Templates",
 			Icon:      "MailIcon",
-			Url:       "/email-templates", // Sesuaikan dengan URL di frontend
+			Url:       "/email-templates",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -250,7 +250,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "Landing Pages",
 			Icon:      "TableIcon",
-			Url:       "/landing-pages", // Sesuaikan dengan URL di frontend
+			Url:       "/landing-pages",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -261,7 +261,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    1,
 			Name:      "Sending Profiles",
 			Icon:      "UserIcon",
-			Url:       "/sending-profiles", // Sesuaikan dengan URL di frontend
+			Url:       "/sending-profiles",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -272,7 +272,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    2,
 			Name:      "Phishing Emails",
 			Icon:      "MdOutlineAttachEmail",
-			Url:       "/phishing-emails", // Sesuaikan dengan URL di frontend
+			Url:       "/phishing-emails",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -283,7 +283,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    2,
 			Name:      "Phishing Websites",
 			Icon:      "CgWebsite",
-			Url:       "/phishing-websites", // Sesuaikan dengan URL di frontend
+			Url:       "/phishing-websites",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -294,7 +294,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    2,
 			Name:      "Training Modules",
 			Icon:      "IoIosBookmarks",
-			Url:       "/training-modules", // Sesuaikan dengan URL di frontend
+			Url:       "/training-modules",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -305,7 +305,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    3,
 			Name:      "Account Settings",
 			Icon:      "IoSettingsOutline",
-			Url:       "/account-settings", // Sesuaikan dengan URL di frontend
+			Url:       "/account-settings",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -314,9 +314,9 @@ func SeedSubmenus(db *gorm.DB) {
 		},
 		{
 			MenuID:    3,
-			Name:      "Subscription & Billing", // Sesuaikan dengan nama di frontend
+			Name:      "Subscription & Billing",
 			Icon:      "FaMoneyCheckAlt",
-			Url:       "/subscription-billing", // Sesuaikan dengan URL di frontend
+			Url:       "/subscription-billing",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -327,7 +327,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    4,
 			Name:      "Logging Activity",
 			Icon:      "IoFootstepsOutline",
-			Url:       "/logging-activity", // Sesuaikan dengan URL di frontend
+			Url:       "/logging-activity",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -336,9 +336,9 @@ func SeedSubmenus(db *gorm.DB) {
 		},
 		{
 			MenuID:    4,
-			Name:      "Environtment Check", // Sesuaikan dengan nama di frontend
+			Name:      "Environtment Check",
 			Icon:      "DiEnvato",
-			Url:       "/environtment-check", // Sesuaikan dengan URL di frontend
+			Url:       "/environtment-check",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,
@@ -347,25 +347,49 @@ func SeedSubmenus(db *gorm.DB) {
 		},
 	}
 
+	// Alternatif 1: Manual check (lebih kontrol)
 	for _, submenuData := range submenusData {
-		// Menggunakan Upsert: Jika record dengan 'name' DAN 'url' yang sama sudah ada,
-		// maka update kolom-kolom lain. Jika tidak, insert baru.
-		err := db.Clauses(clause.OnConflict{
-			// Kriteria unik sekarang adalah kombinasi 'name' dan 'url'
-			Columns: []clause.Column{{Name: "name"}, {Name: "url"}}, // Perubahan di sini
-			DoUpdates: clause.Assignments(map[string]interface{}{
-				"menu_id":    submenuData.MenuID,
-				"icon":       submenuData.Icon, // Tambahkan update untuk icon juga
-				"is_active":  submenuData.IsActive,
-				"updated_at": time.Now(),
-				"updated_by": 0, // Atau user ID yang sesuai
-			}),
-		}).Create(&submenuData).Error
+		// Cek duplikasi berdasarkan name AND url AND icon
+		var existingSubmenu models.Submenu
+		result := db.Where("name = ? AND url = ? AND icon = ?",
+			submenuData.Name, submenuData.Url, submenuData.Icon).First(&existingSubmenu)
 
-		if err != nil {
-			log.Fatalf("Failed to upsert submenu '%s' (URL: %s): %v", submenuData.Name, submenuData.Url, err)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				// Record tidak ditemukan, buat baru
+				err := db.Create(&submenuData).Error
+				if err != nil {
+					log.Fatalf("Failed to create submenu '%s' (URL: %s): %v",
+						submenuData.Name, submenuData.Url, err)
+				} else {
+					log.Printf("Submenu '%s' (URL: %s) created successfully.",
+						submenuData.Name, submenuData.Url)
+				}
+			} else {
+				log.Fatalf("Database error while checking submenu '%s' (URL: %s): %v",
+					submenuData.Name, submenuData.Url, result.Error)
+			}
 		} else {
-			log.Printf("Submenu '%s' (URL: %s) upserted successfully.", submenuData.Name, submenuData.Url)
+			// Record sudah ada, update jika diperlukan
+			if existingSubmenu.MenuID != submenuData.MenuID ||
+				existingSubmenu.IsActive != submenuData.IsActive {
+				existingSubmenu.MenuID = submenuData.MenuID
+				existingSubmenu.IsActive = submenuData.IsActive
+				existingSubmenu.UpdatedAt = time.Now()
+				existingSubmenu.UpdatedBy = 1
+
+				err := db.Save(&existingSubmenu).Error
+				if err != nil {
+					log.Fatalf("Failed to update submenu '%s' (URL: %s): %v",
+						submenuData.Name, submenuData.Url, err)
+				} else {
+					log.Printf("Submenu '%s' (URL: %s) updated successfully.",
+						submenuData.Name, submenuData.Url)
+				}
+			} else {
+				log.Printf("Submenu '%s' (URL: %s) already exists with same data, skipping.",
+					submenuData.Name, submenuData.Url)
+			}
 		}
 	}
 }
@@ -2689,11 +2713,11 @@ func SeedRoleSubmenuAccess(db *gorm.DB) {
 			"Email Templates",
 			"Landing Pages",
 			"Sending Profiles",
-			"Phishing Emails",
-			"Phishing Websites",
-			"Training Modules",
+			// "Phishing Emails",``
+			// "Phishing Websites",
+			// "Training Modules",
 			"Account Settings",
-			"Subscription & Billing",
+			// "Subscription & Billing",
 			"Logging Activity",
 			"Environtment Check",
 		},
@@ -2704,28 +2728,28 @@ func SeedRoleSubmenuAccess(db *gorm.DB) {
 			"Groups & Members",
 			"Email Templates",
 			"Landing Pages",
-			"Sending Profiles",
-			"Phishing Emails",
-			"Phishing Websites",
-			"Training Modules",
+			// "Sending Profiles",
+			// "Phishing Emails",
+			// "Phishing Websites",
+			// "Training Modules",
 			"Account Settings",
-			"Subscription & Billing",
+			// "Subscription & Billing",
 			"Logging Activity",
 			"Environtment Check",
 		},
 		engineerRoleID: {
 			"Dashboard",
-			"Groups & Members",
-			"Email Templates",
-			"Landing Pages",
-			"Sending Profiles",
-			"Phishing Emails",
-			"Phishing Websites",
-			"Training Modules",
+			// "Groups & Members",
+			// "Email Templates",
+			// "Landing Pages",
+			// "Sending Profiles",
+			// "Phishing Emails",
+			// "Phishing Websites",
+			// "Training Modules",
 			"Account Settings",
-			"Subscription & Billing",
-			"Logging Activity",
-			"Environtment Check",
+			// "Subscription & Billing",
+			// "Logging Activity",
+			// "Environtment Check",
 		},
 	}
 

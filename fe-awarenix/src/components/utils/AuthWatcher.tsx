@@ -28,7 +28,8 @@ function isTokenValid(token: string | null): boolean {
  */
 async function performLogout(token: string): Promise<void> {
   try {
-    await fetch("/api/v1/auth/logout", {
+    const API_URL = import.meta.env.VITE_API_URL;
+    await fetch(`${API_URL}/auth/logout`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

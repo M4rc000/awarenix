@@ -49,7 +49,7 @@ func RegisterUser(c *gin.Context) {
 		return
 	}
 
-	sanitizedInput := sanitizeCreateUserInputForLog(input) // Sanitasi input untuk logging
+	sanitizedInput := sanitizeCreateUserInputForLog(input)
 
 	// MULAI TRANSAKSI
 	tx := config.DB.Begin()
@@ -169,11 +169,26 @@ func RegisterUser(c *gin.Context) {
 
 // READ
 func GetUsers(c *gin.Context) {
-	query := config.DB.Table("users").
-		Select(`users.*,  created_by_user.name AS created_by_name,  updated_by_user.name AS updated_by_name, roles_user.name AS role_name`).
-		Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = users.created_by`).
-		Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = users.updated_by`).
-		Joins(`LEFT JOIN roles AS roles_user ON roles_user.id = users.role`)
+	userIDScope, roleScope, errorStatus := services.GetRoleScope(c)
+	if !errorStatus {
+		return
+	}
+
+	var query *gorm.DB
+	if roleScope == 1 {
+		query = config.DB.Table("users").
+			Select(`users.*, created_by_user.name AS created_by_name, updated_by_user.name AS updated_by_name, roles_user.name AS role_name`).
+			Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = users.created_by`).
+			Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = users.updated_by`).
+			Joins(`LEFT JOIN roles AS roles_user ON roles_user.id = users.role`)
+	} else {
+		query = config.DB.Table("users").
+			Select(`users.*, created_by_user.name AS created_by_name, updated_by_user.name AS updated_by_name, roles_user.name AS role_name`).
+			Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = users.created_by`).
+			Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = users.updated_by`).
+			Joins(`LEFT JOIN roles AS roles_user ON roles_user.id = users.role`).
+			Where(`users.created_by = ?`, userIDScope)
+	}
 
 	var total int64
 	query.Count(&total)
@@ -199,12 +214,18 @@ func GetUsers(c *gin.Context) {
 
 // UPDATE
 func UpdateUser(c *gin.Context) {
-	id := c.Param("id")
+	// Ambil ID pengguna dari parameter URL
+	idParam := c.Param("id")
+	userID, err := strconv.ParseUint(idParam, 10, 64) // Konversi string ID ke uint64
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "Invalid user ID format"})
+		return
+	}
 
 	// Mulai transaksi
 	tx := config.DB.Begin()
 	if tx.Error != nil {
-		services.LogActivity(config.DB, c, "Update", moduleNameUser, id, nil, nil, "error", "Failed to start transaction: "+tx.Error.Error())
+		services.LogActivity(config.DB, c, "Update", moduleNameUser, idParam, nil, nil, "error", "Failed to start transaction: "+tx.Error.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to start transaction",
@@ -212,20 +233,22 @@ func UpdateUser(c *gin.Context) {
 		})
 		return
 	}
+	// Defer rollback, akan di-override oleh commit jika berhasil
 	defer func() {
-		if r := recover(); r != nil {
+		if r := recover(); r != nil { // Tangani panic
 			tx.Rollback()
 			panic(r)
-		} else if tx.Error != nil {
+		} else if tx.Error != nil { // Rollback jika ada error GORM yang tidak ditangani
 			tx.Rollback()
 		}
 	}()
 
 	var user models.User
 	// Ambil data user sebelum diupdate untuk oldValue
-	if err := tx.First(&user, id).Error; err != nil {
-		tx.Rollback()
-		services.LogActivity(config.DB, c, "Update", moduleNameUser, id, nil, nil, "error", "User not found for update: "+err.Error())
+	// Menggunakan userID (uint64) untuk query Find
+	if err := tx.First(&user, userID).Error; err != nil {
+		tx.Rollback() // Rollback karena user tidak ditemukan
+		services.LogActivity(config.DB, c, "Update", moduleNameUser, idParam, nil, nil, "error", "User not found for update: "+err.Error())
 		c.JSON(http.StatusNotFound, gin.H{
 			"status":  "error",
 			"message": "User not found",
@@ -233,15 +256,48 @@ func UpdateUser(c *gin.Context) {
 		})
 		return
 	}
-	oldUserValue := sanitizeUserForLog(user) // Sanitasi data lama untuk logging
+	oldUserValue := sanitizeUserForLog(user)
 
 	var updatedData models.UpdateUserInput
 	if err := c.ShouldBindJSON(&updatedData); err != nil {
-		services.LogActivity(config.DB, c, "Update", moduleNameUser, id, oldUserValue, sanitizeUpdateUserInputForLog(updatedData), "error", "Invalid request for update: "+err.Error())
+		logInput := sanitizeUpdateUserInputForLog(updatedData) // Gunakan fungsi sanitize yang benar
+		services.LogActivity(config.DB, c, "Update", moduleNameUser, idParam, oldUserValue, logInput, "error", "Invalid request for update: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
 			"message": "Invalid request",
 			"data":    err.Error(),
+		})
+		return
+	}
+
+	var existingUserWithSameEmail models.User
+	err = tx.Where("email = ? AND id != ?", updatedData.Email, userID).First(&existingUserWithSameEmail).Error
+
+	if err == nil {
+		tx.Rollback()
+		errorMessage := "Email is already taken by another user"
+		logInput := sanitizeUpdateUserInputForLog(updatedData)
+		services.LogActivity(config.DB, c, "Update", moduleNameUser, idParam, oldUserValue, logInput, "error", errorMessage) // Log sebagai 'Update'
+		c.JSON(http.StatusConflict, gin.H{
+			"status":  "error",
+			"message": errorMessage,
+			"data":    nil,
+			"fields": map[string]string{
+				"email": "Email is already taken by another user",
+			},
+		})
+		return
+	}
+	// Jika err != nil DAN err BUKAN gorm.ErrRecordNotFound, berarti ada error database lain
+	if err != nil && err != gorm.ErrRecordNotFound {
+		tx.Rollback()
+		errorMessage := "Database error during email duplication check: " + err.Error()
+		logInput := sanitizeUpdateUserInputForLog(updatedData)
+		services.LogActivity(config.DB, c, "Update", moduleNameUser, idParam, oldUserValue, logInput, "error", errorMessage)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to check email duplication",
+			"data":    errorMessage,
 		})
 		return
 	}
@@ -259,7 +315,9 @@ func UpdateUser(c *gin.Context) {
 	// Hash password jika diisi
 	if updatedData.Password != "" {
 		if len(updatedData.Password) < 6 {
-			services.LogActivity(config.DB, c, "Update", moduleNameUser, id, oldUserValue, sanitizeUserForLog(user), "error", "Password too short during update")
+			tx.Rollback()
+			logInput := sanitizeUpdateUserInputForLog(updatedData)
+			services.LogActivity(config.DB, c, "Update", moduleNameUser, idParam, oldUserValue, logInput, "error", "Password too short during update")
 			c.JSON(http.StatusBadRequest, gin.H{
 				"status":  "error",
 				"message": "Password must be at least 6 characters",
@@ -270,7 +328,9 @@ func UpdateUser(c *gin.Context) {
 
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updatedData.Password), bcrypt.DefaultCost)
 		if err != nil {
-			services.LogActivity(config.DB, c, "Update", moduleNameUser, id, oldUserValue, sanitizeUserForLog(user), "error", "Password hashing failed during update: "+err.Error())
+			tx.Rollback()
+			logInput := sanitizeUpdateUserInputForLog(updatedData)
+			services.LogActivity(config.DB, c, "Update", moduleNameUser, idParam, oldUserValue, logInput, "error", "Password hashing failed during update: "+err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"status":  "error",
 				"message": "Password hashing failed",
@@ -283,7 +343,9 @@ func UpdateUser(c *gin.Context) {
 
 	// Simpan perubahan ke database (menggunakan transaksi)
 	if err := tx.Save(&user).Error; err != nil {
-		services.LogActivity(config.DB, c, "Update", moduleNameUser, id, oldUserValue, sanitizeUserForLog(user), "error", "Failed to update user in DB: "+err.Error())
+		tx.Rollback()
+		logInput := sanitizeUpdateUserInputForLog(updatedData)
+		services.LogActivity(config.DB, c, "Update", moduleNameUser, idParam, oldUserValue, logInput, "error", "Failed to update user in DB: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to update user",
@@ -294,7 +356,8 @@ func UpdateUser(c *gin.Context) {
 
 	// COMMIT TRANSAKSI jika semua operasi berhasil
 	if err := tx.Commit().Error; err != nil {
-		services.LogActivity(config.DB, c, "Update", moduleNameUser, id, oldUserValue, sanitizeUserForLog(user), "error", "Failed to commit update transaction: "+err.Error())
+		logInput := sanitizeUpdateUserInputForLog(updatedData)
+		services.LogActivity(config.DB, c, "Update", moduleNameUser, idParam, oldUserValue, logInput, "error", "Failed to commit update transaction: "+err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Failed to commit transaction",
@@ -304,8 +367,10 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	// Log aktivitas sukses
-	services.LogActivity(config.DB, c, "Update", moduleNameUser, id, oldUserValue, sanitizeUserForLog(user), "success", "User updated successfully")
+	// Pastikan user di sini adalah user yang sudah terupdate
+	services.LogActivity(config.DB, c, "Update", moduleNameUser, idParam, oldUserValue, sanitizeUserForLog(user), "success", "User updated successfully")
 
+	// Kirim respons sukses
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "User updated successfully",
@@ -315,6 +380,8 @@ func UpdateUser(c *gin.Context) {
 			"email":    user.Email,
 			"position": user.Position,
 			"role":     user.Role,
+			"company":  user.Company,
+			"isActive": user.IsActive,
 		},
 	})
 }

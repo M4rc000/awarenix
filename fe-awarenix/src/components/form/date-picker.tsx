@@ -4,7 +4,8 @@ import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.css";
 import Label from "./Label";
 import { CalenderIcon } from "../../icons";
-import { Instance as FlatpickrInstance, Options as FlatpickrOptions } from "flatpickr";
+import { Options as FlatpickrOptions } from "flatpickr/dist/types/options";
+import { Instance as FlatpickrInstance  } from "flatpickr/dist/types/instance";
 
 type PropsType = {
   id: string;
@@ -52,7 +53,7 @@ export default function DatePicker({
     }
 
     // Fungsi untuk memastikan value yang valid
-    const getValidDate = (dateValue: any) => {
+    const getValidDate = (dateValue: FlatpickrOptions["defaultDate"] | null | undefined) => {
       if (dateValue === null || dateValue === undefined || dateValue === '' || dateValue === 'null') {
         return undefined;
       }

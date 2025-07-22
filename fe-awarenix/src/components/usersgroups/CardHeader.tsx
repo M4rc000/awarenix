@@ -41,8 +41,9 @@ export default function CardHeader({ reloadTrigger }: CardHeaderProps) {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (data.Success && typeof data.Total === "number") {
-        setTotalMembers(data.Total);
+      
+      if (data.status === "success") {
+        setTotalMembers(data.total);
       }
     } catch (err) {
       console.error("Failed to fetch total groups:", err);

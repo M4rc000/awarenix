@@ -314,7 +314,7 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
   });
 
   return (
-    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] border-1 border-gray-300 dark:border-gray-800">
+    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] border-1 border-gray-300 dark:border-gray-800 box-border mx-4 xl:max-w-[900px]">
       <div className="p-4 rounded-lg bg-white dark:bg-white/[0.03]">
         <form onSubmit={(e) => e.preventDefault()}>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">

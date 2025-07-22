@@ -13,7 +13,7 @@ interface User {
   name: string;
   email: string;
   position: string;
-  role: string;
+  role: number;
   roleName: string;
   company: string;
   isActive: string;

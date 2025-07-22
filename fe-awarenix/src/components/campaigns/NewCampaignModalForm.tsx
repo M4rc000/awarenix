@@ -575,7 +575,7 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
                 mode="datetime"
                 placeholder="Select a date"
                 value={campaign.launchDate} // Mengikat nilai ke state
-                onChange={(dates, currentDateString) => {
+                onChange={(_, currentDateString) => {
                   handleInputChange('launchDate', currentDateString);
                 }}
               />
@@ -591,7 +591,7 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
                 mode="datetime"
                 placeholder="Select a date"
                 value={campaign.sendEmailBy || ""} // Mengikat nilai ke state
-                onChange={(dates, currentDateString) => {
+                onChange={(_, currentDateString) => {
                   handleInputChange('sendEmailBy', currentDateString);
                 }}
               />

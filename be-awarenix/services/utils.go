@@ -161,3 +161,22 @@ func RewriteLinks(
 
 	return result
 }
+
+func GetRoleScope(c *gin.Context) (int, int, bool) {
+	userScope, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "error", "message": "User not authenticated"})
+		return 0, 0, false
+	}
+
+	user, ok := userScope.(*models.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to parse user data: invalid user object in context"})
+		return 0, 0, false
+	}
+
+	userID := int(user.ID)
+	role := user.Role
+
+	return userID, role, true
+}

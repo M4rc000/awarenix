@@ -225,7 +225,7 @@ const Select: React.FC<SelectProps> = ({
             h-11 w-full appearance-none rounded-lg border bg-white px-4 py-2.5 pr-11 text-sm shadow-sm text-left
             hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20
             dark:bg-gray-900 dark:text-white dark:hover:border-gray-500 dark:focus:border-blue-400
-            transition-all duration-200 ease-in-out border-red-300 dark:border-gray-700
+            transition-all duration-200 ease-in-out border-gray-300 dark:border-gray-700
             ${isOpen ? 'border-blue-500 ring-2 ring-blue-500/20 dark:border-blue-400' : ''}
             ${className}
           `}

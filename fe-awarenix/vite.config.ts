@@ -16,7 +16,7 @@ export default defineConfig({
       },
     }),
   ],
-  // base: '/',
+  base: '/',
   build: {
     // Pastikan output directory adalah 'dist'
     outDir: 'dist',

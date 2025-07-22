@@ -1,11 +1,10 @@
-// AppSidebar.tsx
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom"; // Perbaiki import Link
 import { MdOutlineAttachEmail } from "react-icons/md";
 import { CgWebsite } from "react-icons/cg";
 import { IoIosBookmarks } from "react-icons/io";
 import { IoSettingsOutline } from "react-icons/io5";
-import { FaMoneyCheckAlt } from "react-icons/fa";
+// import { FaMoneyCheckAlt } from "react-icons/fa";
 import { DiEnvato } from "react-icons/di";
 import { FaUserCog } from "react-icons/fa";
 import {
@@ -74,7 +73,7 @@ const allNavGroups: NavGroup[] = [ // Rename to allNavGroups
     key: "user",
     items: [
       { icon: <IoSettingsOutline />, name: "Account Settings", path: "/account-settings" },
-      { icon: <FaMoneyCheckAlt />, name: "Subcription & Billing", path: "/subscription-billing" },
+      // { icon: <FaMoneyCheckAlt />, name: "Subcription & Billing", path: "/subscription-billing" },
     ],
   },
   {
@@ -325,14 +324,14 @@ const AppSidebar: React.FC = () => {
             <>
               <img
                 className="dark:hidden"
-                src={`${import.meta.env.VITE_BASE_URL}/images/logo/auth-logo-light.png`}
+                src='/images/logo/auth-logo-light.png'
                 alt="Logo"
                 width={70}
                 height={50}
               />
               <img
                 className="hidden dark:block"
-                src={`${import.meta.env.VITE_BASE_URL}/images/logo/auth-logo.png`}
+                src='/images/logo/auth-logo.png'
                 alt="Logo"
                 width={70}
                 height={50}
@@ -340,7 +339,7 @@ const AppSidebar: React.FC = () => {
             </>
           ) : (
             <img
-              src={`${import.meta.env.VITE_BASE_URL}/images/logo/auth-logo.png`}
+              src='/images/logo/auth-logo.png'
               alt="Logo"
               width={32}
               height={32}

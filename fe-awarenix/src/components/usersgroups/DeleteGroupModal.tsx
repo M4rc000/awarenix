@@ -22,7 +22,7 @@ export type DeleteUserModalProps = {
   onGroupDeleted?: () => void
 }
 
-export default function DeleteUserModal({
+export default function DeleteGroupModal({
   isOpen,
   onClose,
   group,
@@ -52,12 +52,7 @@ export default function DeleteUserModal({
       const data = await res.json();
       
       if (!res.ok || !data.Success) {
-        setError(data.error || 'Failed to delete user');
-        Swal.fire({
-          text: 'Failed to delete user',
-          icon: 'error',
-          duration: 2000
-        });
+        setError(data.error || 'Failed to delete group');
         return;
       }
       onGroupDeleted?.(); // 🔁 trigger fetch
@@ -126,7 +121,7 @@ export default function DeleteUserModal({
               <div className="flex justify-end gap-2 px-6 py-4 bg-gray-50 dark:bg-gray-900 flex-shrink-0">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-400 rounded dark:hover:bg-gray-600  dark:bg-gray-400"
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-200 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>

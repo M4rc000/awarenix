@@ -1,6 +1,4 @@
-// src/pages/Lander.tsx (atau Tracker.tsx)
-
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function Lander() {
   const qs     = new URLSearchParams(window.location.search)
@@ -41,15 +39,16 @@ export default function Lander() {
       })
       .finally(() => setLoading(false))
 
-    // 3. Pasang atribut action + method pada <form> yang di-inject
+    // 3. Pasang atribut action + method pada semua <form> yang di-inject
     //    sehingga submit otomatis tercatat di /track/submit
     const observer = new MutationObserver(() => {
-      const form = document.querySelector<HTMLFormElement>('form')
-      if (!form) return
-
-      form.setAttribute('action', `${API}/track/submit?rid=${rid}&campaign=${camp}`)
-      form.setAttribute('method', 'POST')
-      observer.disconnect()
+      const forms = document.querySelectorAll<HTMLFormElement>('form:not([data-tracked])')
+      
+      forms.forEach(form => {
+        form.setAttribute('action', `${API}/track/submit?rid=${rid}&campaign=${camp}`)
+        form.setAttribute('method', 'POST')
+        form.setAttribute('data-tracked', 'true')
+      })
     })
 
     observer.observe(document.body, { childList: true, subtree: true })

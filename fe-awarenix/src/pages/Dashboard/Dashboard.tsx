@@ -52,10 +52,11 @@ export interface DashboardData {
 interface PieChartLabelProps {
   cx: number;
   cy: number;
-  midAngle: number;
+  midAngle?: number;
   innerRadius: number;
   outerRadius: number;
-  percent: number;
+  // Ubah percent menjadi opsional
+  percent?: number;
 }
 
 export default function Dashboard() {
@@ -73,7 +74,7 @@ export default function Dashboard() {
       setLoading(true);
     }
     setError(null);
-    
+
     try {
       const token = localStorage.getItem('token');
       const API_URL = import.meta.env.VITE_API_URL;
@@ -102,8 +103,8 @@ export default function Dashboard() {
       if (err instanceof Error) {
         errorMessage = err.message;
       }
-      setError(errorMessage);
-      
+      setError("failed to load dashboard data");
+
       // Only show alert on manual refresh or initial load, not on auto-refresh
       if (!isRefresh) {
         Swal.fire({
@@ -122,11 +123,11 @@ export default function Dashboard() {
   const startAutoRefresh = () => {
     setIsAutoRefresh(true);
     setRefreshCountdown(5);
-    
+
     // Clear existing intervals
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (countdownRef.current) clearInterval(countdownRef.current);
-    
+
     // Start countdown
     countdownRef.current = setInterval(() => {
       setRefreshCountdown(prev => {
@@ -136,7 +137,7 @@ export default function Dashboard() {
         return prev - 1;
       });
     }, 1000);
-    
+
     // Start auto refresh
     intervalRef.current = setInterval(() => {
       fetchDashboardData(true);
@@ -157,7 +158,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-    
+
     // Cleanup on unmount
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -167,6 +168,9 @@ export default function Dashboard() {
 
   const RADIAN = Math.PI / 180;
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: PieChartLabelProps) => {
+    // Tambahkan guard clause untuk midAngle dan percent
+    if (midAngle === undefined || percent === undefined) return null;
+
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
@@ -333,14 +337,14 @@ export default function Dashboard() {
             </svg>
             <span>Refresh</span>
           </button>
-          
+
           {/* Auto Refresh Toggle */}
           <div className="flex items-center space-x-2">
             <button
               onClick={isAutoRefresh ? stopAutoRefresh : startAutoRefresh}
               className={`px-4 py-2 font-medium rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 flex items-center space-x-2 ${
-                isAutoRefresh 
-                  ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white' 
+                isAutoRefresh
+                  ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white'
                   : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white'
               }`}
             >
@@ -375,7 +379,7 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {/* Tambahkan nullish coalescing operator (?? []) untuk memastikan array tidak null/undefined */}
-            {(campaignResults ?? []).map((result: any, index: number) => (
+            {(campaignResults ?? []).map((result: CampaignResult, index: number) => (
               result.label === "Campaign" ? (
                 <MetricCard
                   key={index}
@@ -566,7 +570,7 @@ export default function Dashboard() {
                     strokeWidth={2}
                   >
                     {/* Tambahkan nullish coalescing operator (?? []) */}
-                    {(browserData ?? []).map((entry: any, index: number) => (
+                    {(browserData ?? []).map((entry: BrowserData, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>

@@ -16,12 +16,27 @@ const moduleNameEmailTemplate = "Email Template"
 
 // GET ALL DATA EMAIL TEMPLATE
 func GetEmailTemplates(c *gin.Context) {
-	query := config.DB.Table("email_templates").
-		Select(`email_templates.*, 
-            created_by_user.name AS created_by_name, 
-            updated_by_user.name AS updated_by_name`).
-		Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = email_templates.created_by`).
-		Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = email_templates.updated_by`)
+	userIDScope, roleScope, errorStatus := services.GetRoleScope(c)
+	if !errorStatus {
+		return
+	}
+
+	var query *gorm.DB
+	if roleScope == 1 {
+		query = config.DB.Table("email_templates").
+			Select(`email_templates.*, 
+				created_by_user.name AS created_by_name, 
+				updated_by_user.name AS updated_by_name`).
+			Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = email_templates.created_by`).
+			Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = email_templates.updated_by`)
+	} else {
+		query = config.DB.Table("email_templates").
+			Select(`email_templates.*, 
+				created_by_user.name AS created_by_name, 
+				updated_by_user.name AS updated_by_name`).
+			Joins(`LEFT JOIN users AS created_by_user ON created_by_user.id = email_templates.created_by`).
+			Joins(`LEFT JOIN users AS updated_by_user ON updated_by_user.id = email_templates.updated_by`).Where("email_templates.created_by = ? OR email_templates.is_system_template = ?", userIDScope, 1)
+	}
 
 	var total int64
 	query.Count(&total)
@@ -95,12 +110,12 @@ func RegisterEmailTemplate(c *gin.Context) {
 	// CEK DUPLIKASI EMAIL TEMPLATE
 	var existingEmailTemplate models.EmailTemplate
 	if err := config.DB.
-		Where("subject = ? AND envelope_sender = ?", input.Subject, input.EnvelopeSender).
+		Where("name = ? AND subject = ? AND envelope_sender = ? AND created_by = ?", input.Name, input.Subject, input.EnvelopeSender, input.CreatedBy).
 		First(&existingEmailTemplate).Error; err == nil {
 		services.LogActivity(config.DB, c, "Create", moduleNameEmailTemplate, "", nil, input, "error", "Email Template already exists with this Subject and Envelope Sender.")
 		c.JSON(http.StatusConflict, gin.H{
 			"status":  "error",
-			"message": "Email Template with this Subject and Envelope Sender already registered",
+			"message": "Email Template with this Name, Subject and Envelope Sender already registered",
 			"data":    nil,
 		})
 		return
@@ -134,14 +149,14 @@ func RegisterEmailTemplate(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "Email Template created successfully",
-		"data":    newEmailTemplate, // Mengembalikan objek yang baru dibuat
+		"data":    newEmailTemplate,
 	})
 }
 
 // EDIT
 func UpdateEmailTemplate(c *gin.Context) {
 	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 64) // Parse ke uint64 untuk konsistensi
+	id, err := strconv.ParseUint(idParam, 10, 64)
 	if err != nil {
 		services.LogActivity(config.DB, c, "Update", moduleNameEmailTemplate, idParam, nil, nil, "failed", "Invalid Email Template ID format: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -172,7 +187,7 @@ func UpdateEmailTemplate(c *gin.Context) {
 		return
 	}
 
-	oldEmailTemplate := emailTemplate // Salin data lama untuk logging
+	oldEmailTemplate := emailTemplate
 
 	var updatedData models.EmailTemplateUpdate
 
