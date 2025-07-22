@@ -146,22 +146,27 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         accessorKey: 'id',
         header: '#',
         cell: info => info.row.index + 1,
+        size: 10,
       },
       {
         accessorKey: 'name',
         header: 'Name',
+        size: 10,
       },
       {
         accessorKey: 'envelopeSender',
         header: 'Envelope Sender',
+        size: 10,
       },
       {
         accessorKey: 'subject',
         header: 'Subject',
+        size: 10,
       },
       {
         accessorKey: 'createdAt',
         header: 'Created At',
+        size: 10,
         cell: ({ getValue }) => {
           const raw = getValue();
           if (!raw || (typeof raw !== 'string' && typeof raw !== 'number' && !(raw instanceof Date))) return '-';
@@ -183,6 +188,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
       {
         accessorKey: 'updatedAt',
         header: 'Last Modified',
+        size: 10,
         cell: ({ getValue }) => {
           const raw = getValue();
           if (!raw || typeof raw !== 'string' || raw.trim() === '') return '-';
@@ -205,20 +211,33 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         id: 'actions',
         accessorKey: 'actions',
         header: 'Action',
+        size: 100,
         cell: (row) => (
-          <div className="flex items-center space-x-2">
-            <Button size="xs" variant="success" onClick={() => onDuplicate(row.row.original)}>
-              <IoIosCopy />
-            </Button>
-            <Button size="xs" variant="info" onClick={() => onShowDetail(row.row.original)}>
-              <FaCircleInfo />
-            </Button>
-            <Button size="xs" variant="warning" onClick={() => onEdit(row.row.original)}>
-              <BiSolidEditAlt />
-            </Button>
-            <Button size="xs" variant="danger" onClick={() => onDelete(row.row.original)}>
-              <FaRegTrashAlt />
-            </Button>
+          <div className='pr-4 lg:pr-0'>
+            <div className="grid grid-cols-2 gap-8 lg:gap-2 p-1 space-x-2">
+              <div>
+                <Button size="xs" variant="success" onClick={() => onDuplicate(row.row.original)}>
+                  <IoIosCopy />
+                </Button>
+              </div>
+              <div>
+                <Button size="xs" variant="info" onClick={() => onShowDetail(row.row.original)}>
+                  <FaCircleInfo />
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-8 lg:gap-2 p-1 space-x-2">
+              <div>
+                <Button size="xs" variant="warning" onClick={() => onEdit(row.row.original)}>
+                  <BiSolidEditAlt />
+                </Button>
+              </div>
+              <div>
+                <Button size="xs" variant="danger" onClick={() => onDelete(row.row.original)}>
+                  <FaRegTrashAlt />
+                </Button>
+              </div>
+            </div>
           </div>
         ),
       },
@@ -254,8 +273,8 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
   }, [reloadTrigger]);
 
   return (
-    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] dark:border-gray-800 dark:border-1 border-gray-200 border-1 mx-4">
-      <div className="p-4 rounded-lg bg-white dark:bg-white/[0.03]">
+    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] dark:border-gray-800 border mx-4">
+      <div className="p-4 rounded-tl-lg rounded-tr-lg bg-white dark:bg-white/[0.03]">
         <form onSubmit={(e) => e.preventDefault()}>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="relative">
@@ -276,7 +295,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
               </div>
             </div>
             {/* SEARCH BAR */}
-            <div className={`relative ${isExpanded ? 'xl:mx-40' : 'xl:mx-74'}`}>
+            <div className={`relative ${isExpanded ? 'xl:mx-36' : 'xl:mx-70'}`}>
               <span className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
                 <svg
                   className="fill-gray-500 dark:fill-gray-400"
@@ -311,92 +330,111 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         </form>
       </div>
 
-      <div className="max-w-full overflow-x-auto xl:overflow-x-hidden">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map(headerGroup => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map(header => {
-                  const isSorted = header.column.getIsSorted();  // 'asc' | 'desc' | false
-                  const canSort = header.column.getCanSort();
+      <div className="max-w-full overflow-x-auto">
+        <div className="inline-block min-w-full align-middle">
+          <Table className="min-w-full">
+            <TableHeader>
+                {table.getHeaderGroups().map(headerGroup => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map(header => {
+                      const isSorted = header.column.getIsSorted();
+                      const canSort = header.column.getCanSort();
 
-                  return (
-                    <TableCell
-                      key={header.id}
-                      isHeader
-                      className="
-                        relative 
-                        px-5 py-3 pr-6
-                        text-center text-gray-500 text-sm 
-                        cursor-pointer select-none
-                      "
-                      >
-                      <div
-                        onClick={header.column.getToggleSortingHandler()}>
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      return (
+                        <td
+                          key={header.id}
+                          className="
+                            relative 
+                            px-3 py-3
+                            text-center text-gray-500 text-sm font-medium
+                            cursor-pointer select-none
+                            whitespace-nowrap overflow-hidden text-ellipsis
+                            bg-gray-50 dark:bg-gray-800/50
+                            border-b border-gray-200 dark:border-gray-700"
+                          style={{
+                            width: header.getSize(),
+                            maxWidth: header.getSize()
+                          }}
+                          >
+                          <div
+                            onClick={header.column.getToggleSortingHandler()}
+                            className="flex items-center justify-center gap-1">
+                            <span className="truncate">
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                            </span>
 
-                        {canSort && (
-                          <div className="mt-1 w-1 text-xs">
-                            <span
-                              className={`
-                                ${isSorted === "asc"
-                                  ? "text-gray-800"
-                                  : "text-gray-300"}
-                            `}
-                            >
-                              ▲
-                            </span>
-                            <span
-                              className={`mr-22
-                                ${isSorted === "desc"
-                                  ? "text-gray-800"
-                                  : "text-gray-300"
-                              }`}
-                            >
-                              ▼
-                            </span>
+                            {canSort && (
+                              <div className="flex flex-col text-xs leading-none">
+                                <span
+                                  className={`
+                                    ${isSorted === "asc"
+                                      ? "text-gray-800 dark:text-gray-200"
+                                      : "text-gray-300 dark:text-gray-600"}
+                                `}
+                                >
+                                  ▲
+                                </span>
+                                <span
+                                  className={`
+                                    ${isSorted === "desc"
+                                      ? "text-gray-800 dark:text-gray-200"
+                                      : "text-gray-300 dark:text-gray-600"
+                                    }`}
+                                >
+                                  ▼
+                                </span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </TableCell>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <tr>
-                <td colSpan={columns.length} className="relative h-[40px]">
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-500 italic">
-                    <svg className="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
-                    </svg>
-                  </div>
-                </td>
-              </tr>
-            ) : table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map(row => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className="px-5 py-3 text-sm text-gray-600 text-center">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={columns.length} className="relative h-[40px]">
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-500 italic">
-                    No data available
-                  </div>
-                </td>
-              </tr>
-            )}
-          </TableBody>
-        </Table>
+
+                          {/* Column Resize Handle */}
+                          {header.column.getCanResize() && (
+                            <div
+                              onMouseDown={header.getResizeHandler()}
+                              onTouchStart={header.getResizeHandler()}
+                              className="absolute right-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-blue-500 opacity-0 hover:opacity-100 transition-opacity"
+                            />
+                          )}
+                        </td>
+                      )
+                    })}
+                  </TableRow>
+                ))}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={columns.length} className="relative h-[40px]">
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-500 italic">
+                      <svg className="animate-spin h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+                      </svg>
+                    </div>
+                  </td>
+                </tr>
+              ) : table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map(row => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map(cell => (
+                      <TableCell key={cell.id} className="px-5 py-3 text-sm text-gray-600 text-center border-b border-gray-100 dark:border-gray-800">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={columns.length} className="relative h-[40px]">
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-500 italic">
+                      No data available
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* PAGINATION */}

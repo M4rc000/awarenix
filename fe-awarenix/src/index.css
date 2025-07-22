@@ -4,6 +4,26 @@ layer(base);
 
 @import "tailwindcss";
 
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  table-layout: fixed; /* Membuat kolom distribusi merata */
+}
+
+.table-header-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-cell {
+  word-break: break-word; /* Memungkinkan text wrap */
+}
+
 .flatpickr-calendar {
   z-index: 999999 !important;
   max-height: 80vh !important;
