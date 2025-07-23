@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net"
 	"net/smtp"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -15,72 +17,109 @@ import (
 	"github.com/gophish/gomail"
 )
 
+// SendTestEmail mengirim email tes menggunakan konfigurasi profil pengiriman yang diberikan.
 func SendTestEmail(profile *models.SendingProfiles, recipientEmail, body, subject string) error {
-	// Pastikan profil dan email tujuan valid
-	if profile == nil || profile.SmtpFrom == "" || profile.Host == "" {
-		return fmt.Errorf("invalid sending profile configuration")
+	// 1. Validasi awal profil dan email penerima
+	if profile == nil {
+		return fmt.Errorf("invalid sending profile: profile is nil")
 	}
 	if recipientEmail == "" {
 		return fmt.Errorf("recipient email cannot be empty")
 	}
+	if profile.SmtpFrom == "" {
+		return fmt.Errorf("invalid sending profile: 'from' email (SmtpFrom) cannot be empty")
+	}
+	if profile.Host == "" {
+		return fmt.Errorf("invalid sending profile: host cannot be empty")
+	}
 
-	// from := profile.SmtpFrom
+	// 2. Ambil kredensial dari profil
 	from := profile.SmtpFrom
 	password := profile.Password
+	username := profile.Username
 	smtpHost := profile.Host
-	smtpPort := "587" // **Menggunakan port 587 untuk STARTTLS**
+	var smtpPort string
 
-	// Jika host memiliki port, pisahkan
-	if strings.Contains(smtpHost, ":") {
+	// 3. Prioritaskan profile.Port. Jika tidak ada, coba parse dari Host, atau fallback ke default.
+	// Pastikan profile.Port adalah int atau string. Jika int, gunakan strconv.Itoa.
+	// Jika profile.Port adalah int, Anda harus mengkonversinya ke string.
+	// Asumsi profile.Port di models.SendingProfiles sekarang adalah int.
+	if profile.Port != 0 { // Jika Port adalah int, cek apakah 0 (nilai default)
+		smtpPort = strconv.Itoa(profile.Port)
+	} else if strings.Contains(smtpHost, ":") { // Jika port tidak ada di profile.Port, coba parse dari Host
 		parts := strings.Split(smtpHost, ":")
 		smtpHost = parts[0]
 		smtpPort = parts[1]
+	} else {
+		// Fallback ke port standar jika tidak ada port yang ditemukan
+		smtpPort = "587" // Default jika tidak ada port yang ditemukan
 	}
 
-	// Authentication
-	auth := smtp.PlainAuth("", from, password, smtpHost)
+	// Log untuk debugging
+	log.Printf("Attempting to send email: From=%s, Host=%s, Port=%s, Recipient=%s", from, smtpHost, smtpPort, recipientEmail)
 
-	// TLS config (tetap diperlukan untuk StartTLS)
+	// 4. Authentication
+	var authUsername string
+	if username != "" {
+		authUsername = username
+	} else {
+		authUsername = from
+	}
+	auth := smtp.PlainAuth("", authUsername, password, smtpHost)
+
+	// 5. TLS config (penting untuk keamanan)
 	tlsconfig := &tls.Config{
-		InsecureSkipVerify: false, // Set false untuk keamanan produksi, pastikan sertifikat valid
+		InsecureSkipVerify: false, // Jaga tetap false di produksi. Pertimbangkan sertifikat CA.
 		ServerName:         smtpHost,
 	}
 
-	// --- BAGIAN YANG DIUBAH UNTUK PORT 587 (STARTTLS) ---
-	// 1. Dial koneksi TCP biasa terlebih dahulu
-	conn, err := net.Dial("tcp", smtpHost+":"+smtpPort)
+	// 6. Dial koneksi TCP biasa terlebih dahulu
+	conn, err := net.Dial("tcp", net.JoinHostPort(smtpHost, smtpPort))
 	if err != nil {
-		return fmt.Errorf("failed to dial SMTP server: %w", err)
+		return fmt.Errorf("failed to dial SMTP server at %s:%s: %w", smtpHost, smtpPort, err)
 	}
+	defer conn.Close() // Pastikan koneksi ditutup
 
-	// 2. Buat klien SMTP dari koneksi TCP
+	// 7. Buat klien SMTP dari koneksi TCP
 	client, err := smtp.NewClient(conn, smtpHost)
 	if err != nil {
 		return fmt.Errorf("failed to create SMTP client: %w", err)
 	}
 	defer client.Close() // Pastikan klien ditutup
 
-	// 3. Lakukan STARTTLS untuk meng-upgrade koneksi ke TLS
-	if err = client.StartTLS(tlsconfig); err != nil {
-		return fmt.Errorf("failed to start TLS: %w", err)
+	// 8. Lakukan STARTTLS untuk meng-upgrade koneksi ke TLS (hanya jika server mendukung EHLO)
+	if ok, _ := client.Extension("STARTTLS"); ok {
+		if err = client.StartTLS(tlsconfig); err != nil {
+			return fmt.Errorf("failed to start TLS: %w", err)
+		}
+	} else {
+		log.Println("STARTTLS not supported by server, attempting to proceed without TLS upgrade.")
 	}
-	// --- AKHIR BAGIAN YANG DIUBAH ---
 
+	// 9. Autentikasi setelah STARTTLS
 	if err = client.Auth(auth); err != nil {
-		return fmt.Errorf("failed to authenticate with SMTP server: %w", err)
+		return fmt.Errorf("failed to authenticate with SMTP server (user: %s): %w", authUsername, err)
 	}
 
-	// Setup message
-	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n"
-	msg := []byte(
-		"From: " + from + "\r\n" +
-			"To: " + recipientEmail + "\r\n" +
-			"Subject: " + subject + "\r\n" +
-			mime + "\r\n" +
-			body,
-	)
+	// 10. Setup message (termasuk headers email kustom jika ada)
+	var msgHeaders []string
+	msgHeaders = append(msgHeaders, fmt.Sprintf("From: %s", from))
+	msgHeaders = append(msgHeaders, fmt.Sprintf("To: %s", recipientEmail))
+	msgHeaders = append(msgHeaders, fmt.Sprintf("Subject: %s", subject))
+	msgHeaders = append(msgHeaders, "MIME-version: 1.0;")
+	msgHeaders = append(msgHeaders, "Content-Type: text/html; charset=\"UTF-8\";")
 
-	// Send email
+	// Tambahkan EmailHeaders kustom dari profile jika ada
+	// Sekarang profile.EmailHeaders sudah berupa []models.EmailHeader, tidak perlu unmarshal
+	if profile.EmailHeaders != nil { // Cek apakah slice tidak nil
+		for _, header := range profile.EmailHeaders {
+			msgHeaders = append(msgHeaders, fmt.Sprintf("%s: %s", header.Header, header.Value))
+		}
+	}
+
+	fullMessage := strings.Join(msgHeaders, "\r\n") + "\r\n\r\n" + body
+
+	// 11. Send email
 	if err = client.Mail(from); err != nil {
 		return fmt.Errorf("failed to set sender: %w", err)
 	}
@@ -91,7 +130,7 @@ func SendTestEmail(profile *models.SendingProfiles, recipientEmail, body, subjec
 	if err != nil {
 		return fmt.Errorf("failed to get data writer: %w", err)
 	}
-	_, err = writer.Write(msg)
+	_, err = writer.Write([]byte(fullMessage))
 	if err != nil {
 		return fmt.Errorf("failed to write email body: %w", err)
 	}
@@ -100,7 +139,11 @@ func SendTestEmail(profile *models.SendingProfiles, recipientEmail, body, subjec
 		return fmt.Errorf("failed to close writer: %w", err)
 	}
 
-	client.Quit() // Penting untuk mengakhiri sesi SMTP
+	// 12. Akhiri sesi SMTP
+	err = client.Quit()
+	if err != nil {
+		log.Printf("Warning: Failed to gracefully quit SMTP session: %v", err)
+	}
 
 	return nil
 }

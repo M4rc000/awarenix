@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
 import EmailBodyEditorTemplate from "./EmailBodyEditorTemplate";
-import { forwardRef, useImperativeHandle } from "react";
 import Swal from "../utils/AlertContainer";
 import { LuLayoutTemplate } from "react-icons/lu";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
+import Select from "../form/Select"; 
 
-interface EmailTemplate{
+interface EmailTemplate {
   id: number;
   templateName: string;
   envelopeSender: string;
@@ -38,21 +38,52 @@ type EmailTemplateData = {
   trackerImage: number;
 };
 
-const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEmailTemplateModalFormProps>(({ onSuccess }, ref) => {
+const NewEmailTemplateModalForm = forwardRef<
+  NewEmailTemplateModalFormRef,
+  NewEmailTemplateModalFormProps
+>(({ onSuccess }, ref) => {
   const [emailtemplate, setEmailTemplate] = useState<EmailTemplateData>({
     templateName: "",
     envelopeSender: "",
     subject: "",
-    isSystemTemplate: 0,
+    isSystemTemplate: 0, // Default to 0 (No)
     bodyEmail: "",
     trackerImage: 1,
   });
-  const [templateName, setTemplateName] = useState("Welcome Email");
-  const [envelopeSender, setEnvelopeSender] = useState("team@company.com");
-  const [subject, setSubject] = useState("Welcome to Our Platform!");
+
   const [errors, setErrors] = useState<Partial<EmailTemplateData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [userRoleId, setUserRoleId] = useState<number | null>(null); // State untuk menyimpan role_id
+
+  // Ambil role_id pengguna dari localStorage saat komponen dimuat
+  useEffect(() => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("user") || "{}");
+      const roleId = userData?.role; 
+      if (typeof roleId === "number") {
+        setUserRoleId(roleId);
+        // Jika role_id bukan 1, set isSystemTemplate ke 0
+        if (roleId !== 1) {
+          setEmailTemplate((prev) => ({ ...prev, isSystemTemplate: 0 }));
+        }
+      } else {
+        // Fallback jika role_id tidak ditemukan atau bukan angka
+        setUserRoleId(null);
+        setEmailTemplate((prev) => ({ ...prev, isSystemTemplate: 0 }));
+      }
+    } catch (e) {
+      console.error("Failed to parse user data from localStorage", e);
+      setUserRoleId(null);
+      setEmailTemplate((prev) => ({ ...prev, isSystemTemplate: 0 }));
+    }
+  }, []); // [] agar hanya berjalan sekali saat mount
+
+  // Opsi untuk komponen Select
+  const templateStatusOptions = [
+    { value: "0", label: "No" },
+    { value: "1", label: "Yes" },
+  ];
+
   // VALIDATION FUNCTION
   const validateForm = (): boolean => {
     const newErrors: Partial<EmailTemplateData> = {};
@@ -76,6 +107,19 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
   const submitEmailTemplate = async (): Promise<EmailTemplate | null> => {
     // CEK VALIDASI
     if (!validateForm()) {
+      let errorMessage = '';
+      for (const key in errors) {
+        if (errors[key as keyof EmailTemplateData]) {
+          errorMessage += `${errors[key as keyof EmailTemplateData]}\n`;
+        }
+      }
+      if (errorMessage) {
+        Swal.fire({
+          icon: 'error',
+          text: errorMessage.replace(/\n/g, '<br/>'),
+          duration: 3000,
+        });
+      }
       return null;
     }
 
@@ -85,19 +129,18 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
       const API_URL = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem("token");
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
-      const createdBy = userData?.id || 0; 
+      const createdBy = userData?.id || 0;
       const payload = {
-        templateName: emailtemplate.templateName, 
+        templateName: emailtemplate.templateName,
         envelopeSender: emailtemplate.envelopeSender,
-        subject: emailtemplate.subject, 
+        subject: emailtemplate.subject,
         bodyEmail: emailtemplate.bodyEmail || "",
         isSystemTemplate: emailtemplate.isSystemTemplate,
         trackerImage: emailtemplate.trackerImage,
-        createdAt: new Date().toISOString(),
         createdBy: createdBy,
       };
       const response = await fetch(`${API_URL}/email-template/create`, {
-        method: 'POST',
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -105,79 +148,75 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         body: JSON.stringify(payload),
       });
 
-    
       if (!response.ok) {
-        let errorMessage = 'Failed to create email template';
-        
-        // Cek content type sebelum parsing
-        const contentType = response.headers.get('content-type');
-        
-        if (contentType && contentType.includes('application/json')) {
+        let errorMessage = "Failed to create email template";
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType && contentType.includes("application/json")) {
           try {
             const errorData = await response.json();
             errorMessage = errorData.message || errorData.error || errorMessage;
           } catch (jsonError) {
-            console.error('Failed to parse JSON error:', jsonError);
+            console.error("Failed to parse JSON error:", jsonError);
             errorMessage = `Server error: ${response.status} ${response.statusText}`;
           }
         } else {
-          // Jika bukan JSON, jangan coba parse sebagai JSON
           errorMessage = `Server error: ${response.status} ${response.statusText}`;
         }
-        
+
         throw new Error(errorMessage);
       }
 
-      // Parse the created template from the response
       const createdTemplate: EmailTemplate = await response.json();
 
       Swal.fire({
         text: "Email Template successfully added!",
         icon: "success",
-        duration: 2500
+        duration: 2500,
       });
 
-      if (onSuccess) onSuccess(); 
+      if (onSuccess) onSuccess();
 
-      // Reset form on success
       setEmailTemplate({
         templateName: "",
         envelopeSender: "",
         subject: "",
-        isSystemTemplate: 0,
+        isSystemTemplate: userRoleId !== 1 ? 0 : 0, 
         bodyEmail: "",
         trackerImage: 1,
       });
       setErrors({});
-      
+
       return createdTemplate;
-      
     } catch (error) {
-      console.error('Error creating email template:', error);
-      
-      // Set error message untuk email template
+      console.error("Error creating email template:", error);
+
       if (error instanceof Error) {
-        // Cek jika error terkait network
-        if (error.message.includes('fetch')) {
+        if (error.message.includes("fetch")) {
           setErrors({
-            templateName: 'Connection error. Please check if server is running.',
+            templateName: "Connection error. Please check if server is running.",
           });
-        } else if (error.message.toLowerCase().includes('sender')) {
+        } else if (error.message.toLowerCase().includes("sender")) {
           setErrors({
             envelopeSender: error.message,
           });
-        } else if (error.message.toLowerCase().includes('subject')) {
+        } else if (error.message.toLowerCase().includes("subject")) {
           setErrors({
             subject: error.message,
           });
+        } else if (error.message.toLowerCase().includes("template name already exists")) { 
+          setErrors({
+            templateName: error.message,
+          });
         }
-         else {
+        else {
           setErrors({
             templateName: error.message,
           });
         }
       }
-      
+
       return null;
     } finally {
       setIsSubmitting(false);
@@ -190,22 +229,23 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
   };
 
   // Handle input changes - dengan safety check
-  const handleInputChange = (field: keyof EmailTemplateData, value: string | number) => {
-    // Prevent submit trigger dari input change
+  const handleInputChange = (
+    field: keyof EmailTemplateData,
+    value: string | number
+  ) => {
     if (isSubmitting) {
       return;
     }
-    
-    setEmailTemplate(prev => ({
+
+    setEmailTemplate((prev) => ({
       ...prev,
-      [field]: value
+      [field]: field === "isSystemTemplate" ? Number(value) : value, 
     }));
 
-    // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [field]: undefined
+        [field]: undefined,
       }));
     }
   };
@@ -213,21 +253,22 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
   const emailTabs = [
     {
       label: (
-      <div className="flex items-center justify-center gap-2">
-        <LuLayoutTemplate />
-        <span>Email Body</span>
-      </div>
-      ), 
-      content: <EmailBodyEditorTemplate
-        templateName={templateName}
-        envelopeSender={envelopeSender}
-        subject={subject}
-        onTrackerChange={handleTrackerChange} 
-        onBodyChange={(html) => {
-          handleInputChange("bodyEmail", html);
-          setEmailTemplate(prev => ({ ...prev, bodyEmail: html })); 
-        }}
-      />,
+        <div className="flex items-center justify-center gap-2">
+          <LuLayoutTemplate />
+          <span>Email Body</span>
+        </div>
+      ),
+      content: (
+        <EmailBodyEditorTemplate
+          templateName={emailtemplate.templateName} 
+          envelopeSender={emailtemplate.envelopeSender} 
+          subject={emailtemplate.subject} 
+          onTrackerChange={handleTrackerChange}
+          onBodyChange={(html) => {
+            handleInputChange("bodyEmail", html);
+          }}
+        />
+      ),
     },
   ];
 
@@ -237,93 +278,91 @@ const NewEmailTemplateModalForm = forwardRef<NewEmailTemplateModalFormRef, NewEm
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
           📧 Email Configuration
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className={`grid grid-cols-1 gap-4 ${userRoleId === 1 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
           <div>
             <Label>Template Name</Label>
-            <Input 
-              placeholder="Welcome Email" 
-              type="text" 
-              value={emailtemplate.templateName} 
+            <Input
+              placeholder="Welcome Email"
+              type="text"
+              value={emailtemplate.templateName}
               onChange={(e) => {
-                setTemplateName(e.target.value);
-                handleInputChange('templateName', e.target.value)
+                handleInputChange("templateName", e.target.value);
               }}
               required
               disabled={isSubmitting}
-              className={`w-full text-sm sm:text-base h-10 px-3 ${errors.templateName ? 'border-red-500': ''}`}
-              />
-              {errors.templateName && (
-                <p className="text-red-500 text-sm mt-1">{errors.templateName}</p>
-              )}
+              className={`w-full text-sm sm:text-base h-10 px-3 ${
+                errors.templateName ? "border-red-500" : ""
+              }`}
+            />
+            {errors.templateName && (
+              <p className="text-red-500 text-sm mt-1">{errors.templateName}</p>
+            )}
           </div>
           <div>
             <Label>Envelope Sender</Label>
-            <Input 
-              placeholder="team@company.com" 
-              type="email" 
-              value={emailtemplate.envelopeSender} 
+            <Input
+              placeholder="team@company.com"
+              type="email"
+              value={emailtemplate.envelopeSender}
               onChange={(e) => {
-                setEnvelopeSender(e.target.value)
-                handleInputChange('envelopeSender', e.target.value)
+                handleInputChange("envelopeSender", e.target.value);
               }}
               required
-              className={`w-full text-sm sm:text-base h-10 px-3 ${errors.envelopeSender ? 'border-red-500' : ''}`}
-              />
-              {errors.envelopeSender && (
-                <p className="text-red-500 text-sm mt-1">{errors.envelopeSender}</p>
-              )}
+              className={`w-full text-sm sm:text-base h-10 px-3 ${
+                errors.envelopeSender ? "border-red-500" : ""
+              }`}
+            />
+            {errors.envelopeSender && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.envelopeSender}
+              </p>
+            )}
           </div>
           <div>
             <Label>Subject Line</Label>
-            <Input 
-              placeholder="Welcome to Our Platform!" 
+            <Input
+              placeholder="Welcome to Our Platform!"
               type="text"
-              required 
-              value={emailtemplate.subject} 
+              required
+              value={emailtemplate.subject}
               onChange={(e) => {
-                setSubject(e.target.value)
-                handleInputChange('subject', e.target.value)
-              }} 
-              className={`w-full text-sm sm:text-base h-10 px-3 ${errors.subject ? 'border-red-500' : ''}`}
+                handleInputChange("subject", e.target.value);
+              }}
+              className={`w-full text-sm sm:text-base h-10 px-3 ${
+                errors.subject ? "border-red-500" : ""
+              }`}
             />
             {errors.subject && (
               <p className="text-red-500 text-sm mt-1">{errors.subject}</p>
             )}
           </div>
-          <div>
-            <LabelWithTooltip position="left" tooltip="Templates status means is default template by system or created from user">Template Status</LabelWithTooltip>
-            <select
-              id="email-template-select"
-              value={emailtemplate.isSystemTemplate}
-              onChange={(e) => {
-                setSubject(e.target.value)
-                handleInputChange('isSystemTemplate', e.target.value)
-              }}
-              className="
-                appearance-none
-                block w-full px-4 py-2
-                text-base
-                h-11
-                border border-gray-300 dark:border-gray-700
-                rounded-lg
-                bg-white dark:bg-gray-900
-                text-gray-900 dark:text-gray-100
-                shadow-sm
-                transition-all duration-200 ease-in-out
-                focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                dark:focus:ring-blue-400 dark:focus:border-blue-400
-                cursor-pointer
-                pr-10
-              "
-            >
-              <option value="" selected>Choose Template Type</option>
-              <option value="0">No</option>
-              <option value="1">Yes</option>
-            </select>
-            {errors.subject && (
-              <p className="text-red-500 text-sm mt-1">{errors.isSystemTemplate}</p>
-            )}
-          </div>
+          {/* Conditional rendering untuk Template Status */}
+          {userRoleId === 1 && ( // Hanya render jika userRoleId adalah 1
+            <div>
+              <LabelWithTooltip
+                position="left"
+                tooltip="Templates status means is default template by system or created from user"
+              >
+                Template Status
+              </LabelWithTooltip>
+              <Select
+                placeholder="Choose Template Type"
+                options={templateStatusOptions} // Tidak perlu filter lagi di sini karena sudah di dalam kondisi userRoleId === 1
+                value={String(emailtemplate.isSystemTemplate)}
+                onChange={(val: string) => {
+                  handleInputChange("isSystemTemplate", val);
+                }}
+                className={`w-full text-sm sm:text-base h-11 px-3 ${
+                  errors.isSystemTemplate ? "border-red-500" : ""
+                }`}
+              />
+              {errors.isSystemTemplate && ( 
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.isSystemTemplate}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

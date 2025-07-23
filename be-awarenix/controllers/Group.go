@@ -403,20 +403,8 @@ func UpdateGroup(c *gin.Context) {
 
 	var existingGroup models.Group
 
-	// CHECK DUPLICATE GROUP
-	if err := tx.Where("name = ? AND created_by = ?", req.GroupName, req.UpdatedBy).First(&existingGroup).Error; err == nil {
-		tx.Rollback()
-		errorMessage := "Group Name already exists"
-		services.LogActivity(config.DB, c, "Create", moduleName, "", nil, req, "error", errorMessage)
-		c.JSON(http.StatusConflict, gin.H{
-			"status":  "error",
-			"message": errorMessage,
-			"data":    nil,
-		})
-		return
-	}
-
-	// Find the group to update
+	// Ambil grup yang saat ini akan diperbarui terlebih dahulu
+	// Ini penting agar kita punya objek existingGroup dengan ID yang benar untuk pengecualian
 	if err := tx.First(&existingGroup, groupID).Error; err != nil {
 		tx.Rollback()
 		if err == gorm.ErrRecordNotFound {
@@ -437,7 +425,24 @@ func UpdateGroup(c *gin.Context) {
 		return
 	}
 
-	oldGroupValue := existingGroup // Salin sebelum perubahan untuk log
+	// CHECK DUPLICATE GROUP NAME, EXCLUDING THE CURRENT GROUP BEING UPDATED
+	// Hanya cek jika nama grup berubah. Jika nama grup sama dengan yang lama, tidak perlu cek duplikasi.
+	if req.GroupName != existingGroup.Name { // Tambahkan kondisi ini
+		var duplicateGroup models.Group
+		if err := tx.Where("name = ? AND created_by = ? AND id != ?", req.GroupName, req.UpdatedBy, groupID).First(&duplicateGroup).Error; err == nil {
+			tx.Rollback()
+			errorMessage := "Group Name already exists."
+			services.LogActivity(config.DB, c, "Update", moduleName, idParam, nil, req, "error", errorMessage)
+			c.JSON(http.StatusConflict, gin.H{
+				"status":  "error",
+				"message": errorMessage,
+				"data":    nil,
+			})
+			return
+		}
+	}
+
+	oldGroupValue := existingGroup // Gunakan existingGroup yang sudah diambil dari DB
 	oldMembersValue := []models.Member{}
 	tx.Where("group_id = ?", groupID).Find(&oldMembersValue) // Ambil anggota lama untuk log
 
@@ -496,9 +501,10 @@ func UpdateGroup(c *gin.Context) {
 				Position:  m.Position,
 				Company:   m.Company,
 				Country:   m.Country,
+				CreatedBy: updatedBy,
 				UpdatedBy: updatedBy,
-				CreatedAt: time.Now(), // Set CreatedAt for new members
-				UpdatedAt: time.Now(), // Set UpdatedAt for new members
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			}
 		}
 
@@ -527,7 +533,7 @@ func UpdateGroup(c *gin.Context) {
 
 	// Ambil data group dan member terbaru untuk respons success
 	var updatedGroup models.Group
-	config.DB.Preload("Members").First(&updatedGroup, groupID) // Pastikan untuk memuat anggota
+	config.DB.Preload("Members").First(&updatedGroup, groupID)
 	var updatedMembersResponse []models.MemberResponse
 	for _, member := range updatedGroup.Members {
 		updatedMembersResponse = append(updatedMembersResponse, models.MemberResponse{

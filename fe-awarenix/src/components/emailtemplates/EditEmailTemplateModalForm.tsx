@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
-import { forwardRef, useImperativeHandle } from "react";
 import { LuLayoutTemplate } from "react-icons/lu";
 import EmailBodyEditorTemplate from "./EmailBodyEditorTemplate";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
+import Swal from "../utils/AlertContainer"; // Pastikan Swal diimpor
+import Select from "../form/Select"; // Import komponen Select kustom Anda
 
 type EmailTemplate = {
   id: number;
@@ -15,7 +16,7 @@ type EmailTemplate = {
   bodyEmail: string;
   trackerImage: number;
   isSystemTemplate: number;
-}
+};
 
 export type EditEmailTemplateModalFormRef = {
   submitEmailTemplate: () => Promise<boolean>;
@@ -35,284 +36,359 @@ type EmailTemplateData = {
   isSystemTemplate: number;
 };
 
-const EditEmailTemplateModalForm = forwardRef<EditEmailTemplateModalFormRef, EditEmailTemplateModalFormProps>(
-  ({ emailTemplate, onSuccess }, ref) => {
-    if (!emailTemplate) return false;
+const EditEmailTemplateModalForm = forwardRef<
+  EditEmailTemplateModalFormRef,
+  EditEmailTemplateModalFormProps
+>(({ emailTemplate, onSuccess }, ref) => {
+  // Pastikan emailTemplate ada sebelum melanjutkan
+  const initialData: EmailTemplateData = {
+    templateName: emailTemplate?.name || "",
+    envelopeSender: emailTemplate?.envelopeSender || "",
+    subject: emailTemplate?.subject || "",
+    bodyEmail: emailTemplate?.bodyEmail || "",
+    trackerImage: emailTemplate?.trackerImage || 1, // Default ke 1 jika null/undefined
+    isSystemTemplate: emailTemplate?.isSystemTemplate || 0, // Default ke 0 jika null/undefined
+  };
 
-    const [formData, setFormData] = useState<EmailTemplateData>({
-      templateName: emailTemplate.name || "",
-      envelopeSender: emailTemplate.envelopeSender || "",
-      subject: emailTemplate.subject || "",
-      bodyEmail: emailTemplate.bodyEmail || "",
-      trackerImage: emailTemplate.trackerImage,
-      isSystemTemplate: emailTemplate.isSystemTemplate,
-    });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [errors, setErrors] = useState<Partial<EmailTemplateData>>({});
+  const [formData, setFormData] = useState<EmailTemplateData>(initialData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Partial<EmailTemplateData>>({});
+  const [userRoleId, setUserRoleId] = useState<number | null>(null); // State untuk menyimpan role_id
 
-    // VALIDATION FUNCTION
-    const validateForm = (): boolean => {
-      const newErrors: Partial<EmailTemplateData> = {};
-
-      if (!formData.templateName.trim()) {
-        newErrors.templateName = "Name is required";
+  // Ambil role_id pengguna dari localStorage saat komponen dimuat
+  useEffect(() => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("user") || "{}");
+      const roleId = userData?.role; // Sesuaikan jika propertinya adalah 'role_id'
+      if (typeof roleId === "number") {
+        setUserRoleId(roleId);
+      } else {
+        setUserRoleId(null);
       }
-      if (!formData.envelopeSender.trim()) {
-        newErrors.envelopeSender = "Envelope Sender is required";
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.envelopeSender)) {
-        newErrors.envelopeSender = "Please enter a valid email";
+    } catch (e) {
+      console.error("Failed to parse user data from localStorage", e);
+      setUserRoleId(null);
+    }
+  }, []); // [] agar hanya berjalan sekali saat mount
+
+  // Reset form data ketika emailTemplate berubah (misalnya, saat modal dibuka dengan data template lain)
+  useEffect(() => {
+    if (emailTemplate) {
+      setFormData({
+        templateName: emailTemplate.name || "",
+        envelopeSender: emailTemplate.envelopeSender || "",
+        subject: emailTemplate.subject || "",
+        bodyEmail: emailTemplate.bodyEmail || "",
+        trackerImage: emailTemplate.trackerImage || 1,
+        // Pastikan isSystemTemplate diinisialisasi dengan benar berdasarkan role
+        isSystemTemplate: userRoleId === 1 ? (emailTemplate.isSystemTemplate || 0) : 0, 
+      });
+      setErrors({}); // Bersihkan error saat data baru dimuat
+    }
+  }, [emailTemplate, userRoleId]); // Tambahkan userRoleId sebagai dependency
+
+  // Opsi untuk komponen Select
+  const templateStatusOptions = [
+    { value: "0", label: "Made In" }, // Label diubah sesuai permintaan di komentar kode lama
+    { value: "1", label: "Default" }, // Label diubah sesuai permintaan di komentar kode lama
+  ];
+
+  // VALIDATION FUNCTION
+  const validateForm = (): boolean => {
+    const newErrors: Partial<EmailTemplateData> = {};
+
+    if (!formData.templateName.trim()) {
+      newErrors.templateName = "Name is required";
+    }
+    if (!formData.envelopeSender.trim()) {
+      newErrors.envelopeSender = "Envelope Sender is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.envelopeSender)) {
+      newErrors.envelopeSender = "Please enter a valid email";
+    }
+    if (!formData.subject.trim()) {
+      newErrors.subject = "Subject Email is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const submitEmailTemplate = async (): Promise<boolean> => {
+    if (!emailTemplate) {
+      console.error("No email template data provided for update.");
+      return false;
+    }
+
+    if (!validateForm()) {
+      let errorMessage = '';
+      for (const key in errors) {
+        if (errors[key as keyof EmailTemplateData]) {
+          errorMessage += `${errors[key as keyof EmailTemplateData]}\n`;
+        }
       }
-      if (!formData.subject.trim()) {
-        newErrors.subject = "Subject Email is required";
-      }
-
-      setErrors(newErrors);
-      return Object.keys(newErrors).length === 0;
-    };
-
-    const submitEmailTemplate = async (): Promise<boolean> => {
-      // CEK VALIDASI
-      if (!validateForm()) {
-        return false;
-      }
-
-      setIsSubmitting(true);
-
-      try {
-        const API_URL = import.meta.env.VITE_API_URL;
-        const token = localStorage.getItem("token");
-        const userData = JSON.parse(localStorage.getItem("user") || "{}");
-        const updatedBy = userData?.id || 0; 
-
-        const response = await fetch(`${API_URL}/email-template/${emailTemplate.id}`, {
-          method: 'PUT',
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            templateName: formData.templateName,
-            envelopeSender: formData.envelopeSender,
-            subject: formData.subject,
-            bodyEmail: formData .bodyEmail || "",
-            trackerImage: formData.trackerImage,
-            isSystemTemplate: formData.isSystemTemplate || 0,
-            updatedBy: updatedBy,
-          }),
+      if (errorMessage) {
+        Swal.fire({
+          icon: 'error',
+          text: errorMessage.replace(/\n/g, '<br/>'),
+          duration: 3000,
         });
-
-
-        if (!response.ok) {
-          let errorMessage = `Failed to update email template`;
-          
-          // Cek content type sebelum parsing
-          const contentType = response.headers.get('content-type');
-          
-          if (contentType && contentType.includes('application/json')) {
-            try {
-              const errorData = await response.json();
-              errorMessage = errorData.message || errorData.error || errorMessage;
-            } catch (jsonError) {
-              console.error('Failed to parse JSON error:', jsonError);
-              errorMessage = `Server error: ${response.status} ${response.statusText}`;
-            }
-          } else {
-            // Jika bukan JSON, jangan coba parse sebagai JSON
-            errorMessage = `Server error: ${response.status} ${response.statusText}`;
-          }
-          
-          throw new Error(errorMessage);
-        }
-
-        if (onSuccess) onSuccess(); 
-
-        // Reset form on success only if creating new template
-        if (!emailTemplate?.id) {
-          setFormData({
-            templateName: "",
-            envelopeSender: "",
-            subject: "",
-            bodyEmail: "",
-            trackerImage: 0,
-            isSystemTemplate: 0
-          });
-        }
-        setErrors({});
-        
-        return true;
-        
-      } catch (error) {
-        console.error('Error saving email template:', error);
-        
-        // Set error message untuk user
-        if (error instanceof Error) {
-          // Cek jika error terkait network
-          if (error.message.includes('fetch')) {
-            setErrors({
-              templateName: 'Connection error. Please check if server is running.',
-            });
-          } else if (error.message.toLowerCase().includes('sender')) {
-            setErrors({
-              envelopeSender: error.message,
-            });
-          } else if (error.message.toLowerCase().includes('subject')) {
-            setErrors({
-              subject: error.message,
-            });
-          } else {
-            setErrors({
-              templateName: error.message,
-            });
-          }
-        }
-        
-        return false;
-      } finally {
-        setIsSubmitting(false);
       }
-    };
+      return false;
+    }
 
-    // Expose methods to parent component
-    useImperativeHandle(ref, () => ({ submitEmailTemplate }));
+    setIsSubmitting(true);
 
-    const handleTrackerChange = (trackerValue: number) => {
-      handleInputChange("trackerImage", trackerValue);
-    };
+    try {
+      const API_URL = import.meta.env.VITE_API_URL;
+      const token = localStorage.getItem("token");
+      const userData = JSON.parse(localStorage.getItem("user") || "{}");
+      const updatedBy = userData?.id || 0;
 
-    // Handle input changes - dengan safety check
-    const handleInputChange = (field: keyof EmailTemplateData, value: string | number) => {
-      if (isSubmitting) {
-        return;
-      }
+      // Pastikan isSystemTemplate selalu 0 jika userRoleId bukan 1
+      const isSystemTemplateToSend = userRoleId === 1 ? formData.isSystemTemplate : 0;
 
-      // AKAN UPDATE SAAT VALUE NYA BERUBAH SAJA
-      setFormData(prev => {
-        if (prev[field] === value) {
-          return prev; // No change, return previous state to prevent re-render loop
-        }
-        return {
-          ...prev,
-          [field]: value
-        };
+      const response = await fetch(`${API_URL}/email-template/${emailTemplate.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          templateName: formData.templateName,
+          envelopeSender: formData.envelopeSender,
+          subject: formData.subject,
+          bodyEmail: formData.bodyEmail || "",
+          trackerImage: formData.trackerImage,
+          isSystemTemplate: isSystemTemplateToSend, // Kirim nilai yang disesuaikan
+          updatedBy: updatedBy,
+        }),
       });
 
-      // Clear error when user starts typing
-      if (errors[field]) {
-        setErrors(prev => ({
-          ...prev,
-          [field]: undefined
-        }));
+      if (!response.ok) {
+        let errorMessage = `Failed to update email template`;
+
+        const contentType = response.headers.get("content-type");
+
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch (jsonError) {
+            console.error("Failed to parse JSON error:", jsonError);
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
+        } else {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+
+        throw new Error(errorMessage);
       }
-    };
 
-    const emailTabs = [
-      {
-        label: (
-          <div className="flex items-center justify-center gap-2">
-            <LuLayoutTemplate />
-            <span>Template</span>
-          </div>
-        ), 
-        content: <EmailBodyEditorTemplate
-            templateName={formData.templateName}
-            envelopeSender={formData.envelopeSender}
-            subject={formData.subject}
-            onTrackerChange={handleTrackerChange}
-            initialTrackerValue={formData.trackerImage}
-            initialContent={formData.bodyEmail}
-            onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
-          />,
-        },
-    ];
-    return (
-      <div className="space-y-6 p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-            📧 Email Configuration
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div>
-              <Label>Template Name</Label>
-              <Input 
-                placeholder="Welcome Email" 
-                type="text" 
-                value={formData.templateName} 
-                onChange={(e) => handleInputChange('templateName', e.target.value)}
-                required
-                disabled={isSubmitting}
-                className={`w-full text-sm sm:text-base h-10 px-3 ${errors.templateName ? 'border-red-500': ''}`}
-              />
-              {errors.templateName && (
-                <p className="text-red-500 text-sm mt-1">{errors.templateName}</p>
-              )}
-            </div>
-            <div>
-              <Label>Envelope Sender</Label>
-              <Input 
-                placeholder="team@company.com" 
-                type="email" 
-                value={formData.envelopeSender} 
-                onChange={(e) => handleInputChange('envelopeSender', e.target.value)}
-                required
-                disabled={isSubmitting}
-                className={`w-full text-sm sm:text-base h-10 px-3 ${errors.envelopeSender ? 'border-red-500' : ''}`}
-              />
-              {errors.envelopeSender && (
-                <p className="text-red-500 text-sm mt-1">{errors.envelopeSender}</p>
-              )}
-            </div>
-            <div>
-              <Label>Subject Line</Label>
-              <Input 
-                placeholder="Welcome to Our Platform!" 
-                type="text"
-                required 
-                value={formData.subject} 
-                onChange={(e) => handleInputChange('subject', e.target.value)}
-                disabled={isSubmitting}
-                className={`w-full text-sm sm:text-base h-10 px-3 ${errors.subject ? 'border-red-500' : ''}`}
-              />
-              {errors.subject && (
-                <p className="text-red-500 text-sm mt-1">{errors.subject}</p>
-              )}
-            </div>
-            <div>
-              <LabelWithTooltip position="left" tooltip="Templates status means is default template by system or created from user">Template Status</LabelWithTooltip>
-              <select
-                id="email-template-select"
-                value={formData.isSystemTemplate ? "1" : "0"}
-                onChange={(e) => handleInputChange('isSystemTemplate', parseInt(e.target.value))}
-                className="
-                  appearance-none
-                  block w-full px-4 py-2
-                  text-base
-                  h-11
-                  border border-gray-300 dark:border-gray-700
-                  rounded-lg
-                  bg-white dark:bg-gray-900
-                  text-gray-900 dark:text-gray-100
-                  shadow-sm
-                  transition-all duration-200 ease-in-out
-                  focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                  dark:focus:ring-blue-400 dark:focus:border-blue-400
-                  cursor-pointer
-                  pr-10
-                "
-              >
-                <option value="0" >Made In</option>
-                <option value="1">Default</option>
-              </select>
-              {errors.subject && (
-                <p className="text-red-500 text-sm mt-1">{errors.isSystemTemplate}</p>
-              )}
-            </div>
-          </div>
+      Swal.fire({
+        text: "Email Template successfully updated!",
+        icon: "success",
+        duration: 2500,
+      });
+
+      if (onSuccess) onSuccess();
+
+      setErrors({});
+
+      return true;
+    } catch (error) {
+      console.error("Error saving email template:", error);
+
+      if (error instanceof Error) {
+        if (error.message.includes("fetch")) {
+          setErrors({
+            templateName: "Connection error. Please check if server is running.",
+          });
+        } else if (error.message.toLowerCase().includes("sender")) {
+          setErrors({
+            envelopeSender: error.message,
+          });
+        } else if (error.message.toLowerCase().includes("subject")) {
+          setErrors({
+            subject: error.message,
+          });
+        } else if (error.message.toLowerCase().includes("template name already exists")) { 
+          setErrors({
+            templateName: error.message,
+          });
+        }
+        else {
+          setErrors({
+            templateName: error.message,
+          });
+        }
+      }
+
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({ submitEmailTemplate }));
+
+  const handleTrackerChange = (trackerValue: number) => {
+    handleInputChange("trackerImage", trackerValue);
+  };
+
+  // Handle input changes - dengan safety check
+  const handleInputChange = (
+    field: keyof EmailTemplateData,
+    value: string | number
+  ) => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setFormData((prev) => {
+      // Untuk isSystemTemplate, pastikan hanya role 1 yang bisa mengubahnya
+      if (field === "isSystemTemplate" && userRoleId !== 1) {
+        return prev; // Jangan ubah jika bukan role 1
+      }
+      // Konversi value ke number jika field adalah isSystemTemplate atau trackerImage
+      const finalValue = (field === "isSystemTemplate" || field === "trackerImage") 
+                         ? Number(value) 
+                         : value;
+      
+      if (prev[field] === finalValue) {
+        return prev; 
+      }
+      return {
+        ...prev,
+        [field]: finalValue,
+      };
+    });
+
+    if (errors[field]) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: undefined,
+      }));
+    }
+  };
+
+  const emailTabs = [
+    {
+      label: (
+        <div className="flex items-center justify-center gap-2">
+          <LuLayoutTemplate />
+          <span>Template</span>
         </div>
+      ),
+      content: (
+        <EmailBodyEditorTemplate
+          templateName={formData.templateName}
+          envelopeSender={formData.envelopeSender}
+          subject={formData.subject}
+          onTrackerChange={handleTrackerChange}
+          initialTrackerValue={formData.trackerImage}
+          initialContent={formData.bodyEmail}
+          onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
+        />
+      ),
+    },
+  ];
 
-        <Tabs tabs={emailTabs} />
-      </div>
-    );
+  // Jika emailTemplate null, kembalikan null atau pesan loading
+  if (!emailTemplate) {
+    return null; // Atau tampilkan indikator loading
   }
-);
+
+  return (
+    <div className="space-y-6 p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+          📧 Email Configuration
+        </h3>
+        <div className={`grid grid-cols-1 gap-4 ${userRoleId === 1 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
+          <div>
+            <Label>Template Name</Label>
+            <Input
+              placeholder="Welcome Email"
+              type="text"
+              value={formData.templateName}
+              onChange={(e) => handleInputChange("templateName", e.target.value)}
+              required
+              disabled={isSubmitting}
+              className={`w-full text-sm sm:text-base h-10 px-3 ${
+                errors.templateName ? "border-red-500" : ""
+              }`}
+            />
+            {errors.templateName && (
+              <p className="text-red-500 text-sm mt-1">{errors.templateName}</p>
+            )}
+          </div>
+          <div>
+            <Label>Envelope Sender</Label>
+            <Input
+              placeholder="team@company.com"
+              type="email"
+              value={formData.envelopeSender}
+              onChange={(e) => handleInputChange("envelopeSender", e.target.value)}
+              required
+              disabled={isSubmitting}
+              className={`w-full text-sm sm:text-base h-10 px-3 ${
+                errors.envelopeSender ? "border-red-500" : ""
+              }`}
+            />
+            {errors.envelopeSender && (
+              <p className="text-red-500 text-sm mt-1">{errors.envelopeSender}</p>
+            )}
+          </div>
+          <div>
+            <Label>Subject Line</Label>
+            <Input
+              placeholder="Welcome to Our Platform!"
+              type="text"
+              required
+              value={formData.subject}
+              onChange={(e) => handleInputChange("subject", e.target.value)}
+              disabled={isSubmitting}
+              className={`w-full text-sm sm:text-base h-10 px-3 ${
+                errors.subject ? "border-red-500" : ""
+              }`}
+            />
+            {errors.subject && (
+              <p className="text-red-500 text-sm mt-1">{errors.subject}</p>
+            )}
+          </div>
+          {userRoleId === 1 && (
+            <div>
+              <LabelWithTooltip
+                position="left"
+                tooltip="Templates status means is default template by system or created from user"
+              >
+                Template Status
+              </LabelWithTooltip>
+              <Select
+                placeholder="Choose Template Type"
+                options={templateStatusOptions}
+                value={String(formData.isSystemTemplate)}
+                onChange={(val: string) =>
+                  handleInputChange("isSystemTemplate", val)
+                }
+                className={`w-full text-sm sm:text-base h-11 px-3 ${
+                  errors.isSystemTemplate ? "border-red-500" : ""
+                }`}
+              />
+              {errors.isSystemTemplate && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.isSystemTemplate}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Tabs tabs={emailTabs} />
+    </div>
+  );
+});
 
 export default EditEmailTemplateModalForm;

@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Search, Filter, Download, AlertCircle, CheckCircle, XCircle, Mails ,Clock, User, Settings, Eye, RefreshCw, Database, Edit, Plus, Trash2, Globe, EyeOff, Activity } from 'lucide-react'; // Import EyeOff
+import { Search, Filter, Download, AlertCircle, CheckCircle, XCircle, Mails ,Clock, User, Settings, Eye, RefreshCw, Database, Edit, Plus, Trash2, Globe, EyeOff, Activity } from 'lucide-react';
 import { formatUserDate } from '../../components/utils/DateFormatter';
+import Select from '../../components/form/Select'; // Import komponen Select kustom Anda
 
 type Activity = {
   id: number;
@@ -291,6 +292,31 @@ const LoggingActivity = () => {
       (activity.action === 'Update' && (activity.old_value || activity.new_value)) ||
       (activity.action === 'Delete' && activity.old_value);
   }, []);
+
+  // Options for the Select components
+  const actionOptions = useMemo(() => ([
+    { value: 'all', label: 'All Actions' },
+    { value: 'Create', label: 'Create' },
+    { value: 'Update', label: 'Update' },
+    { value: 'Delete', label: 'Delete' },
+    { value: 'Login', label: 'Login' },
+    { value: 'Send Email', label: 'Send Email' },
+    { value: 'Send Test Email', label: 'Send Test Email' },
+  ]), []);
+
+  const userOptions = useMemo(() => ([
+    { value: 'all', label: 'All Users' },
+    ...uniqueUsers.filter(user => user.id !== 0).map(user => ({ value: user.id.toString(), label: user.name }))
+  ]), [uniqueUsers]);
+
+  const timeRangeOptions = useMemo(() => ([
+    { value: 'all', label: 'All Time' },
+    { value: '24h', label: 'Last 24 Hours' },
+    { value: '7d', label: 'Last 7 Days' },
+    { value: '30d', label: 'Last 30 Days' },
+  ]), []);
+
+
   return (
     <div className="min-h-screen bg-white rounded-md shadow-xl dark:bg-gray-800 p-6 overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
@@ -357,51 +383,34 @@ const LoggingActivity = () => {
                 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Action</label> 
-                  <select
+                  <Select
+                    options={actionOptions}
                     value={selectedFilter}
-                    onChange={(e) => setSelectedFilter(e.target.value)}
-                    className="w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
-                  >
-                    <option value="all">All Actions</option>
-                    <option value="Create">Create</option>
-                    <option value="Update">Update</option>
-                    <option value="Delete">Delete</option>
-                    <option value="Login">Login</option>
-                    <option value="Send Email">Send Email</option>
-                    <option value="Send Test Email">Send Test Email</option>
-                  </select>
+                    onChange={setSelectedFilter}
+                    className="w-full text-sm sm:text-base h-10 px-3" // Sesuaikan kelas
+                  />
                 </div>
 
                 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Action by</label>
-                  <select
+                  <Select
+                    options={userOptions}
                     value={selectedUser}
-                    onChange={(e) => setSelectedUser(e.target.value)}
-                    className="w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
-                  >
-                    <option value="all">All Users</option>
-                    {uniqueUsers.map(user => (
-                      user.id !== 0 && (
-                        <option key={user.id} value={user.id}>{user.name}</option>
-                      )
-                    ))}
-                  </select>
+                    onChange={setSelectedUser}
+                    className="w-full text-sm sm:text-base h-10 px-3" // Sesuaikan kelas
+                  />
                 </div>
 
                 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Time Range</label>
-                  <select
+                  <Select
+                    options={timeRangeOptions}
                     value={selectedTimeRange}
-                    onChange={(e) => setSelectedTimeRange(e.target.value)}
-                    className="w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
-                  >
-                    <option value="all">All Time</option>
-                    <option value="24h">Last 24 Hours</option>
-                    <option value="7d">Last 7 Days</option>
-                    <option value="30d">Last 30 Days</option>
-                  </select>
+                    onChange={setSelectedTimeRange}
+                    className="w-full text-sm sm:text-base h-10 px-3" // Sesuaikan kelas
+                  />
                 </div>
               </div>
             </div>
@@ -591,11 +600,7 @@ const LoggingActivity = () => {
                                 <div className={`p-2 border-b rounded-tr-lg rounded-tl-lg ${activity.status === "success"
                                   ? "border-green-200 dark:border-green-700 dark:bg-gray-900 bg-green-100"
                                   : "border-red-200 dark:border-red-700 dark:bg-gray-900 bg-red-100"}`}>
-                                  <h4 className={`text-xs font-semibold ${activity.status === "success"
-                                    ? "text-emerald-900 dark:text-green-700"
-                                    : "text-red-900 dark:text-red-700"}`}>
-                                    Deleted Data
-                                  </h4>
+                                  <h4 className="text-xs font-semibold text-red-900 dark:text-red-700">Deleted Data</h4>
                                 </div>
                                 <div className="p-2 bg-white dark:bg-gray-900 rounded-bl-lg rounded-br-lg">
                                   <pre className={`text-xs whitespace-pre-wrap break-words max-h-32 overflow-y-auto ${activity.status === "success"

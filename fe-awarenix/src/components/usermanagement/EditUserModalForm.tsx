@@ -4,6 +4,7 @@ import { useUserSession } from "../context/UserSessionContext";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Select from "../form/Select";
+import { EyeCloseIcon, EyeIcon } from "../../icons";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
 
 export type EditUserModalFormRef = {
@@ -68,6 +69,7 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
   const { setUser } = useUserSession();
   const [errors, setErrors] = useState<Partial<Record<keyof UserFormData, string>>>({});
   const [roleOptions, setRoleOptions] = useState<{ value: string; label: string }[]>([]);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Fetch Roles
   const fetchRoles = async () => {
@@ -358,16 +360,26 @@ const EditUserModalForm = forwardRef<EditUserModalFormRef, EditUserModalFormProp
           </div>
 
           {/* Password Input */}
-          <div>
+          <div className="relative">
             <Label>Password</Label>
             <Input
               type="password"
-              placeholder="Leave blank if you do not want to change the password."
+              placeholder="Leave blank for no changes"
               value={formData.password}
               onChange={(e) => handleInputChange('password', e.target.value)}
               disabled={isSubmitting}
               className={errors.password ? 'border-red-500' : ''}
             />
+            <span
+              onClick={() => setShowPassword((s) => !s)}
+              className="absolute z-30 right-4 top-1/2 -translate-y-1/2 cursor-pointer pt-[31px]"
+            >
+              {showPassword ? (
+                <EyeIcon className="size-5 fill-gray-500" />
+              ) : (
+                <EyeCloseIcon className="size-5 fill-gray-500" />
+              )}
+            </span>
             {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
           </div>
         </div>

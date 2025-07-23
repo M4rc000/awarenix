@@ -3,6 +3,7 @@ import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import Swal from "../utils/AlertContainer";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
+import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Select from "../form/Select";
 
 type User = {
@@ -59,6 +60,7 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roleOptions, setRoleOptions] = useState<{ value: string; label: string }[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user") || "{}");
@@ -98,7 +100,6 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
         setRoleOptions(options);
       } else {
         console.error('Failed to fetch roles:', result.Message);
-        // Fallback options jika API gagal
         setRoleOptions([
           { value: "1", label: "Super Admin"},
           { value: "2", label: "Admin"},
@@ -107,7 +108,6 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
       }
     } catch (error) {
       console.error('Error fetching roles:', error);
-      // Fallback options jika ada error jaringan atau lainnya
       setRoleOptions([
         { value: "1", label: "Super Admin"},
         { value: "2", label: "Admin"},
@@ -380,17 +380,27 @@ const NewUserModalForm = forwardRef<NewUserModalFormRef, NewUserModalFormProps>(
               </div>
             )}
             
-            <div>
+            <div className="relative">
               <Label required>Password</Label>
               <Input
                 placeholder="Password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={user.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
                 disabled={isSubmitting}
                 className={errors.password ? 'border-red-500' : ''}
                 required
               />
+              <span
+                onClick={() => setShowPassword((s) => !s)}
+                className="absolute z-30 right-4 top-1/2 -translate-y-1/2 cursor-pointer pt-[31px]"
+              >
+                {showPassword ? (
+                  <EyeIcon className="size-5 fill-gray-500" />
+                ) : (
+                  <EyeCloseIcon className="size-5 fill-gray-500" />
+                )}
+              </span>
               {errors.password && (
                 <p className="text-red-500 text-sm mt-1">{errors.password}</p>
               )}

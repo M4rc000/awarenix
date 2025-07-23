@@ -44,6 +44,7 @@ type CreateSendingProfileRequest struct {
 	InterfaceType string        `json:"interfaceType"`
 	SmtpFrom      string        `json:"smtpFrom" binding:"required"`
 	Host          string        `json:"host" binding:"required"`
+	Port          int           `json:"port"`
 	Username      string        `json:"username" binding:"required"`
 	Password      string        `json:"password" binding:"required"`
 	EmailHeaders  []EmailHeader `json:"emailHeaders"`
@@ -67,10 +68,11 @@ type SendTestEmailRequest struct {
 		ID            uint          `json:"id"`
 		Name          string        `json:"name" binding:"required"`
 		InterfaceType string        `json:"interfaceType" binding:"required"`
+		Port          int           `json:"port"`
 		SmtpFrom      string        `json:"smtpFrom" binding:"required,email"`
-		Username      string        `json:"username"` // Optional, tergantung interfaceType
-		Password      string        `json:"password"` // Optional
-		Host          string        `json:"host"`     // Optional, tergantung interfaceType
+		Username      string        `json:"username"`
+		Password      string        `json:"password"`
+		Host          string        `json:"host"`
 		EmailHeaders  []EmailHeader `json:"emailHeaders"`
 	} `json:"sendingProfile" binding:"required"`
 	Recipient TestRecipient `json:"recipient" binding:"required"`

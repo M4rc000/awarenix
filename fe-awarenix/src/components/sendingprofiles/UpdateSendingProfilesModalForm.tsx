@@ -12,8 +12,9 @@ import { FaRegTrashAlt } from "react-icons/fa";
 import Swal from "../utils/AlertContainer";
 import { GrFormPrevious } from "react-icons/gr";
 import { MdOutlineNavigateNext } from "react-icons/md";
-import LabelWithTooltip from "../ui/tooltip/Tooltip"; // Tetap gunakan jika tooltip memang diperlukan
-import Select from "../form/Select"; // Import Select component
+import LabelWithTooltip from "../ui/tooltip/Tooltip";
+import Select from "../form/Select";
+import { EyeCloseIcon, EyeIcon } from "../../icons";
 import SendTestEmailModal from "./SendTestEmailModal";
 
 // Definisi interface untuk TestRecipient (sesuai dengan yang sudah ada)
@@ -32,13 +33,14 @@ type SendingProfile = {
   username: string;
   password: string;
   host: string;
+  port: string;
   createdAt: string;
   createdBy: number;
   createdByName: string;
   updatedAt: string;
   updatedBy: number;
   updatedByName: string;
-  EmailHeaders: string; // Ini akan berupa JSON string dari array header
+  EmailHeaders: string;
 };
 
 // Interface untuk setiap Email Header dalam array
@@ -46,14 +48,14 @@ type EmailHeader = { header: string; value: string };
 
 // Interface untuk ref yang diekspos ke parent
 export type UpdateSendingProfileModalFormRef = {
-  submitSendingProfile: () => Promise<boolean>; // Mengembalikan boolean untuk indikasi sukses/gagal
-  sendingProfile: SendingProfile | null; // Mengembalikan data sending profile saat ini
+  submitSendingProfile: () => Promise<boolean>; 
+  sendingProfile: SendingProfile | null; 
 };
 
 // Interface props untuk komponen ini
 type UpdateSendingProfilesModalFormProps = {
   onSuccess?: () => void;
-  sendingProfile: SendingProfile; // Prop untuk data yang akan diupdate
+  sendingProfile: SendingProfile; 
 };
 
 const UpdateSendingProfileModalForm = forwardRef<
@@ -68,6 +70,7 @@ const UpdateSendingProfileModalForm = forwardRef<
   const [smtpFrom, setSmtpFrom] = useState(initialSendingProfile?.smtpFrom || "");
   const [host, setHost] = useState(initialSendingProfile?.host || "");
   const [username, setUsername] = useState(initialSendingProfile?.username || "");
+  const [port, setPort] = useState(initialSendingProfile?.port || "");
   // Password diinisialisasi sebagai string kosong agar backend bisa mendeteksi "tidak ada perubahan"
   const [password, setPassword] = useState("");
   // const [senderAddress, setSenderAddress] = useState(initialSendingProfile?.senderAddress || ""); // Dihapus
@@ -87,7 +90,9 @@ const UpdateSendingProfileModalForm = forwardRef<
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [errors, setErrors] = useState<Partial<SendingProfile>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false); // State ini akan digunakan
+  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false);
+  
 
   // State untuk modal email tes
   const [showTestEmailModal, setShowTestEmailModal] = useState(false);
@@ -102,6 +107,7 @@ const UpdateSendingProfileModalForm = forwardRef<
     setSmtpFrom(initialSendingProfile?.smtpFrom || "");
     setHost(initialSendingProfile?.host || "");
     setUsername(initialSendingProfile?.username || "");
+    setPort(initialSendingProfile?.port || "");
     // Password tidak di-set di sini agar field tetap kosong untuk "tidak ada perubahan"
     setPassword("");
     // setSenderAddress(initialSendingProfile?.senderAddress || ""); // Dihapus
@@ -174,6 +180,9 @@ const UpdateSendingProfileModalForm = forwardRef<
     if (!username.trim()) {
       newErrors.username = "Username is required";
     }
+    if (!port) {
+      newErrors.port = "Port is required";
+    }
     // Password tidak lagi wajib diisi untuk update, backend akan mengambil yang lama jika kosong
     // if (!password.trim()) {
     //   newErrors.password = "Password is required";
@@ -221,14 +230,15 @@ const UpdateSendingProfileModalForm = forwardRef<
     // KIRIM EMAILHEADERS SEBAGAI ARRAY OBJEK, BUKAN STRING JSON
     const dataToSend = {
       sendingProfile: {
-        id: initialSendingProfile?.id || 0, // Menggunakan optional chaining dan fallback 0
+        id: initialSendingProfile?.id || 0, 
         name: profileName,
         interfaceType: interfaceType,
         smtpFrom: smtpFrom,
         host: host,
+        prt: port,
         username: username,
-        password: password, // Kirim password yang ada di state (kosong jika tidak diubah)
-        EmailHeaders: emailHeaders, // <--- Perubahan di sini: kirim array langsung
+        password: password, 
+        EmailHeaders: emailHeaders, 
       },
       recipient: recipient,
       // Tambahkan EmailBody karena backend memerlukannya
@@ -307,14 +317,15 @@ const UpdateSendingProfileModalForm = forwardRef<
         interfaceType: interfaceType,
         smtpFrom: smtpFrom,
         host: host,
+        port: port,
         username: username,
-        password: password, // Kirim password yang ada di state (kosong jika tidak diubah)
-        EmailHeaders: emailHeadersString, // Kirim sebagai string (sesuai dengan model backend untuk update utama)
+        password: password, 
+        EmailHeaders: emailHeadersString, 
         updatedBy: updatedBy,
       };
 
       try {
-        const response = await fetch(`${API_URL}/sending-profile/${initialSendingProfile?.id || 0}`, { // Menggunakan optional chaining dan fallback 0
+        const response = await fetch(`${API_URL}/sending-profile/${initialSendingProfile?.id || 0}`, { 
           method: "PUT",
           credentials: 'include',
           headers: {
@@ -327,13 +338,13 @@ const UpdateSendingProfileModalForm = forwardRef<
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error("API Error Response:", errorData); // Log error dari API
+          console.error("API Error Response:", errorData); 
           Swal.fire({
             icon: 'error',
             text: errorData.message || 'Failed to update sending profile',
             duration: 3000,
           });
-          return false; // Mengembalikan false jika request gagal
+          return false; 
         }
 
         Swal.fire({
@@ -342,7 +353,7 @@ const UpdateSendingProfileModalForm = forwardRef<
           duration: 3000,
         });
         if (onSuccess) onSuccess();
-        return true; // Mengembalikan true jika sukses
+        return true; 
       } catch (error: unknown) {
         console.error("An error occurred when updating sending profile: ", error);
         Swal.fire({
@@ -355,7 +366,7 @@ const UpdateSendingProfileModalForm = forwardRef<
         setIsSubmitting(false);
       }
     },
-    sendingProfile: { // Mengembalikan data form saat ini
+    sendingProfile: { 
       id: initialSendingProfile?.id || 0, // Menggunakan optional chaining dan fallback 0
       name: profileName,
       interfaceType: interfaceType,
@@ -363,6 +374,7 @@ const UpdateSendingProfileModalForm = forwardRef<
       username: username,
       password: password, // Mengembalikan password yang ada di state (bisa kosong)
       host: host,
+      port: port,
       EmailHeaders: JSON.stringify(emailHeaders), // Kembalikan sebagai string
       createdAt: initialSendingProfile?.createdAt || "",
       createdBy: initialSendingProfile?.createdBy || 0,
@@ -375,118 +387,152 @@ const UpdateSendingProfileModalForm = forwardRef<
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto bg-white dark:bg-gray-900">
-      {/* Profile Name */}
-      <div>
-        <LabelWithTooltip required>Profile Name</LabelWithTooltip>
-        <Input
-          placeholder="Team A"
-          type="text"
-          className={`w-full text-sm sm:text-base h-10 px-3 ${errors.name ? 'border-red-500' : ''}`}
-          value={profileName}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setProfileName(e.target.value);
-            setErrors(prev => ({ ...prev, name: undefined })); // Clear error on change
-          }}
-          disabled={isSubmitting} 
-        />
-        {errors.name && (
-          <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-        )}
+      <div className="grid grid-cols-3 gap-3">
+        {/* Profile Name */}
+        <div>
+          <LabelWithTooltip required>Profile Name</LabelWithTooltip>
+          <Input
+            placeholder="Team A"
+            type="text"
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.name ? 'border-red-500' : ''}`}
+            value={profileName}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setProfileName(e.target.value);
+              setErrors(prev => ({ ...prev, name: undefined })); // Clear error on change
+            }}
+            disabled={isSubmitting} 
+          />
+          {errors.name && (
+            <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+          )}
+        </div>
+
+        {/* Interface Type */}
+        <div>
+          <LabelWithTooltip required>Interface Type</LabelWithTooltip>
+          <Select
+            placeholder="Select Interface Type"
+            options={interfaceTypeOptions}
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.interfaceType ? 'border-red-500' : ''}`}
+            value={interfaceType}
+            onChange={(val: string) => {
+              setInterfaceType(val);
+              setErrors(prev => ({ ...prev, interfaceType: undefined })); // Clear error on change
+            }}
+          />
+          {errors.interfaceType && (
+            <p className="text-red-500 text-sm mt-1">{errors.interfaceType}</p>
+          )}
+        </div>
+
+        {/* Port */}
+        <div>
+          <LabelWithTooltip required>Port</LabelWithTooltip>
+          <Input
+            placeholder="Default port is 587"
+            type="text"
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.port ? 'border-red-500' : ''}`}
+            value={port}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setPort(e.target.value);
+              setErrors(prev => ({ ...prev, port: undefined }));
+            }}
+            disabled={isSubmitting} 
+          />
+          {errors.port && (
+            <p className="text-red-500 text-sm mt-1">{errors.port}</p>
+          )}
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-3">
+        {/* SMTP FROM */}
+        <div>
+          <LabelWithTooltip required>SMTP From</LabelWithTooltip>
+          <Input
+            placeholder="example@gmail.com"
+            type="text"
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.smtpFrom ? 'border-red-500' : ''}`}
+            value={smtpFrom}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setSmtpFrom(e.target.value);
+              setErrors(prev => ({ ...prev, smtpFrom: undefined })); // Clear error on change
+            }}
+            disabled={isSubmitting} 
+          />
+          {errors.smtpFrom && (
+            <p className="text-red-500 text-sm mt-1">{errors.smtpFrom}</p>
+          )}
+        </div>
+
+        {/* Host */}
+        <div>
+          <LabelWithTooltip required>Host</LabelWithTooltip>
+          <Input
+            placeholder="smtp.example.com:587"
+            type="text"
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.host ? 'border-red-500' : ''}`}
+            value={host}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setHost(e.target.value);
+              setErrors(prev => ({ ...prev, host: undefined })); // Clear error on change
+            }}
+            disabled={isSubmitting} 
+          />
+          {errors.host && (
+            <p className="text-red-500 text-sm mt-1">{errors.host}</p>
+          )}
+        </div>
       </div>
 
-      {/* Interface Type */}
-      <div>
-        <LabelWithTooltip required>Interface Type</LabelWithTooltip>
-        <Select
-          placeholder="Select Interface Type"
-          options={interfaceTypeOptions}
-          className={`w-full text-sm sm:text-base h-10 px-3 ${errors.interfaceType ? 'border-red-500' : ''}`}
-          value={interfaceType}
-          onChange={(val: string) => {
-            setInterfaceType(val);
-            setErrors(prev => ({ ...prev, interfaceType: undefined })); // Clear error on change
-          }}
-        />
-        {errors.interfaceType && (
-          <p className="text-red-500 text-sm mt-1">{errors.interfaceType}</p>
-        )}
-      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {/* Username */}
+        <div>
+          <LabelWithTooltip required>Username</LabelWithTooltip>
+          <Input
+            placeholder="username"
+            type="text"
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.username ? 'border-red-500' : ''}`}
+            value={username}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setUsername(e.target.value);
+              setErrors(prev => ({ ...prev, username: undefined })); // Clear error on change
+            }}
+            disabled={isSubmitting} 
+          />
+          {errors.username && (
+            <p className="text-red-500 text-sm mt-1">{errors.username}</p>
+          )}
+        </div>
 
-      {/* SMTP FROM */}
-      <div>
-        <LabelWithTooltip required>SMTP From</LabelWithTooltip>
-        <Input
-          placeholder="example@gmail.com"
-          type="text"
-          className={`w-full text-sm sm:text-base h-10 px-3 ${errors.smtpFrom ? 'border-red-500' : ''}`}
-          value={smtpFrom}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setSmtpFrom(e.target.value);
-            setErrors(prev => ({ ...prev, smtpFrom: undefined })); // Clear error on change
-          }}
-          disabled={isSubmitting} 
-        />
-        {errors.smtpFrom && (
-          <p className="text-red-500 text-sm mt-1">{errors.smtpFrom}</p>
-        )}
-      </div>
-
-      {/* Host */}
-      <div>
-        <LabelWithTooltip required>Host</LabelWithTooltip>
-        <Input
-          placeholder="smtp.example.com:587"
-          type="text"
-          className={`w-full text-sm sm:text-base h-10 px-3 ${errors.host ? 'border-red-500' : ''}`}
-          value={host}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setHost(e.target.value);
-            setErrors(prev => ({ ...prev, host: undefined })); // Clear error on change
-          }}
-          disabled={isSubmitting} 
-        />
-        {errors.host && (
-          <p className="text-red-500 text-sm mt-1">{errors.host}</p>
-        )}
-      </div>
-
-      {/* Username */}
-      <div>
-        <LabelWithTooltip required>Username</LabelWithTooltip>
-        <Input
-          placeholder="username"
-          type="text"
-          className={`w-full text-sm sm:text-base h-10 px-3 ${errors.username ? 'border-red-500' : ''}`}
-          value={username}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setUsername(e.target.value);
-            setErrors(prev => ({ ...prev, username: undefined })); // Clear error on change
-          }}
-          disabled={isSubmitting} 
-        />
-        {errors.username && (
-          <p className="text-red-500 text-sm mt-1">{errors.username}</p>
-        )}
-      </div>
-
-      {/* Password */}
-      <div>
-        <LabelWithTooltip>Password</LabelWithTooltip> {/* Hapus 'required' */}
-        <Input
-          placeholder="Leave blank for no changes" // Placeholder baru
-          type="password"
-          className={`w-full text-sm sm:text-base h-10 px-3 ${errors.password ? 'border-red-500' : ''}`}
-          value={password}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setPassword(e.target.value);
-            setErrors(prev => ({ ...prev, password: undefined })); // Clear error on change
-          }}
-          disabled={isSubmitting} 
-          // Hapus prop 'required'
-        />
-        {errors.password && (
-          <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-        )}
+        {/* Password */}
+        <div className="relative">
+          <LabelWithTooltip>Password</LabelWithTooltip> 
+          <Input
+            placeholder="Leave blank for no changes" 
+            type={showPassword ? 'text' : 'password'}
+            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.password ? 'border-red-500' : ''}`}
+            value={password}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setPassword(e.target.value);
+              setErrors(prev => ({ ...prev, password: undefined })); 
+            }}
+            disabled={isSubmitting} 
+          />
+          <span
+            onClick={() => setShowPassword((s) => !s)}
+            className="absolute z-30 right-4 top-1/2 -translate-y-1/2 cursor-pointer pt-[31px]"
+          >
+            {showPassword ? (
+              <EyeIcon className="size-5 fill-gray-500" />
+            ) : (
+              <EyeCloseIcon className="size-5 fill-gray-500" />
+            )}
+          </span>
+          {errors.password && (
+            <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+          )}
+        </div>
       </div>
 
       {/* Email Headers Section */}

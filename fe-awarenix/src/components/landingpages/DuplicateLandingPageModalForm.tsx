@@ -148,8 +148,8 @@ const DuplicateLandingPageModalForm = forwardRef<DuplicateLandingPageModalFormRe
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        console.error("Error duplicating landing page:", error); // Ubah pesan
-        console.error("Error duplicating landing page:", errorMessage); // Ubah pesan
+        console.error("Error duplicating landing page:", error); 
+        console.error("Error duplicating landing page:", errorMessage); 
         return null;
       } finally {
         setIsSubmitting(false);

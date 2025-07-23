@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import { EyeCloseIcon, EyeIcon } from "../../icons";
 import { FaRegTrashAlt } from "react-icons/fa";
 import Swal from "../utils/AlertContainer";
 import { GrFormPrevious } from "react-icons/gr";
@@ -27,6 +28,7 @@ type SendingProfile = {
   interfaceType: string;
   smtpFrom: string;
   host: string;
+  port: number;
   username: string;
   password: string;
 }
@@ -49,12 +51,14 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
 
     // State untuk input form
     const [profileName, setProfileName] = useState("");
-    const [interfaceType, setInterfaceType] = useState("");
+    const [interfaceType, setInterfaceType] = useState("SMTP");
     const [smtpFrom, setSmtpFrom] = useState("");
+    const [port, setPort] = useState("");
     const [host, setHost] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-
+    const [showPassword, setShowPassword] = useState(false);
+  
     const [emailHeaders, setEmailHeaders] = useState<EmailHeader[]>([]);
     const [newHeader, setNewHeader] = useState("");
     const [newValue, setNewValue] = useState("");
@@ -204,6 +208,7 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
           interfaceType: interfaceType,
           smtpFrom: smtpFrom,
           host: host,
+          port: parseInt(port),
           username: username,
           password: password,
           emailHeaders: emailHeaders,
@@ -239,7 +244,7 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
           text: 'The test email was sent successfully!',
           duration: 3000,
         });
-        handleCloseTestEmailModal(); // Tutup modal setelah berhasil
+        handleCloseTestEmailModal(); 
       } catch (error: unknown) {
         console.error("An error occurred while sending the test email.: ", error);
         Swal.fire({
@@ -314,106 +319,136 @@ const NewSendingProfileModalForm = forwardRef<NewSendingProfileModalFormRef>(
 
     return (
       <div className="space-y-6 max-w-4xl mx-auto bg-white dark:bg-gray-900">
-        {/* Profile Name */}
-        <div>
-          <LabelWithTooltip required>Profile Name</LabelWithTooltip>
-          <Input
-            placeholder="Team A"
-            type="text"
-            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.name ? 'border-red-500' : ''}`}
-            value={profileName}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setProfileName(e.target.value)
-            }
-          />
-          {errors.name && (
-            <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-          )}
+        <div className="grid grid-cols-3 gap-3">
+          {/* Profile Name */}
+          <div>
+            <LabelWithTooltip required>Profile Name</LabelWithTooltip>
+            <Input
+              placeholder="Team A"
+              type="text"
+              className={`w-full text-sm sm:text-base h-10 px-3 ${errors.name ? 'border-red-500' : ''}`}
+              value={profileName}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setProfileName(e.target.value)
+              }
+            />
+            {errors.name && (
+              <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+            )}
+          </div>
+
+          {/* Interface Type */}
+          <div>
+            <LabelWithTooltip required>Interface Type</LabelWithTooltip>
+            <Input
+              placeholder="SMTP"
+              type="text"
+              className={`w-full text-sm sm:text-base h-10 px-3 ${errors.interfaceType ? 'border-red-500' : ''}`}
+              value={interfaceType}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setInterfaceType(e.target.value)
+              }
+            />
+            {errors.interfaceType && (
+              <p className="text-red-500 text-sm mt-1">{errors.interfaceType}</p>
+            )}
+          </div>
+          
+          {/* Port */}
+          <div>
+            <LabelWithTooltip required>Port</LabelWithTooltip>
+            <Input
+              placeholder="Default port is 587"
+              type="text"
+              className={`w-full text-sm sm:text-base h-10 px-3`}
+              value={port}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setPort(e.target.value)
+              }
+            />
+          </div>
         </div>
 
-        {/* Interface Type */}
-        <div>
-          <LabelWithTooltip required>Interface Type</LabelWithTooltip>
-          <Input
-            placeholder="SMTP"
-            type="text"
-            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.interfaceType ? 'border-red-500' : ''}`}
-            value={interfaceType}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setInterfaceType(e.target.value)
-            }
-          />
-          {errors.interfaceType && (
-            <p className="text-red-500 text-sm mt-1">{errors.interfaceType}</p>
-          )}
+        <div className="grid grid-cols-2 gap-3">
+          {/* SMTP FROM */}
+          <div>
+            <LabelWithTooltip required>SMTP From</LabelWithTooltip>
+            <Input
+              placeholder="example@gmail.com"
+              type="text"
+              className={`w-full text-sm sm:text-base h-10 px-3 ${errors.smtpFrom ? 'border-red-500' : ''}`}
+              value={smtpFrom}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSmtpFrom(e.target.value)
+              }
+            />
+            {errors.smtpFrom && (
+              <p className="text-red-500 text-sm mt-1">{errors.smtpFrom}</p>
+            )}
+          </div>
+
+          {/* Host */}
+          <div>
+            <LabelWithTooltip required>Host</LabelWithTooltip>
+            <Input
+              placeholder="smtp.example.com"
+              type="text"
+              className={`w-full text-sm sm:text-base h-10 px-3 ${errors.host ? 'border-red-500' : ''}`}
+              value={host}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setHost(e.target.value)
+              }
+            />
+            {errors.host && (
+              <p className="text-red-500 text-sm mt-1">{errors.host}</p>
+            )}
+          </div>
         </div>
 
-        {/* SMTP FROM */}
-        <div>
-          <LabelWithTooltip required>SMTP From</LabelWithTooltip>
-          <Input
-            placeholder="example@gmail.com"
-            type="text"
-            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.smtpFrom ? 'border-red-500' : ''}`}
-            value={smtpFrom}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setSmtpFrom(e.target.value)
-            }
-          />
-          {errors.smtpFrom && (
-            <p className="text-red-500 text-sm mt-1">{errors.smtpFrom}</p>
-          )}
-        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {/* Username */}
+          <div>
+            <LabelWithTooltip required>Username</LabelWithTooltip>
+            <Input
+              placeholder="username"
+              type="text"
+              className={`w-full text-sm sm:text-base h-10 px-3 ${errors.username ? 'border-red-500' : ''}`}
+              value={username}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setUsername(e.target.value)
+              }
+            />
+            {errors.username && (
+              <p className="text-red-500 text-sm mt-1">{errors.username}</p>
+            )}
+          </div>
 
-        {/* Host */}
-        <div>
-          <LabelWithTooltip required>Host</LabelWithTooltip>
-          <Input
-            placeholder="smtp.example.com"
-            type="text"
-            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.host ? 'border-red-500' : ''}`}
-            value={host}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setHost(e.target.value)
-            }
-          />
-          {errors.host && (
-            <p className="text-red-500 text-sm mt-1">{errors.host}</p>
-          )}
-        </div>
-
-        {/* Username */}
-        <div>
-          <LabelWithTooltip required>Username</LabelWithTooltip>
-          <Input
-            placeholder="username"
-            type="text"
-            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.username ? 'border-red-500' : ''}`}
-            value={username}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setUsername(e.target.value)
-            }
-          />
-          {errors.username && (
-            <p className="text-red-500 text-sm mt-1">{errors.username}</p>
-          )}
-        </div>
-
-        {/* Password */}
-        <div>
-          <LabelWithTooltip required>Password</LabelWithTooltip>
-          <Input
-            placeholder="******"
-            type="password"
-            className={`w-full text-sm sm:text-base h-10 px-3 ${errors.password ? 'border-red-500' : ''}`}
-            value={password}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setPassword(e.target.value)
-            }
-          />
-          {errors.password && (
-            <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-          )}
+          {/* Password */}
+          <div className="relative">
+            <LabelWithTooltip required>Password</LabelWithTooltip>
+            <Input
+              placeholder="******"
+              type={showPassword ? "text" : "password"}
+              className={`w-full text-sm sm:text-base h-10 px-3 ${errors.password ? 'border-red-500' : ''}`}
+              value={password}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setPassword(e.target.value)
+              }
+            />
+            <span
+              onClick={() => setShowPassword((s) => !s)}
+              className="absolute z-30 right-4 top-1/2 -translate-y-1/2 cursor-pointer pt-[31px]"
+            >
+              {showPassword ? (
+                <EyeIcon className="size-5 fill-gray-500" />
+              ) : (
+                <EyeCloseIcon className="size-5 fill-gray-500" />
+              )}
+            </span>
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+            )}
+          </div>
         </div>
 
         {/* Email Headers Section */}

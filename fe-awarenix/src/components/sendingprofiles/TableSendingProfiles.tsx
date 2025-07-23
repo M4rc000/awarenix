@@ -25,7 +25,9 @@ import { useSidebar } from "../../context/SidebarContext";
 import ShowSendingProfilesModal from './ShowSendingProfilesModal';
 import UpdateSendingProfilesModal from './UpdateSendingProfilesModal';
 import DeleteSendingProfilesModal from './DeleteSendingProfilesModal'
+import DuplicateSendingProfilesModal from './DuplicateSendingProfilesModal';
 import Swal from '../utils/AlertContainer';
+import { IoIosCopy } from 'react-icons/io';
 
 interface SendingProfile {
   id: number;
@@ -35,6 +37,7 @@ interface SendingProfile {
 	username     : string;
 	password     : string;
 	host         : string;
+	port         : string;
 	createdAt    : string;
 	createdBy    : number;
 	createdByName    : string;
@@ -55,10 +58,15 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
   const [sorting, setSorting] = useState<SortingState>([]);
   const deferredSearch = useDeferredValue(search);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [activeModal, setActiveModal] = useState<'detail' | 'edit' | 'delete' | null>(null);
+  const [activeModal, setActiveModal] = useState< 'duplicate' | 'detail' | 'edit' | 'delete' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<SendingProfile[]>([]);
   const [selectedSendingProfile, setSelectedSendingProfile] = useState<SendingProfile | null>(null);
+  
+  const onDuplicateSendingProfiles = (sendingProfile: SendingProfile) => {
+    setSelectedSendingProfile(sendingProfile);
+    setActiveModal('duplicate');
+  };
   
   const onShowSendingProfiles = (sendingProfile: SendingProfile) => {
     setSelectedSendingProfile(sendingProfile);
@@ -210,16 +218,31 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         accessorKey: 'actions',
         header: 'Action',
         cell: (row) => (
-          <div className="flex items-center justify-center space-x-2">
-            <Button size="xs" variant="info" onClick={() => onShowSendingProfiles(row.row.original)}>
-              <FaCircleInfo />
-            </Button>
-            <Button size="xs" variant="warning" onClick={() => onUpdateSendingProfiles(row.row.original)}>
-              <BiSolidEditAlt />
-            </Button>
-            <Button size="xs" variant="danger" onClick={() => onDeleteSendingProfiles(row.row.original)}>
-              <FaRegTrashAlt />
-            </Button>
+          <div className='pr-4 lg:pr-0'>
+            <div className="grid grid-cols-2 gap-8 lg:gap-4 p-1 space-x-2">
+                <div>
+                  <Button size="xs" variant="success" onClick={() => onDuplicateSendingProfiles(row.row.original)}>
+                    <IoIosCopy />
+                  </Button>
+                </div>
+                <div>
+                  <Button size="xs" variant="info" onClick={() => onShowSendingProfiles(row.row.original)}>
+                    <FaCircleInfo />
+                  </Button>
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-8 lg:gap-4 p-1 space-x-2">
+              <div>
+                <Button size="xs" variant="warning" onClick={() => onUpdateSendingProfiles(row.row.original)}>
+                  <BiSolidEditAlt />
+                </Button>
+              </div>
+              <div>
+                <Button size="xs" variant="danger" onClick={() => onDeleteSendingProfiles(row.row.original)}>
+                  <FaRegTrashAlt />
+                </Button>
+              </div>
+            </div>
           </div>
         ),
       },
@@ -488,6 +511,17 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
       </div>
 
 
+      {/* MODALS */}
+      <DuplicateSendingProfilesModal
+        isOpen={activeModal === 'duplicate'}
+        onSendingProfileUpdated={() => { fetchData(); }}
+        sendingProfile={selectedSendingProfile!}
+        onClose={() => {
+          setActiveModal(null);
+          setSelectedSendingProfile(null);
+        }}
+      />
+      
       {/* MODALS */}
       <ShowSendingProfilesModal
         isOpen={activeModal === 'detail'}

@@ -158,6 +158,18 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         header: 'Name',
       },
       {
+        accessorKey: 'isSystemTemplate',
+        header: 'Default?',
+        cell: ({ getValue }) =>{
+          const raw = getValue();
+          if(raw == 1){
+            return <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-400 text-green-800 dark:bg-green-700 dark:text-green-100 rounded-full">Yes</span>
+          } else {
+            return <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-200 text-gray-800 rounded-full">No</span>
+          }
+        }
+      },
+      {
         accessorKey: 'createdAt',
         header: 'Created At',
         cell: ({ getValue }) => {

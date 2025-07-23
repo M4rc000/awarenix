@@ -40,11 +40,13 @@ func RegisterSendingProfile(c *gin.Context) {
 		return
 	}
 
+	// port, _ := strconv.Atoi(input.Port)
 	sendingProfile := models.SendingProfiles{
 		Name:          input.Name,
 		InterfaceType: input.InterfaceType,
 		SmtpFrom:      input.SmtpFrom,
 		Host:          input.Host,
+		Port:          input.Port,
 		Username:      input.Username,
 		Password:      input.Password,
 		CreatedAt:     time.Now(),
@@ -417,12 +419,14 @@ func SendTestEmail(c *gin.Context) {
 		req.SendingProfile.Password = existingSendingProfiles.Password
 	}
 
+	// port, _ := strconv.Atoi(req.SendingProfile.Port)
 	sendingProfile := models.SendingProfiles{
 		Name:          req.SendingProfile.Name,
 		InterfaceType: req.SendingProfile.InterfaceType,
 		SmtpFrom:      req.SendingProfile.SmtpFrom,
 		Username:      req.SendingProfile.Username,
 		Password:      req.SendingProfile.Password,
+		Port:          req.SendingProfile.Port,
 		Host:          req.SendingProfile.Host,
 		EmailHeaders:  req.SendingProfile.EmailHeaders,
 	}
