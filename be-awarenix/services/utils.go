@@ -27,7 +27,11 @@ func HashPassword(password string) (string, error) {
 }
 
 // LogEventByRID mencatat event berbasis rid (string UUID)
-func LogEventByRID(c *gin.Context, rid string, eventType string) {
+func LogEventByRID(c *gin.Context, rid string, eventType string, campaignLanguage string) {
+	if campaignLanguage == "" {
+		campaignLanguage = "English"
+	}
+
 	// 1. Cari Recipient
 	var rec models.Recipient
 	if err := config.DB.
@@ -96,14 +100,15 @@ func LogEventByRID(c *gin.Context, rid string, eventType string) {
 		c.File("pixel.gif")
 	case string(models.Clicked):
 		target, _ := url.QueryUnescape(c.Query("url"))
-		c.Redirect(302, target)
+		c.Redirect(http.StatusFound, target) // Menggunakan http.StatusFound (302)
 	case string(models.Submitted):
-		c.Redirect(302, "http://localhost:5173/dashboard")
+		c.Redirect(http.StatusFound, "http://localhost:5173/dashboard") // Menggunakan http.StatusFound (302)
 	case string(models.Reported):
 		frontendDomain := "localhost:5173"
-		c.Redirect(302, fmt.Sprintf("http://%s/report-thanks", frontendDomain))
+		// Meneruskan parameter bahasa yang diterima ke URL frontend
+		c.Redirect(http.StatusFound, fmt.Sprintf("http://%s/report-thanks?lang=%s", frontendDomain, campaignLanguage)) // Menggunakan http.StatusFound (302)
 	default:
-		c.Status(204)
+		c.Status(http.StatusNoContent) // Menggunakan http.StatusNoContent (204)
 	}
 }
 

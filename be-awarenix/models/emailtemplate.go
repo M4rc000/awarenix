@@ -9,8 +9,8 @@ type EmailTemplate struct {
 	EnvelopeSender   string    `gorm:"type:varchar(50);not null" json:"envelopeSender"`
 	Subject          string    `gorm:"type:varchar(100);not null" json:"subject"`
 	Body             string    `gorm:"null;type=longtext" json:"bodyEmail"`
-	TrackerImage     int       `gorm:"type:tinyint(1)" json:"trackerImage"`
 	IsSystemTemplate int       `gorm:"type:tinyint(1);default:0" json:"isSystemTemplate"`
+	Language         string    `gorm:"type:varchar(20);default:indonesia" json:"language"`
 	CreatedAt        time.Time `gorm:"type:datetime;null" json:"createdAt"`
 	CreatedBy        int       `gorm:"type:tinyint(3);null" json:"createdBy"`
 	UpdatedAt        time.Time `gorm:"type:datetime;null" json:"updatedAt"`
@@ -34,21 +34,20 @@ type EmailTemplateInput struct {
 	EnvelopeSender   string    `gorm:"not null" json:"envelopeSender"`
 	Subject          string    `gorm:"not null" json:"subject"`
 	Body             string    `gorm:"null" json:"bodyEmail"`
-	TrackerImage     int       `gorm:"not null" json:"trackerImage"`
 	IsSystemTemplate int       `gorm:"null" json:"isSystemTemplate"`
+	Language         string    `gorm:"not null" json:"language"`
 	CreatedBy        int       `gorm:"null" json:"createdBy"`
 	CreatedAt        time.Time `gorm:"null" json:"createdAt"`
 }
 
 // UPDATE
-
 type EmailTemplateUpdate struct {
 	Name             string `json:"templateName"`
 	EnvelopSender    string `json:"envelopeSender"`
 	Subject          string `json:"subject"`
 	Body             string `json:"bodyEmail"`
-	TrackerImage     int    `json:"trackerImage"`
 	IsSystemTemplate int    `gorm:"null" json:"isSystemTemplate"`
+	Language         string `json:"language"`
 	UpdatedAt        string `json:"updatedAt"`
 	UpdatedBy        int8   `json:"updatedBy"`
 }

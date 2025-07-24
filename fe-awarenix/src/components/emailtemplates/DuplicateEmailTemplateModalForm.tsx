@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"; // Tambahkan useEffect, useCallback
+import { useState, useEffect, useCallback } from "react";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
@@ -15,8 +15,8 @@ type EmailTemplate = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
-  trackerImage: number;
   isSystemTemplate: number;
+  language: string; 
 }
 
 export type DuplicateEmailTemplateModalFormRef = {
@@ -33,16 +33,16 @@ type EmailTemplateData = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
-  trackerImage: number;
   isSystemTemplate: number;
+  language: string; 
 };
 
 const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFormRef, DuplicateEmailTemplateModalFormProps>(
   ({ emailTemplate, onSuccess }, ref) => {
-    // ⭐ State untuk menyimpan role pengguna yang sedang login
+    // State untuk menyimpan role pengguna yang sedang login
     const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
 
-    // ⭐ Ambil role pengguna saat komponen dimuat
+    // Ambil role pengguna saat komponen dimuat
     useEffect(() => {
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       const roleFromLocalStorage = userData?.role; 
@@ -53,30 +53,32 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
 
     // Inisialisasi formData
     const [formData, setFormData] = useState<EmailTemplateData>(() => {
-      // Jika emailTemplate tidak ada, atau role bukan admin, set isSystemTemplate ke 0
+      // isSystemTemplate diatur berdasarkan role atau default ke 0
       const initialIsSystemTemplate = currentUserRole === "1" ? (emailTemplate?.isSystemTemplate || 0) : 0;
       return {
         templateName: "Copy of " + (emailTemplate?.name || ""),
         envelopeSender: emailTemplate?.envelopeSender || "",
         subject: emailTemplate?.subject || "",
         bodyEmail: emailTemplate?.bodyEmail || "",
-        trackerImage: emailTemplate?.trackerImage || 0,
-        isSystemTemplate: initialIsSystemTemplate,
+        isSystemTemplate: initialIsSystemTemplate, // Diatur berdasarkan role
+        language: emailTemplate?.language || "Indonesia", // Inisialisasi language
       };
     });
 
-    // ⭐ Effect untuk menyesuaikan isSystemTemplate jika role berubah (misal saat komponen dimuat)
-    useEffect(() => {
-      // Jika currentUserRole sudah didapatkan dan bukan '1' (Super Admin)
-      // dan isSystemTemplate belum '0', paksa menjadi '0'.
-      // Ini juga berfungsi jika isSystemTemplate awal dari prop adalah '1'.
-      if (currentUserRole !== null && currentUserRole !== "1" && formData.isSystemTemplate !== 0) {
-        setFormData(prev => ({ ...prev, isSystemTemplate: 0 }));
-      }
-    }, [currentUserRole, formData.isSystemTemplate]); // Dependensi: currentUserRole dan isSystemTemplate
-
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Partial<EmailTemplateData>>({});
+
+    // Opsi untuk language type
+    const languageOptions = [
+      { value: "indonesia", label: "Indonesia" },
+      { value: "english", label: "English" },
+    ];
+
+    // Opsi untuk Email Template Status (untuk komponen Select)
+    const systemTemplateOptions = [
+      { value: "0", label: "Made In" },
+      { value: "1", label: "Default" },
+    ];
 
     // VALIDATION FUNCTION
     const validateForm = (): boolean => {
@@ -93,6 +95,9 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
       if (!formData.subject.trim()) {
         newErrors.subject = "Subject Email is required";
       }
+      if (!formData.language.trim()) { // Validasi untuk language
+        newErrors.language = "Language is required";
+      }
 
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
@@ -101,6 +106,19 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
     const submitEmailTemplate = async (): Promise<boolean> => {
       // CEK VALIDASI
       if (!validateForm()) {
+        let errorMessage = '';
+        for (const key in errors) {
+          if (errors[key as keyof EmailTemplateData]) {
+            errorMessage += `${errors[key as keyof EmailTemplateData]}\n`;
+          }
+        }
+        if (errorMessage) {
+          Swal.fire({
+            icon: 'error',
+            text: errorMessage.replace(/\n/g, '<br/>'),
+            duration: 3000,
+          });
+        }
         return false;
       }
 
@@ -117,8 +135,8 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
           envelopeSender: formData.envelopeSender,
           subject: formData.subject,
           bodyEmail: formData.bodyEmail || "",
-          isSystemTemplate: formData.isSystemTemplate,
-          trackerImage: formData.trackerImage,
+          isSystemTemplate: formData.isSystemTemplate, // Menggunakan nilai dari state formData
+          language: formData.language, 
           createdBy: createdby,
         };
 
@@ -148,8 +166,8 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
           envelopeSender: emailTemplate?.envelopeSender || "",
           subject: emailTemplate?.subject || "",
           bodyEmail: emailTemplate?.bodyEmail || "",
-          trackerImage: emailTemplate?.trackerImage || 0,
-          isSystemTemplate: currentUserRole == "1" ? (emailTemplate?.isSystemTemplate || 0) : 0, 
+          isSystemTemplate: currentUserRole === "1" ? (emailTemplate?.isSystemTemplate || 0) : 0, // Reset berdasarkan role
+          language: emailTemplate?.language || "Indonesia", // Reset language
         });
         setErrors({});
 
@@ -165,7 +183,10 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
             setErrors({ envelopeSender: error.message });
           } else if (error.message.toLowerCase().includes('subject')) {
             setErrors({ subject: error.message });
-          } else {
+          } else if (error.message.toLowerCase().includes('language')) { // Penanganan error untuk language
+            setErrors({ language: error.message });
+          }
+          else {
             setErrors({ templateName: error.message });
           }
         }
@@ -178,12 +199,6 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
 
     // Expose methods to parent component
     useImperativeHandle(ref, () => ({ submitEmailTemplate }));
-
-    // Gunakan useCallback untuk handleInputChange dan handleTrackerChange
-    const handleTrackerChange = useCallback((trackerValue: number) => {
-      setFormData(prev => ({ ...prev, trackerImage: trackerValue }));
-      setErrors(prev => ({ ...prev, trackerImage: undefined })); // Clear error if applicable
-    }, []);
 
     const handleInputChange = useCallback((field: keyof EmailTemplateData, value: string | number) => {
       if (isSubmitting) {
@@ -208,14 +223,8 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
           [field]: undefined
         }));
       }
-    }, [isSubmitting, errors]); // Dependensi errors ditambahkan agar callback tidak usang
+    }, [isSubmitting, errors]);
 
-
-    // Opsi untuk Email Template Status (untuk komponen Select)
-    const systemTemplateOptions = [
-      { value: "0", label: "Made In" },
-      { value: "1", label: "Default" },
-    ];
 
     const emailTabs = [
       {
@@ -229,10 +238,7 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
             templateName={formData.templateName}
             envelopeSender={formData.envelopeSender}
             subject={formData.subject}
-            onTrackerChange={handleTrackerChange}
-            initialTrackerValue={formData.trackerImage}
             initialContent={formData.bodyEmail}
-            // ⭐ Pastikan onBodyChange juga menggunakan useCallback atau langsung fungsi inline
             onBodyChange={useCallback((html: string) => handleInputChange("bodyEmail", html), [handleInputChange])}
           />,
         },
@@ -248,7 +254,8 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
             📧 Email Configuration
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          {/* Mengubah grid-cols menjadi dinamis berdasarkan currentUserRole */}
+          <div className={`grid grid-cols-1 gap-4 ${currentUserRole === "1" ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
             <div>
               <Label>Template Name</Label>
               <Input
@@ -294,8 +301,8 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
                 <p className="text-red-500 text-sm mt-1">{errors.subject}</p>
               )}
             </div>
-            {/* ⭐ Conditional rendering untuk Template Status */}
-            {currentUserRole == "1" ? ( 
+            {/* Template Status - Conditional rendering */}
+            {currentUserRole === "1" ? (
                 <div>
                     <LabelWithTooltip position="left" tooltip="Templates status means is default template by system or created from user">Template Status</LabelWithTooltip>
                     <Select
@@ -305,7 +312,7 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
                         placeholder={"Select Status"}
                         required={true}
                     />
-                    {errors.isSystemTemplate && ( // Perbaikan: Gunakan errors.isSystemTemplate
+                    {errors.isSystemTemplate && (
                         <p className="text-red-500 text-sm mt-1">{errors.isSystemTemplate}</p>
                     )}
                 </div>
@@ -322,6 +329,26 @@ const DuplicateEmailTemplateModalForm = forwardRef<DuplicateEmailTemplateModalFo
                     <input type="hidden" name="isSystemTemplate" value="0" />
                 </div>
             )}
+            {/* Select input for Language Type */}
+            <div>
+              <Label>Language Type</Label>
+              <Select
+                placeholder="Choose Language"
+                options={languageOptions}
+                value={formData.language}
+                onChange={(val: string) => {
+                  handleInputChange("language", val);
+                }}
+                className={`w-full text-sm sm:text-base h-11 px-3 ${
+                  errors.language ? "border-red-500" : ""
+                }`}
+              />
+              {errors.language && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.language}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 

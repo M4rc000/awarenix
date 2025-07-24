@@ -323,18 +323,18 @@ const AppSidebar: React.FC = () => {
           {isExpanded || isHovered || isMobileOpen ? (
             <>
               <img
-                className="dark:hidden"
+                className="dark:hidden -ml-3"
                 src='/images/logo/auth-logo-light.png'
                 alt="Logo"
-                width={70}
-                height={50}
+                width={90}
+                height={80}
               />
               <img
-                className="hidden dark:block"
+                className="hidden dark:block -ml-3"
                 src='/images/logo/auth-logo.png'
                 alt="Logo"
-                width={70}
-                height={50}
+                width={90}
+                height={80}
               />
             </>
           ) : (

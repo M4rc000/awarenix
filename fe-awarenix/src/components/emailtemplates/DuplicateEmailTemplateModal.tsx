@@ -14,10 +14,10 @@ type EmailTemplate = {
   id: number;
   name: string;
   envelopeSender: string;
+  language: string; 
   isSystemTemplate: number;
   subject: string;
   bodyEmail: string;
-  trackerImage: number;
 };
 
 export type DuplicateEmailTemplateModalProps = {

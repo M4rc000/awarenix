@@ -11,7 +11,7 @@ type EmailTemplate = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
-  trackerImage: number;
+  language: string;
   createdAt: string;
   createdBy: number;
   updatedAt: string;
@@ -28,7 +28,7 @@ type EmailTemplateData = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
-  trackerImage: number;
+  language: string;
   isSystemTemplate: number;
   createdAt: string;
   createdBy: number;
@@ -95,21 +95,21 @@ const ShowEmailTemplateDetailModalForm = ({ emailTemplate }: ShowEmailTemplateDe
             />
           </div>
           <div>
-            <Label>Tracker Image</Label>
-            <Input 
-              type="text"
-              required 
-              value={emailTemplate.trackerImage == 1 ? 'Active' : 'Not Active'} 
-              readonly
-              className={`w-full text-sm sm:text-base h-10 px-3`}
-            />
-          </div>
-          <div>
             <LabelWithTooltip position="left" tooltip="Templates status means is default template by system or created from user">Template Status</LabelWithTooltip>
             <Input 
               type="text"
               required 
               value={emailTemplate.isSystemTemplate == 1 ? 'Default' : 'Made in'} 
+              readonly
+              className={`w-full text-sm sm:text-base h-10 px-3`}
+            />
+          </div>
+          <div>
+            <LabelWithTooltip position="left" tooltip="Language Templates">Template Language</LabelWithTooltip>
+            <Input 
+              type="text"
+              required 
+              value={emailTemplate.language} 
               readonly
               className={`w-full text-sm sm:text-base h-10 px-3`}
             />

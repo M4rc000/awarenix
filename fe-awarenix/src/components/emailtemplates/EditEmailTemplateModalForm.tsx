@@ -1,12 +1,12 @@
-import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
 import { LuLayoutTemplate } from "react-icons/lu";
 import EmailBodyEditorTemplate from "./EmailBodyEditorTemplate";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
-import Swal from "../utils/AlertContainer"; // Pastikan Swal diimpor
-import Select from "../form/Select"; // Import komponen Select kustom Anda
+import Swal from "../utils/AlertContainer";
+import Select from "../form/Select";
 
 type EmailTemplate = {
   id: number;
@@ -14,8 +14,8 @@ type EmailTemplate = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
-  trackerImage: number;
   isSystemTemplate: number;
+  language: string; // Menambahkan bidang language
 };
 
 export type EditEmailTemplateModalFormRef = {
@@ -32,34 +32,21 @@ type EmailTemplateData = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
-  trackerImage: number;
   isSystemTemplate: number;
+  language: string; 
 };
 
 const EditEmailTemplateModalForm = forwardRef<
   EditEmailTemplateModalFormRef,
   EditEmailTemplateModalFormProps
 >(({ emailTemplate, onSuccess }, ref) => {
-  // Pastikan emailTemplate ada sebelum melanjutkan
-  const initialData: EmailTemplateData = {
-    templateName: emailTemplate?.name || "",
-    envelopeSender: emailTemplate?.envelopeSender || "",
-    subject: emailTemplate?.subject || "",
-    bodyEmail: emailTemplate?.bodyEmail || "",
-    trackerImage: emailTemplate?.trackerImage || 1, // Default ke 1 jika null/undefined
-    isSystemTemplate: emailTemplate?.isSystemTemplate || 0, // Default ke 0 jika null/undefined
-  };
-
-  const [formData, setFormData] = useState<EmailTemplateData>(initialData);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Partial<EmailTemplateData>>({});
   const [userRoleId, setUserRoleId] = useState<number | null>(null); // State untuk menyimpan role_id
 
   // Ambil role_id pengguna dari localStorage saat komponen dimuat
   useEffect(() => {
     try {
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
-      const roleId = userData?.role; // Sesuaikan jika propertinya adalah 'role_id'
+      const roleId = userData?.role;
       if (typeof roleId === "number") {
         setUserRoleId(roleId);
       } else {
@@ -69,7 +56,24 @@ const EditEmailTemplateModalForm = forwardRef<
       console.error("Failed to parse user data from localStorage", e);
       setUserRoleId(null);
     }
-  }, []); // [] agar hanya berjalan sekali saat mount
+  }, []);
+
+  // Inisialisasi formData
+  const [formData, setFormData] = useState<EmailTemplateData>(() => {
+    // Pastikan emailTemplate ada sebelum melanjutkan
+    const initialIsSystemTemplate = userRoleId === 1 ? (emailTemplate?.isSystemTemplate || 0) : 0;
+    return {
+      templateName: emailTemplate?.name || "",
+      envelopeSender: emailTemplate?.envelopeSender || "",
+      subject: emailTemplate?.subject || "",
+      bodyEmail: emailTemplate?.bodyEmail || "",
+      isSystemTemplate: initialIsSystemTemplate,
+      language: emailTemplate?.language || "Indonesia", // Inisialisasi language
+    };
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Partial<EmailTemplateData>>({});
 
   // Reset form data ketika emailTemplate berubah (misalnya, saat modal dibuka dengan data template lain)
   useEffect(() => {
@@ -79,18 +83,24 @@ const EditEmailTemplateModalForm = forwardRef<
         envelopeSender: emailTemplate.envelopeSender || "",
         subject: emailTemplate.subject || "",
         bodyEmail: emailTemplate.bodyEmail || "",
-        trackerImage: emailTemplate.trackerImage || 1,
         // Pastikan isSystemTemplate diinisialisasi dengan benar berdasarkan role
-        isSystemTemplate: userRoleId === 1 ? (emailTemplate.isSystemTemplate || 0) : 0, 
+        isSystemTemplate: userRoleId === 1 ? (emailTemplate.isSystemTemplate || 0) : 0,
+        language: emailTemplate.language || "Indonesia", // Reset language
       });
       setErrors({}); // Bersihkan error saat data baru dimuat
     }
   }, [emailTemplate, userRoleId]); // Tambahkan userRoleId sebagai dependency
 
-  // Opsi untuk komponen Select
+  // Opsi untuk komponen Select Template Status
   const templateStatusOptions = [
-    { value: "0", label: "Made In" }, // Label diubah sesuai permintaan di komentar kode lama
-    { value: "1", label: "Default" }, // Label diubah sesuai permintaan di komentar kode lama
+    { value: "0", label: "Made In" },
+    { value: "1", label: "Default" },
+  ];
+
+  // Opsi untuk komponen Select Language Type
+  const languageOptions = [
+    { value: "indonesia", label: "Indonesia" },
+    { value: "english", label: "English" },
   ];
 
   // VALIDATION FUNCTION
@@ -107,6 +117,9 @@ const EditEmailTemplateModalForm = forwardRef<
     }
     if (!formData.subject.trim()) {
       newErrors.subject = "Subject Email is required";
+    }
+    if (!formData.language.trim()) { 
+      newErrors.language = "Template Language is required";
     }
 
     setErrors(newErrors);
@@ -146,6 +159,9 @@ const EditEmailTemplateModalForm = forwardRef<
 
       // Pastikan isSystemTemplate selalu 0 jika userRoleId bukan 1
       const isSystemTemplateToSend = userRoleId === 1 ? formData.isSystemTemplate : 0;
+      // Pastikan language hanya dikirim jika userRoleId adalah 1, jika tidak, gunakan nilai yang ada atau default
+      const languageToSend = userRoleId === 1 ? formData.language : emailTemplate.language || "Indonesia";
+
 
       const response = await fetch(`${API_URL}/email-template/${emailTemplate.id}`, {
         method: "PUT",
@@ -158,8 +174,8 @@ const EditEmailTemplateModalForm = forwardRef<
           envelopeSender: formData.envelopeSender,
           subject: formData.subject,
           bodyEmail: formData.bodyEmail || "",
-          trackerImage: formData.trackerImage,
-          isSystemTemplate: isSystemTemplateToSend, // Kirim nilai yang disesuaikan
+          isSystemTemplate: isSystemTemplateToSend,
+          language: languageToSend, // Menggunakan nilai yang disesuaikan
           updatedBy: updatedBy,
         }),
       });
@@ -184,12 +200,6 @@ const EditEmailTemplateModalForm = forwardRef<
         throw new Error(errorMessage);
       }
 
-      Swal.fire({
-        text: "Email Template successfully updated!",
-        icon: "success",
-        duration: 2500,
-      });
-
       if (onSuccess) onSuccess();
 
       setErrors({});
@@ -211,9 +221,13 @@ const EditEmailTemplateModalForm = forwardRef<
           setErrors({
             subject: error.message,
           });
-        } else if (error.message.toLowerCase().includes("template name already exists")) { 
+        } else if (error.message.toLowerCase().includes("template name already exists")) {
           setErrors({
             templateName: error.message,
+          });
+        } else if (error.message.toLowerCase().includes("language")) {
+          setErrors({
+            language: error.message,
           });
         }
         else {
@@ -232,12 +246,8 @@ const EditEmailTemplateModalForm = forwardRef<
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({ submitEmailTemplate }));
 
-  const handleTrackerChange = (trackerValue: number) => {
-    handleInputChange("trackerImage", trackerValue);
-  };
-
   // Handle input changes - dengan safety check
-  const handleInputChange = (
+  const handleInputChange = useCallback((
     field: keyof EmailTemplateData,
     value: string | number
   ) => {
@@ -250,13 +260,17 @@ const EditEmailTemplateModalForm = forwardRef<
       if (field === "isSystemTemplate" && userRoleId !== 1) {
         return prev; // Jangan ubah jika bukan role 1
       }
-      // Konversi value ke number jika field adalah isSystemTemplate atau trackerImage
-      const finalValue = (field === "isSystemTemplate" || field === "trackerImage") 
-                         ? Number(value) 
-                         : value;
-      
+      // Untuk language, pastikan hanya role 1 yang bisa mengubahnya
+      if (field === "language" && userRoleId !== 1) {
+        return prev; // Jangan ubah jika bukan role 1
+      }
+
+      const finalValue = (field === "isSystemTemplate")
+                           ? Number(value)
+                           : value;
+
       if (prev[field] === finalValue) {
-        return prev; 
+        return prev;
       }
       return {
         ...prev,
@@ -270,7 +284,7 @@ const EditEmailTemplateModalForm = forwardRef<
         [field]: undefined,
       }));
     }
-  };
+  }, [isSubmitting, errors, userRoleId]);
 
   const emailTabs = [
     {
@@ -285,10 +299,8 @@ const EditEmailTemplateModalForm = forwardRef<
           templateName={formData.templateName}
           envelopeSender={formData.envelopeSender}
           subject={formData.subject}
-          onTrackerChange={handleTrackerChange}
-          initialTrackerValue={formData.trackerImage}
           initialContent={formData.bodyEmail}
-          onBodyChange={(html: string) => handleInputChange("bodyEmail", html)}
+          onBodyChange={useCallback((html: string) => handleInputChange("bodyEmail", html), [handleInputChange])}
         />
       ),
     },
@@ -305,7 +317,8 @@ const EditEmailTemplateModalForm = forwardRef<
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
           📧 Email Configuration
         </h3>
-        <div className={`grid grid-cols-1 gap-4 ${userRoleId === 1 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
+        {/* Mengubah grid-cols menjadi dinamis berdasarkan currentUserRole */}
+        <div className={`grid grid-cols-1 gap-4 ${userRoleId === 1 ? 'sm:grid-cols-5' : 'sm:grid-cols-3'}`}>
           <div>
             <Label>Template Name</Label>
             <Input
@@ -357,28 +370,56 @@ const EditEmailTemplateModalForm = forwardRef<
               <p className="text-red-500 text-sm mt-1">{errors.subject}</p>
             )}
           </div>
+          {/* Template Status - Conditional rendering */}
+          {userRoleId === 1 ? (
+              <div>
+                  <LabelWithTooltip position="left" tooltip="Templates status means is default template by system or created from user">Template Status</LabelWithTooltip>
+                  <Select
+                      placeholder="Choose Template Type"
+                      options={templateStatusOptions}
+                      value={String(formData.isSystemTemplate)}
+                      onChange={(val: string) =>
+                        handleInputChange("isSystemTemplate", val)
+                      }
+                      className={`w-full text-sm sm:text-base h-11 px-3 ${
+                        errors.isSystemTemplate ? "border-red-500" : ""
+                      }`}
+                  />
+                  {errors.isSystemTemplate && (
+                      <p className="text-red-500 text-sm mt-1">{errors.isSystemTemplate}</p>
+                  )}
+              </div>
+          ) : (
+              // Jika bukan Super Admin, tampilkan teks non-editable "Made In"
+              <div>
+                  <LabelWithTooltip position="left" tooltip="This template is created by user">Template Status</LabelWithTooltip>
+                  <Input
+                      value="Made In" // Tampilkan default role "Made In"
+                      disabled={true} // Tidak bisa diubah
+                      className="bg-gray-100 dark:bg-gray-700 cursor-not-allowed" // Styling untuk menunjukkan disabled
+                  />
+                  {/* Input hidden untuk memastikan nilai `isSystemTemplate` dikirimkan (0) */}
+                  <input type="hidden" name="isSystemTemplate" value="0" />
+              </div>
+          )}
+          {/* Select input for Language Type - Conditional rendering */}
           {userRoleId === 1 && (
             <div>
-              <LabelWithTooltip
-                position="left"
-                tooltip="Templates status means is default template by system or created from user"
-              >
-                Template Status
-              </LabelWithTooltip>
+              <Label>Language Type</Label>
               <Select
-                placeholder="Choose Template Type"
-                options={templateStatusOptions}
-                value={String(formData.isSystemTemplate)}
-                onChange={(val: string) =>
-                  handleInputChange("isSystemTemplate", val)
-                }
+                placeholder="Choose Language"
+                options={languageOptions}
+                value={formData.language}
+                onChange={(val: string) => {
+                  handleInputChange("language", val);
+                }}
                 className={`w-full text-sm sm:text-base h-11 px-3 ${
-                  errors.isSystemTemplate ? "border-red-500" : ""
+                  errors.language ? "border-red-500" : ""
                 }`}
               />
-              {errors.isSystemTemplate && (
+              {errors.language && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.isSystemTemplate}
+                  {errors.language}
                 </p>
               )}
             </div>

@@ -16,6 +16,7 @@ type SendingProfile = {
 	username     : string;
 	password     : string;
 	host         : string;
+  port: string;
 	createdAt    : string;
 	createdBy    : number;
 	createdByName    : string;

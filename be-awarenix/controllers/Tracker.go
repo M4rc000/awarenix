@@ -14,22 +14,49 @@ import (
 
 func HandleOpenTracker(c *gin.Context) {
 	rid := c.Query("rid")
-	services.LogEventByRID(c, rid, string(models.Opened))
+	services.LogEventByRID(c, rid, string(models.Opened), "")
 }
 
 func HandleClickTracker(c *gin.Context) {
 	rid := c.Query("rid")
-	services.LogEventByRID(c, rid, string(models.Clicked))
+	services.LogEventByRID(c, rid, string(models.Clicked), "")
 }
 
 func HandleSubmitTracker(c *gin.Context) {
 	rid := c.Query("rid")
-	services.LogEventByRID(c, rid, string(models.Submitted))
+	services.LogEventByRID(c, rid, string(models.Submitted), "")
 }
 
 func HandleReportTracker(c *gin.Context) {
 	rid := c.Query("rid")
-	services.LogEventByRID(c, rid, "reported")
+
+	// 1. Cari Recipient
+	var rec models.Recipient
+	if err := config.DB.Where("uid = ?", rid).First(&rec).Error; err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	// 2. Cari Campaign dan pre-load EmailTemplate
+	var camp models.Campaign
+	// Pastikan EmailTemplate dimuat agar kita bisa mengakses Language
+	if err := config.DB.Preload("EmailTemplate").Where("id = ?", rec.CampaignID).First(&camp).Error; err != nil {
+		// Jika campaign atau email template tidak ditemukan, log error dan berikan respons yang sesuai
+		c.Status(http.StatusBadRequest) // Atau bisa juga redirect ke halaman default tanpa pesan spesifik
+		return
+	}
+
+	// 3. Ambil bahasa dari EmailTemplate
+	campaignLanguage := camp.EmailTemplate.Language
+	if campaignLanguage == "" {
+		// Fallback ke bahasa default jika tidak ada bahasa yang disetel di template
+		campaignLanguage = "English" // Atau "Indonesia" tergantung default yang diinginkan
+	} else if campaignLanguage == "indonesia" {
+		campaignLanguage = "ID"
+	}
+
+	// Panggil LogEventByRID dengan bahasa yang ditemukan
+	services.LogEventByRID(c, rid, "reported", campaignLanguage)
 }
 
 func TrackAttachment(c *gin.Context) {

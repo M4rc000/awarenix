@@ -14,7 +14,7 @@ type EmailTemplate = {
   envelopeSender: string;
   subject: string;
   bodyEmail: string;
-  trackerImage: number;
+  language: string;
   isSystemTemplate: number;
   createdAt: string;
   createdBy: number;

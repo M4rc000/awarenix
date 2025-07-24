@@ -15,7 +15,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// RegisterCampaign handles the creation of a new campaign
+// Create
 func RegisterCampaign(c *gin.Context) {
 	var input models.CampaignRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -111,11 +111,6 @@ func RegisterCampaign(c *gin.Context) {
 		return
 	}
 
-	// CHECK IF SEND EMAIL BY IS NULL
-	if sendEmailBy == nil {
-		sendEmailBy = &launchDate
-	}
-
 	campaign := models.Campaign{
 		Name:             input.Name,
 		LaunchDate:       launchDate,
@@ -127,7 +122,7 @@ func RegisterCampaign(c *gin.Context) {
 		URL:              input.URL,
 		CreatedBy:        int(input.CreatedBy),
 		CreatedAt:        time.Now(),
-		Status:           "draft",
+		Status:           "pending",
 	}
 
 	if err := config.DB.Create(&campaign).Error; err != nil {
@@ -154,6 +149,7 @@ func RegisterCampaign(c *gin.Context) {
 	})
 }
 
+// Read ALL
 func GetCampaigns(c *gin.Context) {
 	// 1. Parse query params
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -171,6 +167,15 @@ func GetCampaigns(c *gin.Context) {
 	if search != "" {
 		// Contoh search di kolom name
 		db = db.Where("name LIKE ?", "%"+search+"%")
+	}
+
+	userIDScope, roleScope, errorStatus := services.GetRoleScope(c)
+	if !errorStatus {
+		return
+	}
+
+	if roleScope != 1 {
+		db.Where("created_by = ?", userIDScope)
 	}
 
 	// 4. Hitung total data (after filter)
@@ -263,7 +268,7 @@ func GetCampaigns(c *gin.Context) {
 	})
 }
 
-// GetCampaignDetail retrieves a single campaign by ID
+// Read Detail
 func GetCampaignDetail(c *gin.Context) {
 	id := c.Param("id")
 
@@ -365,7 +370,7 @@ func GetCampaignDetail(c *gin.Context) {
 	})
 }
 
-// UpdateCampaign updates an existing campaign
+// Update
 func UpdateCampaign(c *gin.Context) {
 	id := c.Param("id")
 
@@ -527,24 +532,24 @@ func UpdateCampaign(c *gin.Context) {
 	})
 }
 
-// DeleteCampaign deletes a campaign by ID
+// Delete
 func DeleteCampaign(c *gin.Context) {
 	id := c.Param("id")
 
 	var campaign models.Campaign
 	if err := config.DB.First(&campaign, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			services.LogActivity(config.DB, c, "Delete", "Campaign", id, nil, nil, "error", "Campaign not found") // Log Error
+			services.LogActivity(config.DB, c, "Delete", "Campaign", id, nil, nil, "error", "Campaign not found")
 			c.JSON(http.StatusNotFound, gin.H{"status": "error", "message": "Campaign not found"})
 			return
 		}
-		services.LogActivity(config.DB, c, "Delete", "Campaign", id, nil, nil, "error", "Failed to find campaign") // Log Error
+		services.LogActivity(config.DB, c, "Delete", "Campaign", id, nil, nil, "error", "Failed to find campaign")
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to find campaign"})
 		return
 	}
 
-	if campaign.Status == "in_progress" || campaign.Status == "completed" {
-		services.LogActivity(config.DB, c, "Delete", "Campaign", id, campaign, nil, "error", "Campaign is running or finished") // Log Error
+	if campaign.Status == "in progress" || campaign.Status == "pending" {
+		services.LogActivity(config.DB, c, "Delete", "Campaign", id, campaign, nil, "error", "Campaign is running or pending")
 		c.JSON(http.StatusForbidden, gin.H{"status": "error", "message": "Campaign is running or finished"})
 		return
 	}
@@ -593,8 +598,7 @@ func SendCampaign(camp models.Campaign) {
 		}
 		config.DB.Create(&rec)
 
+		// kirim async
 		go services.SendEmailToRecipient(rec, camp)
 	}
-
-	config.DB.Model(&camp).Update("status", "sent")
 }

@@ -7,7 +7,6 @@ import Swal from "../utils/AlertContainer";
 import DatePicker from "../form/date-picker";
 import SendTestEmailModal from "../sendingprofiles/SendTestEmailModal";
 import { Button } from "@headlessui/react";
-// import { TestRecipient } from "../sendingprofiles/NewSendingProfilesModalForm";
 
 type Campaign = {
   name: string;
@@ -284,7 +283,7 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
       const formattedLaunchDate = campaign.launchDate ? new Date(campaign.launchDate).toISOString() : "";
       const formattedSendEmailBy = campaign.sendEmailBy ? new Date(campaign.sendEmailBy).toISOString() : undefined;
 
-      const response = await fetch(`${API_URL}/campaigns/create`, { // Mengubah endpoint ke /campaigns/create
+      const response = await fetch(`${API_URL}/campaigns/create`, { 
         method: 'POST',
         headers: {
           "Content-Type": "application/json",
@@ -292,14 +291,14 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
         },
         body: JSON.stringify({
           name: campaign.name,
-          launch_date: formattedLaunchDate, // Menggunakan launch_date sesuai model Go
-          send_email_by: formattedSendEmailBy, // Menggunakan send_email_by sesuai model Go
+          launch_date: formattedLaunchDate, 
+          send_email_by: formattedSendEmailBy, 
           url: campaign.url,
-          group_id: parseInt(campaign.group), // Menggunakan group_id dan konversi ke integer
-          email_template_id: parseInt(campaign.emailTemplate), // Menggunakan email_template_id
-          landing_page_id: parseInt(campaign.landingPage), // Menggunakan landing_page_id
-          sending_profile_id: parseInt(campaign.sendingProfile), // Menggunakan sending_profile_id
-          created_by: createdBy // Menggunakan created_by
+          group_id: parseInt(campaign.group), 
+          email_template_id: parseInt(campaign.emailTemplate), 
+          landing_page_id: parseInt(campaign.landingPage), 
+          sending_profile_id: parseInt(campaign.sendingProfile),
+          created_by: createdBy 
         }),
       });
 

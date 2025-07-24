@@ -15,7 +15,7 @@ type Campaign struct {
 	LandingPageID    uint       `gorm:"not null;index"               json:"landingPageId"`
 	SendingProfileID uint       `gorm:"not null;index"               json:"sendingProfileId"`
 	URL              string     `gorm:"type:varchar(255);not null"   json:"url"`
-	Status           string     `gorm:"type:varchar(20);default:'draft'" json:"status"`
+	Status           string     `gorm:"type:varchar(20);default:'pending'" json:"status"`
 	CreatedAt        time.Time  `gorm:"type:datetime;null" json:"createdAt"`
 	CreatedBy        int        `gorm:"type:tinyint(3);null" json:"createdBy"`
 	UpdatedAt        time.Time  `gorm:"type:datetime;null" json:"updatedAt"`

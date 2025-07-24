@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
 	"be-awarenix/config"
 	"be-awarenix/models"
@@ -17,7 +18,7 @@ import (
 	"github.com/gophish/gomail"
 )
 
-// SendTestEmail mengirim email tes menggunakan konfigurasi profil pengiriman yang diberikan.
+// SendTestEmail
 func SendTestEmail(profile *models.SendingProfiles, recipientEmail, body, subject string) error {
 	// 1. Validasi awal profil dan email penerima
 	if profile == nil {
@@ -54,9 +55,6 @@ func SendTestEmail(profile *models.SendingProfiles, recipientEmail, body, subjec
 		// Fallback ke port standar jika tidak ada port yang ditemukan
 		smtpPort = "587" // Default jika tidak ada port yang ditemukan
 	}
-
-	// Log untuk debugging
-	log.Printf("Attempting to send email: From=%s, Host=%s, Port=%s, Recipient=%s", from, smtpHost, smtpPort, recipientEmail)
 
 	// 4. Authentication
 	var authUsername string
@@ -148,6 +146,7 @@ func SendTestEmail(profile *models.SendingProfiles, recipientEmail, body, subjec
 	return nil
 }
 
+// SendEmail
 func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 	// Domains
 	backendBase := "localhost:3000"
@@ -155,9 +154,9 @@ func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 
 	// --- AMBIL NAMA RECIPIENT DARI GROUP MEMBER ---
 	var recipientName string
-	var gm models.GroupMember
+	var gm models.Member
 	err := config.DB.
-		Where("group_id = ? AND user_id = ?", camp.GroupID, rec.UserID).
+		Where("group_id = ? AND email = ?", camp.GroupID, rec.Email).
 		First(&gm).Error
 	if err != nil {
 		// fallback ke email jika nama tidak ditemukan
@@ -166,49 +165,71 @@ func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 		recipientName = gm.Name
 	}
 
-	// 1. Render email body
-	tpl, _ := template.New("email").Parse(camp.EmailTemplate.Body)
-	var buf bytes.Buffer
-	data := map[string]interface{}{
-		"Name": recipientName,
+	// Data untuk template (body dan subject)
+	templateData := map[string]interface{}{
+		"Name":  recipientName,
+		"Email": rec.Email,
 		"LandingURL": fmt.Sprintf(
 			"http://%s/lander?rid=%s&campaign=%d&page=%d",
 			frontendDomain, rec.UID, camp.ID, camp.LandingPageID,
 		),
 	}
-	tpl.Execute(&buf, data)
-	body := buf.String()
 
-	// 2. Sisipkan tracking pixel (opened)
+	// 1. Render email body
+	tplBody, _ := template.New("emailBody").Parse(camp.EmailTemplate.Body)
+	var bufBody bytes.Buffer
+	tplBody.Execute(&bufBody, templateData)
+	body := bufBody.String()
+
+	// 2. Render email subject
+	tplSubject, _ := template.New("emailSubject").Parse(camp.EmailTemplate.Subject)
+	var bufSubject bytes.Buffer
+	tplSubject.Execute(&bufSubject, templateData)
+	subject := bufSubject.String()
+
+	// 3. Sisipkan tracking pixel (opened)
 	pixel := fmt.Sprintf(
 		`<img src="http://%s/track/open?rid=%s&campaign=%d" style="display:none"/>`,
 		backendBase, rec.UID, camp.ID,
 	)
 	body += pixel
 
-	// 3. Tambahkan tombol “Laporkan Email Ini”
+	// Ambil bahasa dari template email
+	emailLanguage := camp.EmailTemplate.Language
+	var reportButtonText string
+	var reportIntroText string
+	switch emailLanguage {
+	case "Indonesia":
+		reportButtonText = "Laporkan Email Ini"
+		reportIntroText = "Jika Anda yakin email ini adalah phishing, silakan"
+	case "English":
+		reportButtonText = "Report This Email"
+		reportIntroText = "If you believe this email is phishing, please"
+	default:
+		reportButtonText = "Report This Email"
+		reportIntroText = "If you believe this email is phishing, please"
+	}
+
+	// 4. Tambahkan tombol “Laporkan Email Ini” dengan styling mirip Gmail
+	// Menggunakan gaya yang lebih subtle dan teks yang disesuaikan bahasa
 	reportLink := fmt.Sprintf(`
-      <div style="text-align:center; margin:24px 0;">
-        <a href="http://%s/track/report?rid=%s&campaign=%d"
+      <div style="text-align:center; margin-top:20px; font-family:Arial, sans-serif; font-size:12px; color:#999;">
+        %s <a href="http://%s/track/report?rid=%s&campaign=%d"
            style="
-             display:inline-block;
-             padding:10px 20px;
-             background-color:#e74c3c;
-             color:#ffffff;
+             color:#1a73e8; /* Warna biru mirip Gmail */
              text-decoration:none;
-             border-radius:4px;
-             font-family:Arial, sans-serif;
-             font-size:14px;
            ">
-          Laporkan Email Ini
-        </a>
+          %s
+        </a>.
       </div>`,
+		reportIntroText, // Menggunakan variabel teks pengantar
 		backendBase, rec.UID, camp.ID,
+		reportButtonText,
 	)
 	body += reportLink
 
-	// 4. Rewrite click links (termasuk placeholder {{.Name}} & {{.Email}})
-	body = RewriteLinks(
+	// 5. Rewrite click links (termasuk placeholder {{.Name}} & {{.Email}})
+	body = RewriteLinks( // Asumsi RewriteLinks sudah didefinisikan
 		body,
 		rec.UID,
 		camp.ID,
@@ -218,11 +239,11 @@ func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 		rec.Email,
 	)
 
-	// 5. SMTP send
+	// 6. SMTP send
 	m := gomail.NewMessage()
 	m.SetHeader("From", camp.SendingProfile.SmtpFrom)
 	m.SetHeader("To", rec.Email)
-	m.SetHeader("Subject", camp.EmailTemplate.Subject)
+	m.SetHeader("Subject", subject) // Gunakan subject yang sudah di-render
 	m.SetBody("text/html", body)
 
 	d := gomail.NewDialer(
@@ -237,4 +258,67 @@ func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 		return
 	}
 	config.DB.Model(&rec).Update("status", "sent")
+}
+
+func MonitorCampaignStatus(campaignID uint) {
+	log.Printf("🔍 Monitoring campaign %d…", campaignID)
+
+	for {
+		// 1. Load campaign untuk ambil SendEmailBy
+		var camp models.Campaign
+		err := config.DB.
+			Select("send_email_by").
+			First(&camp, campaignID).Error
+		if err != nil {
+			log.Printf("‼️ Campaign %d not found: %v", campaignID, err)
+			return
+		}
+		now := time.Now()
+
+		// 2. Hitung total recipient dan yang sudah selesai
+		var total, done int64
+		config.DB.
+			Model(&models.Recipient{}).
+			Where("campaign_id = ?", campaignID).
+			Count(&total)
+
+		config.DB.
+			Model(&models.Recipient{}).
+			Where("campaign_id = ? AND status IN ?", campaignID, []string{"sent", "failed"}).
+			Count(&done)
+
+		// 3. Penanganan deadline SendEmailBy
+		if camp.SendEmailBy != nil {
+			// --- Jika ada deadline ---
+			if now.After(*camp.SendEmailBy) {
+				status := "completed"
+				if done < total {
+					status = "expired"
+				}
+
+				config.DB.
+					Model(&models.Campaign{}).
+					Where("id = ?", campaignID).
+					Update("status", status)
+
+				log.Printf("🚦 Campaign %d finished as '%s' (done %d of %d, deadline %s).",
+					campaignID, status, done, total, camp.SendEmailBy.Format(time.RFC3339))
+				return
+			}
+		} else {
+			// --- Jika SendEmailBy kosong ---
+			if total > 0 && done == total {
+				config.DB.
+					Model(&models.Campaign{}).
+					Where("id = ?", campaignID).
+					Update("status", "completed")
+
+				log.Printf("✅ Campaign %d completed (no deadline, all %d recipients processed).", campaignID, total)
+				return
+			}
+		}
+
+		// 4. Tunggu polling selanjutnya
+		time.Sleep(15 * time.Second)
+	}
 }

@@ -13,7 +13,7 @@ interface EmailTemplate {
   templateName: string;
   envelopeSender: string;
   subject: string;
-  trackerImage: number;
+  language: string; // Added language field
   createdAt: string;
   createdBy: string;
   updatedAt: string;
@@ -35,7 +35,7 @@ type EmailTemplateData = {
   subject: string;
   isSystemTemplate: number;
   bodyEmail: string;
-  trackerImage: number;
+  language: string; // Added language field
 };
 
 const NewEmailTemplateModalForm = forwardRef<
@@ -48,7 +48,7 @@ const NewEmailTemplateModalForm = forwardRef<
     subject: "",
     isSystemTemplate: 0, // Default to 0 (No)
     bodyEmail: "",
-    trackerImage: 1,
+    language: "Indonesia", // Default language
   });
 
   const [errors, setErrors] = useState<Partial<EmailTemplateData>>({});
@@ -84,6 +84,12 @@ const NewEmailTemplateModalForm = forwardRef<
     { value: "1", label: "Yes" },
   ];
 
+  // Opsi untuk language type
+  const languageOptions = [
+    { value: "indonesia", label: "Indonesia" },
+    { value: "english", label: "English" },
+  ];
+
   // VALIDATION FUNCTION
   const validateForm = (): boolean => {
     const newErrors: Partial<EmailTemplateData> = {};
@@ -98,6 +104,9 @@ const NewEmailTemplateModalForm = forwardRef<
     }
     if (!emailtemplate.subject.trim()) {
       newErrors.subject = "Subject Email is required";
+    }
+    if (!emailtemplate.language.trim()) { // Added validation for language
+      newErrors.language = "Language is required";
     }
 
     setErrors(newErrors);
@@ -136,7 +145,7 @@ const NewEmailTemplateModalForm = forwardRef<
         subject: emailtemplate.subject,
         bodyEmail: emailtemplate.bodyEmail || "",
         isSystemTemplate: emailtemplate.isSystemTemplate,
-        trackerImage: emailtemplate.trackerImage,
+        language: emailtemplate.language, 
         createdBy: createdBy,
       };
       const response = await fetch(`${API_URL}/email-template/create`, {
@@ -184,7 +193,7 @@ const NewEmailTemplateModalForm = forwardRef<
         subject: "",
         isSystemTemplate: userRoleId !== 1 ? 0 : 0, 
         bodyEmail: "",
-        trackerImage: 1,
+        language: "Indonesia", 
       });
       setErrors({});
 
@@ -209,6 +218,10 @@ const NewEmailTemplateModalForm = forwardRef<
           setErrors({
             templateName: error.message,
           });
+        } else if (error.message.toLowerCase().includes("language")) { // Added error handling for language
+          setErrors({
+            language: error.message,
+          });
         }
         else {
           setErrors({
@@ -223,10 +236,6 @@ const NewEmailTemplateModalForm = forwardRef<
     }
   };
   useImperativeHandle(ref, () => ({ submitEmailTemplate, emailtemplate: null }));
-
-  const handleTrackerChange = (trackerValue: number) => {
-    handleInputChange("trackerImage", trackerValue);
-  };
 
   // Handle input changes - dengan safety check
   const handleInputChange = (
@@ -263,7 +272,6 @@ const NewEmailTemplateModalForm = forwardRef<
           templateName={emailtemplate.templateName} 
           envelopeSender={emailtemplate.envelopeSender} 
           subject={emailtemplate.subject} 
-          onTrackerChange={handleTrackerChange}
           onBodyChange={(html) => {
             handleInputChange("bodyEmail", html);
           }}
@@ -278,7 +286,7 @@ const NewEmailTemplateModalForm = forwardRef<
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
           📧 Email Configuration
         </h3>
-        <div className={`grid grid-cols-1 gap-4 ${userRoleId === 1 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
+        <div className={`grid grid-cols-1 gap-4 ${userRoleId === 1 ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
           <div>
             <Label>Template Name</Label>
             <Input
@@ -363,6 +371,25 @@ const NewEmailTemplateModalForm = forwardRef<
               )}
             </div>
           )}
+          <div>
+            <Label>Language Type</Label>
+            <Select
+              placeholder="Choose Language"
+              options={languageOptions}
+              value={emailtemplate.language}
+              onChange={(val: string) => {
+                handleInputChange("language", val);
+              }}
+              className={`w-full text-sm sm:text-base h-11 px-3 ${
+                errors.language ? "border-red-500" : ""
+              }`}
+            />
+            {errors.language && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.language}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

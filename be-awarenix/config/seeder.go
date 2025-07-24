@@ -193,7 +193,7 @@ func SeedSubmenus(db *gorm.DB) {
 		},
 		{
 			MenuID:    1,
-			Name:      "Campaign",
+			Name:      "Campaigns",
 			Icon:      "CalenderIcon",
 			Url:       "/campaigns",
 			IsActive:  1,
@@ -617,9 +617,8 @@ func SeedEmailTemplates(db *gorm.DB) {
 						</div>
 					</body>
 					</html>`,
-			TrackerImage: 1,
-			CreatedAt:    time.Now(),
-			CreatedBy:    0,
+			CreatedAt: time.Now(),
+			CreatedBy: 1,
 		},
 		{
 			Name:           "LinkedIn Password Reset",
@@ -757,9 +756,8 @@ func SeedEmailTemplates(db *gorm.DB) {
 						</div>
 					</body>
 					</html>`,
-			TrackerImage: 1,
-			CreatedAt:    time.Now(),
-			CreatedBy:    0,
+			CreatedAt: time.Now(),
+			CreatedBy: 1,
 		},
 		{
 			Name:           "Netflix Password Reset",
@@ -898,9 +896,8 @@ func SeedEmailTemplates(db *gorm.DB) {
 						</div>
 					</body>
 					</html>`,
-			TrackerImage: 1,
-			CreatedAt:    time.Now(),
-			CreatedBy:    0,
+			CreatedAt: time.Now(),
+			CreatedBy: 1,
 		},
 		{
 			Name:           "Zoom Meeting Invitation",
@@ -1039,9 +1036,8 @@ func SeedEmailTemplates(db *gorm.DB) {
 							</div>
 						</body>
 						</html>`,
-			TrackerImage: 1,
-			CreatedAt:    time.Now(),
-			CreatedBy:    0,
+			CreatedAt: time.Now(),
+			CreatedBy: 1,
 		},
 		{
 			Name:           "Trello Invitation",
@@ -1125,9 +1121,8 @@ func SeedEmailTemplates(db *gorm.DB) {
 
 					</body>
 					</html>`,
-			TrackerImage: 1,
-			CreatedAt:    time.Now(),
-			CreatedBy:    0,
+			CreatedAt: time.Now(),
+			CreatedBy: 1,
 		},
 	}
 
@@ -2723,7 +2718,7 @@ func SeedRoleSubmenuAccess(db *gorm.DB) {
 		},
 		adminRoleID: {
 			"Dashboard",
-			"Campaign",
+			"Campaigns",
 			"User Management",
 			"Groups & Members",
 			"Email Templates",

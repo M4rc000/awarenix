@@ -16,10 +16,13 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/20/solid'
 import { FaRegTrashAlt } from "react-icons/fa";
 import { BiSolidEditAlt } from "react-icons/bi";
 import { FaCircleInfo } from "react-icons/fa6";
+import { LuArrowBigLeftDash } from "react-icons/lu";
+import { LuArrowBigRightDash } from "react-icons/lu";
+import { LuArrowBigLeft } from "react-icons/lu";
+import { LuArrowBigRight } from "react-icons/lu";
 import Button from "../ui/button/Button";
 import type { SortingState } from '@tanstack/react-table';
 import { useSidebar } from "../../context/SidebarContext";
@@ -220,7 +223,7 @@ export default function TableRoles({ reloadTrigger, onReload }: { reloadTrigger?
   });
 
   return (
-    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] border border-1-gray-500 dark:border-gray-700">
+    <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] border border-1-gray-500 dark:border-gray-700 shadow-xl">
       <div className="p-4 rounded-tl-lg rounded-tr-lg bg-white dark:bg-white/[0.03]">
         <form onSubmit={(e) => e.preventDefault()}>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -383,82 +386,189 @@ export default function TableRoles({ reloadTrigger, onReload }: { reloadTrigger?
       </div>
 
       {/* PAGINATION */}
-      <div className="flex items-center justify-between p-4 text-gray-600 dark:text-gray-500 text-sm">
-        <div>
-          Showing {table.getState().pagination.pageIndex + 1} to {table.getState().pagination.pageSize}  of{' '}
-          {table.getPageCount()}
+      <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+        {/* Entries Info */}
+        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-0">
+            <span>
+                Showing{' '}
+                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
+                </span>{' '}
+                to{' '}
+                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)}
+                </span>{' '}
+                of{' '}
+                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    {table.getFilteredRowModel().rows.length}
+                </span>{' '}
+                entries
+            </span>
         </div>
-        <div className="space-x-2">
-          <div>
-            <nav aria-label="Pagination" className="isolate inline-flex -space-x-px rounded-md shadow-xs">
-              <a
-                href="#"
-                className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-gray-300 dark:ring-gray-700 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0${!table.getCanPreviousPage() ? ' opacity-50 pointer-events-none cursor-not-allowed' : ''}`}
-                onClick={e => {
-                  e.preventDefault();
-                  if (table.getCanPreviousPage()) table.previousPage();
-                }}
-                aria-disabled={!table.getCanPreviousPage()}
-                tabIndex={!table.getCanPreviousPage() ? -1 : 0}>
-                <span className="sr-only">Previous</span>
-                <ChevronLeftIcon aria-hidden="true" className="size-5" color='grey'/>
-              </a>
 
-              {/* Page Numbers */}
-              {Array.from({ length: table.getPageCount() }, (_, i) => i).map((page) => {
-                const currentPage = table.getState().pagination.pageIndex;
-                const totalPage = table.getPageCount();
+        {/* Pagination Controls */}
+        <div className="flex items-center space-x-1">
+            {/* First Page Button */}
+            <button
+                onClick={() => table.setPageIndex(0)}
+                disabled={!table.getCanPreviousPage()}
+                className={`
+                  inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600
+                  ${!table.getCanPreviousPage()
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
+                  }
+                  transition-colors duration-200
+                `}
+                title="First page"
+            >
+                <LuArrowBigLeftDash size={20}/>
+            </button>
 
-                // Only show first, last, current, current±1
-                if (
-                  page === 0 ||
-                  page === totalPage - 1 ||
-                  Math.abs(currentPage - page) <= 1
-                ) {
-                return (
-                  <a
-                    key={page}
-                    onClick={() => table.setPageIndex(page)}
-                    href="#"
-                    aria-current="page"
-                    className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-regular focus:z-20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:text-grey-400 ${
-                      currentPage === page
-                        ? 'z-10 bg-blue-600 text-white focus:outline-blue-600 ring-gray-300 dark:ring-gray-700 border-1 border-gray-400 dark:border-gray-700'
-                        : 'text-gray-600 ring-gray-300 hover:bg-gray-50 dark:text-gray-400 dark:ring-gray-700 border-1 border-gray-300 dark:border-gray-700'
-                    }`}>
-                    {page + 1}
-                  </a>
-              );}
+            {/* Previous Page Button */}
+            <button
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+                className={`
+                  inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600
+                  ${!table.getCanPreviousPage()
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
+                  }
+                  transition-colors duration-200 ml-1 // Tambah margin kiri sedikit
+                `}
+                title="Previous page"
+            >
+                <LuArrowBigLeft size={20}/>
+            </button>
 
-              if (
-                page === currentPage - 2 ||
-                page === currentPage + 2
-              ) {
-                return (
-                <a
-                  href="#"
-                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-gray-300 dark:ring-gray-700 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
-                    ...
-                </a>
-                );
-                }
-                return null;
-              })}
+            {/* Page Numbers */}
+            <div className="flex items-center space-x-1 mx-2"> {/* Tambah margin horizontal */}
+                {(() => {
+                    const currentPage = table.getState().pagination.pageIndex;
+                    const totalPages = table.getPageCount();
+                    const pages = [];
 
-              <a
-                onClick={e => {
-                  e.preventDefault();
-                  if (table.getCanNextPage()) table.nextPage();
-                }}
-                aria-disabled={!table.getCanNextPage()}
-                href="#"
-                className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-300 ring-1 ring-gray-300 dark:ring-gray-700 ring-inset hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                >
-                <span className="sr-only">Previous</span>
-                <ChevronRightIcon aria-hidden="true" className="size-5" color='grey'/>
-              </a>
-            </nav>
-          </div>
+                    // Always show first page
+                    if (totalPages > 0) {
+                        pages.push(
+                            <button
+                                key={0}
+                                onClick={() => table.setPageIndex(0)}
+                                className={`
+                                  inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg
+                                  ${currentPage === 0
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-sm'
+                                  }
+                                  transition-colors duration-200
+                                `}
+                            >
+                                1
+                            </button>
+                        );
+                    }
+
+                    // Show ellipsis if there's a gap
+                    if (currentPage > 3) {
+                        pages.push(
+                            <span key="ellipsis-start" className="inline-flex items-center justify-center w-9 h-9 text-sm text-gray-400 dark:text-gray-500">
+                                ...
+                            </span>
+                        );
+                    }
+
+                    // Show pages around current page
+                    const start = Math.max(1, currentPage - 1);
+                    const end = Math.min(totalPages - 1, currentPage + 1);
+
+                    for (let i = start; i <= end; i++) {
+                        if (i !== 0 && i !== totalPages - 1) {
+                            pages.push(
+                                <button
+                                    key={i}
+                                    onClick={() => table.setPageIndex(i)}
+                                    className={`
+                                      inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg
+                                      ${currentPage === i
+                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-sm'
+                                      }
+                                      transition-colors duration-200
+                                    `}
+                                >
+                                    {i + 1}
+                                </button>
+                            );
+                        }
+                    }
+
+                    // Show ellipsis if there's a gap
+                    if (currentPage < totalPages - 4) {
+                        pages.push(
+                            <span key="ellipsis-end" className="inline-flex items-center justify-center w-9 h-9 text-sm text-gray-400 dark:text-gray-500">
+                                ...
+                            </span>
+                        );
+                    }
+
+                    // Always show last page (if more than 1 page)
+                    if (totalPages > 1) {
+                        pages.push(
+                            <button
+                                key={totalPages - 1}
+                                onClick={() => table.setPageIndex(totalPages - 1)}
+                                className={`
+                                  inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg
+                                  ${currentPage === totalPages - 1
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-sm'
+                                  }
+                                  transition-colors duration-200
+                                `}
+                            >
+                                {totalPages}
+                            </button>
+                        );
+                    }
+
+                    return pages;
+                })()}
+            </div>
+
+            {/* Next Page Button */}
+            <button
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+                className={`
+                  inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600
+                  ${!table.getCanNextPage()
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
+                  }
+                  transition-colors duration-200 mr-1 // Tambah margin kanan sedikit
+                `}
+                title="Next page"
+            >
+              <LuArrowBigRight size={20}/>
+            </button>
+
+            {/* Last Page Button */}
+            <button
+                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                disabled={!table.getCanNextPage()}
+                className={`
+                  inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600
+                  ${!table.getCanNextPage()
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
+                  }
+                  transition-colors duration-200
+                `}
+                title="Last page"
+            >
+              <LuArrowBigRightDash size={20}/>
+            </button>
         </div>
       </div>
 
