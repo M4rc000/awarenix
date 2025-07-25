@@ -14,12 +14,20 @@ import {
 } from 'recharts';
 import MetricCard from '../../components/dashboard/MetricCard';
 import Swal from '../../components/utils/AlertContainer';
+import { HiOutlineMailOpen } from 'react-icons/hi';
+import { LuMousePointerClick } from 'react-icons/lu';
+import { IoIosCalendar, IoIosSave } from 'react-icons/io';
+import { BiError } from 'react-icons/bi';
+import { FaTable } from 'react-icons/fa';
+import TableDashboard from '../../components/dashboard/TableDashboard';
 
 export interface TopPerformer {
-  campaignName: string;
-  name: string;
-  clicks: number;
-  submits: number;
+  email: string;
+  totalCampaign: number;
+  onOpened: number;
+  onClicks: number;
+  onSubmits: number;
+  onReport: number;
 }
 
 export interface CampaignResult {
@@ -55,7 +63,6 @@ interface PieChartLabelProps {
   midAngle?: number;
   innerRadius: number;
   outerRadius: number;
-  // Ubah percent menjadi opsional
   percent?: number;
 }
 
@@ -132,7 +139,7 @@ export default function Dashboard() {
     countdownRef.current = setInterval(() => {
       setRefreshCountdown(prev => {
         if (prev <= 1) {
-          return 5; // Reset countdown
+          return 5; 
         }
         return prev - 1;
       });
@@ -366,6 +373,7 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
+
         {/* Campaign Overview Metrics */}
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/20 p-6 transition-all duration-300 hover:shadow-2xl">
           <div className="flex items-center mb-6">
@@ -397,6 +405,20 @@ export default function Dashboard() {
                 />
               )
             ))}
+          </div>
+        </div>
+
+        {/* Campaign Overview Table */}
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/20 p-6 transition-all duration-300 hover:shadow-2xl">
+          <div className="flex items-center mb-6">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+              <FaTable className="text-white"/>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Campaign Table</h2>
+          </div>
+
+          <div className="grid grid-cols-1">
+            <TableDashboard/>
           </div>
         </div>
 
@@ -496,16 +518,22 @@ export default function Dashboard() {
                   <thead className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600">
                     <tr>
                       <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                        Campaign
+                        Email
                       </th>
                       <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                        Target
+                        <IoIosCalendar className='text-green-400' size={20}/> 
                       </th>
                       <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                        Clicks
+                        <HiOutlineMailOpen color='yellow' size={20}/>
                       </th>
                       <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-                        Submits
+                        <LuMousePointerClick className="text-blue-600" size={20} />
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                        <IoIosSave className="text-cyan-600" size={20}/>
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+                        <BiError className="text-red-600" size={20}/>
                       </th>
                     </tr>
                   </thead>
@@ -517,20 +545,22 @@ export default function Dashboard() {
                         className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
                       >
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
-                          {performer.campaignName}
+                          {performer.email}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
-                          {performer.name}
+                          {performer.totalCampaign}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 text-center">
-                          <span className="inline-flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
-                            {performer.clicks}
-                          </span>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
+                          {performer.onOpened}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 text-center">
-                          <span className="inline-flex justify-center items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100">
-                            {performer.submits}
-                          </span>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
+                          {performer.onClicks}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
+                          {performer.onSubmits}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 text-center">
+                          {performer.onReport}
                         </td>
                       </tr>
                     ))}

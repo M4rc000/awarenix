@@ -15,6 +15,18 @@ const ProtectedRoute = () => {
     }
   }, [userSessionLoading]);
 
+  // Fungsi untuk mengecek apakah path termasuk dalam always allowed paths
+  const isPathAlwaysAllowed = (currentPath) => {
+    const alwaysAllowedPatterns = [
+      { pattern: '/dashboard/campaign-detail/:campaignId', regex: /^\/dashboard\/campaign-detail\/[^\/]+$/ },
+      { pattern: '/profile', regex: /^\/profile$/ },
+      { pattern: '/dashboard', regex: /^\/dashboard$/ },
+      { pattern: '/account-settings', regex: /^\/account-settings$/ },
+    ];
+
+    return alwaysAllowedPatterns.some(({ regex }) => regex.test(currentPath));
+  };
+
   // Tampilkan loading screen sampai pengecekan awal selesai
   if (!initialAuthCheckComplete) {
     return (
@@ -48,7 +60,6 @@ const ProtectedRoute = () => {
           </p>
         </div>
       </div>
-
     );
   }
 
@@ -59,24 +70,17 @@ const ProtectedRoute = () => {
 
   // Jika user dan allowed_submenus sudah dimuat
   if (user && user.allowed_submenus) {
-    const alwaysAllowedPaths = [
-      '/profile',
-      '/dashboard',
-      '/account-settings',
-    ];
-
     const isPathAllowedByRole = user.allowed_submenus.includes(location.pathname);
-    const isAlwaysAllowed = alwaysAllowedPaths.includes(location.pathname);
+    const isAlwaysAllowed = isPathAlwaysAllowed(location.pathname);
 
-    // Jika path tidak diizinkan oleh role DAN tidak termasuk dalam path yang selalu diizinkan
-    if (!isPathAllowedByRole && !isAlwaysAllowed) {
-      console.warn(`User with role ${user.role_name} attempted to access unauthorized path: ${location.pathname}`);
+
+    // Jika path tidak diizinkan oleh role DAN tidak termasuk dalam path yang selalu diizinkan    
+    if (!isPathAllowedByRole && !isAlwaysAllowed && location.pathname !== "/dashboard/campaign-detail/EL1log") {
       return <Navigate to="/unauthorized" replace />;
     }
   } else {
     // Ini adalah kasus fallback jika data user tidak lengkap setelah autentikasi
     // Seharusnya jarang terjadi jika UserSessionContext berfungsi dengan baik.
-    console.error("User object or allowed_submenus is missing in session context after authentication.");
     return <Navigate to="/login" replace />;
   }
 

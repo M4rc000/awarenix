@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom"; // Perbaiki import Link
+import { Link, useLocation } from "react-router-dom"; 
 import { MdOutlineAttachEmail } from "react-icons/md";
 import { CgWebsite } from "react-icons/cg";
 import { IoIosBookmarks } from "react-icons/io";
 import { IoSettingsOutline } from "react-icons/io5";
-// import { FaMoneyCheckAlt } from "react-icons/fa";
 import { DiEnvato } from "react-icons/di";
 import { FaUserCog } from "react-icons/fa";
 import {
@@ -50,6 +49,7 @@ const allNavGroups: NavGroup[] = [ // Rename to allNavGroups
     key: "main",
     items: [
       { icon: <GridIcon />, name: "Dashboard", path: "/dashboard" },
+      { icon: <GridIcon />, name: "Campaign Detail", path: "/campaign-detail/:campaignId" },
       { icon: <CalenderIcon />, name: "Campaigns", path: "/campaigns" },
       { icon: <FaUserCog size={5}/>, name: "Role Management", path: "/role-management" },
       { icon: <User />, name: "User Management", path: "/user-management" },

@@ -149,7 +149,6 @@ func RegisterCampaign(c *gin.Context) {
 	})
 }
 
-// Read ALL
 func GetCampaigns(c *gin.Context) {
 	// 1. Parse query params
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -171,11 +170,12 @@ func GetCampaigns(c *gin.Context) {
 
 	userIDScope, roleScope, errorStatus := services.GetRoleScope(c)
 	if !errorStatus {
+		// services.GetRoleScope seharusnya sudah menangani respons error
 		return
 	}
 
-	if roleScope != 1 {
-		db.Where("created_by = ?", userIDScope)
+	if roleScope != 1 { // Asumsi role 1 adalah admin yang bisa melihat semua
+		db = db.Where("created_by = ?", userIDScope)
 	}
 
 	// 4. Hitung total data (after filter)
@@ -190,7 +190,15 @@ func GetCampaigns(c *gin.Context) {
 
 	// 5. Ambil page data dengan sort, limit, offset
 	var campaigns []models.Campaign
+	// Preload relasi yang diperlukan untuk daftar (jika GroupName, dll. dibutuhkan)
+	// Jika hanya ID dan Name yang dibutuhkan, Preload tidak perlu di sini untuk efisiensi.
+	// Namun, karena CampaignResponse membutuhkan GroupName, EmailTemplateName, dll.,
+	// maka Preload diperlukan.
 	if err := db.
+		Preload("Group").          // Memuat data Group
+		Preload("EmailTemplate").  // Memuat data EmailTemplate
+		Preload("LandingPage").    // Memuat data LandingPage
+		Preload("SendingProfile"). // Memuat data SendingProfile
 		Order(fmt.Sprintf("%s %s", sortBy, order)).
 		Limit(limit).
 		Offset(offset).
@@ -213,7 +221,6 @@ func GetCampaigns(c *gin.Context) {
 		reported := 0
 
 		// Hitung Email Sent (dari Recipient status 'sent')
-		// Asumsi status 'sent' ada di tabel Recipient
 		var sentCount int64
 		config.DB.Model(&models.Recipient{}).Where("campaign_id = ? AND status = ?", camp.ID, "sent").Count(&sentCount)
 		emailSent = int(sentCount)
@@ -235,25 +242,55 @@ func GetCampaigns(c *gin.Context) {
 		config.DB.Model(&models.Event{}).Where("campaign_id = ? AND type = ?", camp.ID, models.Reported).Count(&reportedCount)
 		reported = int(reportedCount)
 
+		CampaignUID := services.EncodeID(int(camp.ID))
+
+		// Ambil createdByName dan updatedByName
+		createdByName := ""
+		updatedByName := ""
+
+		if camp.CreatedBy != 0 {
+			var createdByUser models.User
+			if err := config.DB.Select("name").First(&createdByUser, camp.CreatedBy).Error; err == nil {
+				createdByName = createdByUser.Name
+			}
+		}
+
+		if camp.UpdatedBy != 0 {
+			var updatedByUser models.User
+			if err := config.DB.Select("name").First(&updatedByUser, camp.UpdatedBy).Error; err == nil {
+				updatedByName = updatedByUser.Name
+			}
+		}
+
 		out = append(out, models.CampaignResponse{
-			ID:               int(camp.ID),
-			Name:             camp.Name,
-			LaunchDate:       camp.LaunchDate,
-			SendEmailBy:      camp.SendEmailBy,
-			GroupID:          int(camp.GroupID),
-			EmailTemplateID:  int(camp.EmailTemplateID),
-			LandingPageID:    int(camp.LandingPageID),
-			SendingProfileID: int(camp.SendingProfileID),
-			URL:              camp.URL,
-			CreatedBy:        camp.CreatedBy,
-			CreatedAt:        camp.CreatedAt,
-			UpdatedAt:        camp.UpdatedAt,
-			Status:           camp.Status,
-			EmailSent:        emailSent,
-			EmailOpened:      emailOpened,
-			EmailClicks:      clicks,
-			EmailSubmitted:   submitted,
-			EmailReported:    reported,
+			ID:                 int(camp.ID),
+			UID:                CampaignUID,
+			Name:               camp.Name,
+			LaunchDate:         camp.LaunchDate,
+			SendEmailBy:        camp.SendEmailBy,
+			GroupID:            int(camp.GroupID),
+			GroupName:          camp.Group.Name, // Pastikan Group di-Preload
+			EmailTemplateID:    int(camp.EmailTemplateID),
+			EmailTemplateName:  camp.EmailTemplate.Name, // Pastikan EmailTemplate di-Preload
+			LandingPageID:      int(camp.LandingPageID),
+			LandingPageName:    camp.LandingPage.Name, // Pastikan LandingPage di-Preload
+			SendingProfileID:   int(camp.SendingProfileID),
+			SendingProfileName: camp.SendingProfile.Name, // Pastikan SendingProfile di-Preload
+			URL:                camp.URL,
+			CreatedAt:          camp.CreatedAt,
+			CreatedBy:          int(camp.CreatedBy),
+			CreatedByName:      createdByName,
+			UpdatedAt:          camp.UpdatedAt,
+			UpdatedBy:          int(camp.UpdatedBy),
+			UpdatedByName:      updatedByName,
+			Status:             camp.Status,
+			EmailSent:          emailSent,
+			EmailOpened:        emailOpened,
+			EmailClicks:        clicks,
+			EmailSubmitted:     submitted,
+			EmailReported:      reported,
+			Participants:       nil,
+			TimelineEvents:     nil,
 		})
 	}
 
@@ -271,10 +308,11 @@ func GetCampaigns(c *gin.Context) {
 // Read Detail
 func GetCampaignDetail(c *gin.Context) {
 	id := c.Param("id")
+	idCampaign, _ := services.DecodeID(id)
 
 	var campaign models.Campaign
 	// Gunakan Preload untuk memuat data relasi Group, EmailTemplate, LandingPage, dan SendingProfile
-	if err := config.DB.Preload("Group").Preload("EmailTemplate").Preload("LandingPage").Preload("SendingProfile").First(&campaign, id).Error; err != nil {
+	if err := config.DB.Preload("Group").Preload("EmailTemplate").Preload("LandingPage").Preload("SendingProfile").First(&campaign, idCampaign).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
 				"status":  "error",
@@ -318,26 +356,74 @@ func GetCampaignDetail(c *gin.Context) {
 	config.DB.Model(&models.Event{}).Where("campaign_id = ? AND type = ?", campaign.ID, models.Reported).Count(&reportedCount)
 	reported = int(reportedCount)
 
-	// Ambil nama pengguna berdasarkan CreatedBy dan UpdatedBy ID
+	var totalParticipants int64
+	config.DB.Model(&models.Member{}).Where("group_id = ?", campaign.GroupID).Count(&totalParticipants)
+
 	createdByName := ""
 	updatedByName := ""
 
-	if campaign.CreatedBy != 0 { // Pastikan ID bukan nol
-		var createdByUser models.User // Asumsikan ada model User dengan field Name
+	if campaign.CreatedBy != 0 {
+		var createdByUser models.User
 		if err := config.DB.Select("name").First(&createdByUser, campaign.CreatedBy).Error; err == nil {
 			createdByName = createdByUser.Name
 		}
 	}
 
-	if campaign.UpdatedBy != 0 { // Pastikan ID bukan nol
-		var updatedByUser models.User // Asumsikan ada model User dengan field Name
+	if campaign.UpdatedBy != 0 {
+		var updatedByUser models.User
 		if err := config.DB.Select("name").First(&updatedByUser, campaign.UpdatedBy).Error; err == nil {
 			updatedByName = updatedByUser.Name
 		}
 	}
 
+	var participants []models.Member
+	config.DB.Where("group_id = ?", campaign.GroupID).Find(&participants)
+
+	var participantsData []models.ParticipantDetail
+	for _, p := range participants {
+		memberStatus := ""
+		position := p.Position
+
+		var recipient models.Recipient
+		if err := config.DB.Where("campaign_id = ? AND email = ?", campaign.ID, p.Email).First(&recipient).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				memberStatus = "-"
+			} else {
+				memberStatus = "error_fetching_status"
+			}
+		} else {
+			memberStatus = recipient.Status
+		}
+
+		participantsData = append(participantsData, models.ParticipantDetail{
+			ID:       p.ID,
+			Name:     p.Name,
+			Email:    p.Email,
+			Status:   memberStatus,
+			Position: position,
+		})
+	}
+
+	var timelineEvents []models.TimelineEvent
+
+	// Event: Kampanye dibuat
+	timelineEvents = append(timelineEvents, models.TimelineEvent{
+		Timestamp: campaign.CreatedAt,
+		Type:      "campaign_created",
+		Message:   "Kampanye dibuat oleh " + createdByName,
+	})
+
+	// Event: Kampanye diluncurkan (jika LaunchDate ada)
+	if !campaign.LaunchDate.IsZero() {
+		timelineEvents = append(timelineEvents, models.TimelineEvent{
+			Timestamp: campaign.LaunchDate,
+			Type:      "campaign_launched",
+			Message:   "Kampanye diluncurkan",
+		})
+	}
 	response := models.CampaignResponse{
 		ID:                 int(campaign.ID),
+		UID:                services.EncodeID(int(campaign.ID)),
 		Name:               campaign.Name,
 		LaunchDate:         campaign.LaunchDate,
 		SendEmailBy:        campaign.SendEmailBy,
@@ -352,17 +438,21 @@ func GetCampaignDetail(c *gin.Context) {
 		URL:                campaign.URL,
 		Status:             campaign.Status,
 		CreatedAt:          campaign.CreatedAt,
-		CreatedBy:          campaign.CreatedBy,
+		CreatedBy:          int(campaign.CreatedBy),
 		CreatedByName:      createdByName,
 		UpdatedAt:          campaign.UpdatedAt,
-		UpdatedBy:          campaign.UpdatedBy,
+		UpdatedBy:          int(campaign.UpdatedBy),
 		UpdatedByName:      updatedByName,
 		EmailSent:          emailSent,
 		EmailOpened:        emailOpened,
 		EmailClicks:        clicks,
 		EmailSubmitted:     submitted,
 		EmailReported:      reported,
+		TotalParticipants:  int(totalParticipants),
+		Participants:       participantsData,
+		TimelineEvents:     timelineEvents,
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Detail campaign successfully retrieved",

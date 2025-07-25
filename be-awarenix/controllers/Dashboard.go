@@ -1,12 +1,13 @@
 package controllers
 
 import (
-	"be-awarenix/config" // Asumsi Anda memiliki konfigurasi database di sini
-	"be-awarenix/models" // Import models Anda
+	"be-awarenix/config"
+	"be-awarenix/models"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // Struktur data untuk respons Dashboard (tetap sama)
@@ -41,10 +42,12 @@ type CTROverTime struct {
 }
 
 type TopPerformer struct {
-	Name         string `json:"name"`
-	CampaignName string `json:"campaignName"`
-	Clicks       int    `json:"clicks"`
-	Submits      int    `json:"submits"`
+	Email        string `json:"email"`
+	CampaignName int    `json:"totalCampaign"`
+	Opened       int    `json:"onOpened"`
+	Clicks       int    `json:"onClicks"`
+	Submits      int    `json:"onSubmits"`
+	ReportLink   int    `json:"onReport"`
 }
 
 type BrowserStats struct {
@@ -66,10 +69,7 @@ func GetDashboardMetrics(c *gin.Context) {
 	}
 
 	// --- 1. Total Email Sent ---
-	// Hitung total email yang dikirim (berdasarkan Recipients yang dibuat)
 	var totalSent int64
-	// Asumsi status 'sent' untuk Recipient menandakan email telah dikirim.
-	// Jika status 'pending' juga dihitung, Anda bisa menghapusnya.
 	err := db.Model(&models.Recipient{}).Where("status = ?", "sent").Count(&totalSent).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "failed to count total send email"})
@@ -77,19 +77,13 @@ func GetDashboardMetrics(c *gin.Context) {
 	}
 
 	// --- 2. Campaign Overview Metrics (Sent, Opened, Clicked, Submitted, Reported) ---
-	// Ini bisa dihitung dari tabel Event.
 	var openedCount, clickedCount, submittedCount, reportedCount int64
 
-	// Count Opened Events
 	db.Model(&models.Event{}).Where("type = ?", models.Opened).Count(&openedCount)
-	// Count Clicked Events
 	db.Model(&models.Event{}).Where("type = ?", models.Clicked).Count(&clickedCount)
-	// Count Submitted Events
 	db.Model(&models.Event{}).Where("type = ?", models.Submitted).Count(&submittedCount)
-	// Count Reported Events
 	db.Model(&models.Event{}).Where("type = ?", models.Reported).Count(&reportedCount)
 
-	// Hitung persentase
 	calculatePercentage := func(value int64, total int64) int {
 		if total == 0 {
 			return 0
@@ -115,23 +109,14 @@ func GetDashboardMetrics(c *gin.Context) {
 	}
 
 	// --- 4. CTR Over Time (misalnya per jam dalam 24 jam terakhir) ---
-	// Ini akan lebih kompleks karena membutuhkan agregasi berdasarkan waktu.
-	// Untuk demo, kita akan mengambil 5 jam terakhir dan menghitung event.
-	// Dalam aplikasi nyata, Anda mungkin ingin mengambil data per hari, per jam, dll.
-	// sesuai kebutuhan dan efisiensi query.
 	var ctrOverTimeData []CTROverTime
 	now := time.Now()
-	// Loop untuk 5 jam terakhir (atau rentang waktu yang relevan)
 	for i := 4; i >= 0; i-- {
-		// Mengambil data per jam (contoh sederhana)
-		// Anda mungkin perlu menyesuaikan ini untuk zona waktu atau rentang waktu yang lebih spesifik
 		hourStart := now.Add(time.Duration(-i) * time.Hour).Truncate(time.Hour)
 		hourEnd := hourStart.Add(1 * time.Hour)
 
 		var hourlySent, hourlyOpened, hourlyClicked int64
-		// Recipients created within this hour
 		db.Model(&models.Recipient{}).Where("created_at >= ? AND created_at < ?", hourStart, hourEnd).Count(&hourlySent)
-		// Events within this hour
 		db.Model(&models.Event{}).Where("timestamp >= ? AND timestamp < ? AND type = ?", hourStart, hourEnd, models.Opened).Count(&hourlyOpened)
 		db.Model(&models.Event{}).Where("timestamp >= ? AND timestamp < ? AND type = ?", hourStart, hourEnd, models.Clicked).Count(&hourlyClicked)
 
@@ -143,54 +128,62 @@ func GetDashboardMetrics(c *gin.Context) {
 		})
 	}
 
-	// --- 5. Top Performing Targets ---
-	// Agregasi event berdasarkan RecipientID
+	// --- 5. Top Performer ---
 	var topPerformers []TopPerformer
-	// Contoh: 5 pengguna teratas berdasarkan jumlah klik
-	var topClicks []struct {
-		RecipientID uint  `gorm:"column:recipient_id"`
-		Clicks      int64 `gorm:"column:clicks"`
+	type RecipientStats struct {
+		RecipientID    uint   `gorm:"column:recipient_id"`
+		Email          string `gorm:"column:email"`
+		TotalClicks    int64  `gorm:"column:total_clicks"`
+		TotalOpened    int64  `gorm:"column:total_opened"`
+		TotalSubmits   int64  `gorm:"column:total_submits"`
+		TotalReported  int64  `gorm:"column:total_reported"`
+		TotalCampaigns int64  `gorm:"column:total_campaigns"`
 	}
-	db.Model(&models.Event{}).
-		Select("recipient_id, count(id) as clicks").
-		Where("type = ?", models.Clicked).
-		Group("recipient_id").
-		Order("clicks desc").
-		Limit(5).
-		Scan(&topClicks)
 
-	for _, tc := range topClicks {
-		var submits int64
-		var recipient models.Recipient
-		db.Where("id = ?", tc.RecipientID).First(&recipient)
+	var stats []RecipientStats
+	err = db.Raw(`
+		SELECT
+			r.id as recipient_id, -- Ambil satu recipient_id saja, bisa sembarang
+			r.email,
+			COUNT(DISTINCT r.campaign_id) as total_campaigns, -- Hitung jumlah kampanye unik
+			COALESCE(SUM(CASE WHEN e.type = ? THEN 1 ELSE 0 END), 0) as total_clicks,
+			COALESCE(SUM(CASE WHEN e.type = ? THEN 1 ELSE 0 END), 0) as total_opened,
+			COALESCE(SUM(CASE WHEN e.type = ? THEN 1 ELSE 0 END), 0) as total_submits,
+			COALESCE(SUM(CASE WHEN e.type = ? THEN 1 ELSE 0 END), 0) as total_reported
+		FROM
+			recipients r
+		LEFT JOIN
+			events e ON r.id = e.recipient_id
+		GROUP BY
+			r.email
+		ORDER BY
+			total_clicks DESC
+		LIMIT 5
+	`, models.Clicked, models.Opened, models.Submitted, models.Reported).Scan(&stats).Error
 
-		var campaign models.Campaign
-		db.Model(&models.Campaign{}).Where("id = ?", recipient.CampaignID).First(&campaign, recipient.CampaignID)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "failed to get top performers",
+			"data":    nil,
+		})
+		return
+	}
 
-		db.Model(&models.Event{}).
-			Where("recipient_id = ? AND type = ?", tc.RecipientID, models.Submitted).
-			Count(&submits)
-
-		// Mengambil nama pengguna atau email dari Recipient atau User terkait
-		// Asumsi Recipient memiliki email yang bisa digunakan sebagai "nama"
-		// Jika Anda memiliki relasi Recipient ke User dan User memiliki nama, gunakan itu.
-		performerName := recipient.Email
-		if performerName == "" {
-			performerName = "Unknown Target"
-		}
-
+	for _, s := range stats {
 		topPerformers = append(topPerformers, TopPerformer{
-			Name:         performerName,
-			CampaignName: campaign.Name,
-			Clicks:       int(tc.Clicks),
-			Submits:      int(submits),
+			Email:        s.Email,
+			CampaignName: int(s.TotalCampaigns),
+			Opened:       int(s.TotalOpened),
+			Clicks:       int(s.TotalClicks),
+			Submits:      int(s.TotalSubmits),
+			ReportLink:   int(s.TotalReported),
 		})
 	}
 
 	// --- 6. Browser/OS Breakdown ---
 	var browserData []BrowserStats
 
-	// Agregasi Browser
 	var browserCounts []struct {
 		Browser string
 		Count   int64
@@ -200,12 +193,11 @@ func GetDashboardMetrics(c *gin.Context) {
 		Where("browser IS NOT NULL AND browser != ''").
 		Group("browser").
 		Order("count desc").
-		Limit(5). // Batasi jumlah browser yang ditampilkan
+		Limit(5).
 		Scan(&browserCounts)
 
 	for _, bc := range browserCounts {
-		// Asumsi warna statis atau Anda memiliki logika untuk menetapkan warna
-		color := "#9CA3AF" // Warna default
+		color := "#9CA3AF"
 		switch bc.Browser {
 		case "Chrome":
 			color = "#3B82F6"
@@ -214,7 +206,7 @@ func GetDashboardMetrics(c *gin.Context) {
 		case "Edge":
 			color = "#0EA5E9"
 		default:
-			color = "#6B7280" // Gray for others
+			color = "#6B7280"
 		}
 		browserData = append(browserData, BrowserStats{Name: bc.Browser, Value: int(bc.Count), Color: color})
 	}

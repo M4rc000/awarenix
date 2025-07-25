@@ -30,7 +30,7 @@ type Campaign struct {
 
 type CampaignRequest struct {
 	Name             string  `json:"name" binding:"required"`
-	LaunchDate       string  `json:"launch_date" binding:"required"` // String untuk JSON dari frontend
+	LaunchDate       string  `json:"launch_date" binding:"required"`
 	SendEmailBy      *string `json:"send_email_by,omitempty"`
 	GroupID          uint    `json:"group_id" binding:"required"`
 	EmailTemplateID  uint    `json:"email_template_id" binding:"required"`
@@ -43,6 +43,7 @@ type CampaignRequest struct {
 
 type CampaignResponse struct {
 	ID                 int        `json:"id"`
+	UID                string     `json:"uid"`
 	Name               string     `json:"name"`
 	LaunchDate         time.Time  `json:"launch_date"`
 	SendEmailBy        *time.Time `json:"send_email_by,omitempty"`
@@ -69,6 +70,24 @@ type CampaignResponse struct {
 	EmailClicks    int `json:"email_clicks"`
 	EmailSubmitted int `json:"email_submitted"`
 	EmailReported  int `json:"email_reported"`
+
+	TotalParticipants int                 `json:"total_participants"`
+	Participants      []ParticipantDetail `json:"participants,omitempty"`
+	TimelineEvents    []TimelineEvent     `json:"timeline_events,omitempty"`
+}
+
+type ParticipantDetail struct {
+	ID       uint   `json:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Status   string `json:"status"`
+	Position string `json:"position"`
+}
+
+type TimelineEvent struct {
+	Timestamp time.Time `json:"timestamp"`
+	Type      string    `json:"type"`
+	Message   string    `json:"message"`
 }
 
 type NewCampaignResponse struct {

@@ -8,11 +8,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mssola/user_agent"
+	"github.com/speps/go-hashids"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/html"
 	"gorm.io/datatypes"
@@ -184,4 +186,28 @@ func GetRoleScope(c *gin.Context) (int, int, bool) {
 	role := user.Role
 
 	return userID, role, true
+}
+
+func EncodeID(id int) string {
+	hd := hashids.NewData()
+	hd.Salt = os.Getenv("SALT_SECRET")
+	hd.MinLength = 6
+	h, _ := hashids.NewWithData(hd)
+
+	e, _ := h.Encode([]int{id})
+	return e
+}
+
+func DecodeID(encoded string) (int, error) {
+	hd := hashids.NewData()
+	hd.Salt = os.Getenv("SALT_SECRET")
+	hd.MinLength = 6
+	h, _ := hashids.NewWithData(hd)
+
+	ids, err := h.DecodeWithError(encoded)
+	if err != nil || len(ids) == 0 {
+		return 0, fmt.Errorf("invalid ID")
+	}
+
+	return ids[0], nil
 }
