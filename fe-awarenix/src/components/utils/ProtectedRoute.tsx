@@ -16,7 +16,7 @@ const ProtectedRoute = () => {
   }, [userSessionLoading]);
 
   // Fungsi untuk mengecek apakah path termasuk dalam always allowed paths
-  const isPathAlwaysAllowed = (currentPath) => {
+  const isPathAlwaysAllowed = (currentPath: string) => {
     const alwaysAllowedPatterns = [
       { pattern: '/dashboard/campaign-detail/:campaignId', regex: /^\/dashboard\/campaign-detail\/[^\/]+$/ },
       { pattern: '/profile', regex: /^\/profile$/ },
