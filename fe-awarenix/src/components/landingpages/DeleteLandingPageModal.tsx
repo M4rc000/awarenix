@@ -58,14 +58,19 @@ export default function DeleteLandingPageModal({
       const data = await res.json();
 
       if (data.status !== "success") {
-        console.log('Data Error: ', data.error);
         setError(data.error || 'Failed to delete landing page');
         Swal.fire({
-          text: 'Failed to delete landing page',
+          text: data.message || 'Failed to delete landing page',
           icon: 'error',
-          duration: 2000
+          duration: 3000
         });
         return;
+      } else if (data.status == "success"){
+        Swal.fire({
+          text: 'Landing Page deleted successfully',
+          icon: "success",
+          duration: 3000
+        });
       }
       onClose();        
       if (onLandingPageDeleted) {
@@ -78,7 +83,7 @@ export default function DeleteLandingPageModal({
       Swal.fire({
         text: `Unexpected error occurred while deleting landing page`,
         icon: 'error',
-        duration: 2000,
+        duration: 3000,
       });
     } finally {
       setIsDeleting(false);
@@ -149,11 +154,6 @@ export default function DeleteLandingPageModal({
                       
                       if (success) {
                         onClose();
-                        Swal.fire({
-                          text: 'Landing Page deleted successfully',
-                          icon: "success",
-                          duration: 2000
-                        });
                         
                         // Panggil callback untuk refresh data
                         if (onLandingPageDeleted) {

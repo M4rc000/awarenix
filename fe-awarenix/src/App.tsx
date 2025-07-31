@@ -28,8 +28,9 @@
   const PhishingWebsite = lazy(() => import("./pages/PhisingWebsite/PhisingWebsite"));
   const TrainingModules = lazy(() => import("./pages/TrainingModules/TrainingModules"));
   const LoggingActivity = lazy(() => import("./pages/LoggingActivity/LoggingActivity"));
-  const CommingSoon = lazy(() => import("./pages/OtherPage/CommingSoon"));
+  // const CommingSoon = lazy(() => import("./pages/OtherPage/CommingSoon"));
   const Unauthorized = lazy(() => import("./pages/OtherPage/Unauthorized"));
+  const EnvironmentCheck = lazy(() => import("./pages/EnvironmentCheck/EnvironmentCheck"));
 
   import { routeTitles } from "./components/utils/RouteTiles";
 
@@ -76,7 +77,7 @@
                     {/* <Route path="/subscription-billing" element={<CommingSoon />} /> */}
                     <Route path="/account-settings" element={<AccountSettings />} />
                     <Route path="/logging-activity" element={<LoggingActivity />} />
-                    <Route path="/environtment-check" element={<CommingSoon />} />
+                    <Route path="/environment-check" element={<EnvironmentCheck />} />
                   </Route>
                 </Route>
 

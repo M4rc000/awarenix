@@ -58,11 +58,17 @@ export default function DeleteEmailTemplateModal({
       if (data.status !== "success") {
         setError(data.error || 'Failed to delete email template');
         Swal.fire({
-          text: 'Failed to delete email template',
+          text: data.message || 'Failed to delete email template',
           icon: 'error',
           duration: 2000
         });
         return;
+      } else if (data.status == "success"){
+        Swal.fire({
+          text: 'Email template deleted successfully',
+          icon: "success",
+          duration: 2000
+        });
       }
       onClose();         
       if (onEmailTemplateDeleted) {
@@ -111,7 +117,7 @@ export default function DeleteEmailTemplateModal({
           >
             <DialogPanel className="w-full max-w-fit box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-hidden dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5 z-[9999999999999]" onClick={(e) => e.stopPropagation()}>
               {/* HEADER */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-700 flex-shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                     <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Confirmation Delete Email Template ?
                     </DialogTitle>
@@ -146,11 +152,6 @@ export default function DeleteEmailTemplateModal({
                       
                       if (success) {
                         onClose();
-                        Swal.fire({
-                          text: 'Email template deleted successfully',
-                          icon: "success",
-                          duration: 2000
-                        });
                         
                         // Panggil callback untuk refresh data
                         if (onEmailTemplateDeleted) {

@@ -4,7 +4,7 @@ import NewUserModal from "../../components/usermanagement/NewUserModal";
 import TableUsers from "../../components/usermanagement/TableUsers";
 import CardHeader from "../../components/usermanagement/CardHeader";
 
-export default function UserManagement() { // Sekarang UserManagement tidak menerima props lagi
+export default function UserManagement() { 
   const [modalOpen, setModalOpen] = useState(false);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
@@ -14,7 +14,6 @@ export default function UserManagement() { // Sekarang UserManagement tidak mene
 
   useEffect(() => {
   }, [reloadTrigger]);
-
 
   return (
     <div className="p-4 min-h-screen">

@@ -38,7 +38,7 @@ const DeleteEmailTemplateModalForm = forwardRef<DeleteEmailTemplateFormRef, Dele
           <Input 
             type="text"  
             value={emailTemplate.name}
-            disabled
+            readonly
             className="w-full text-sm sm:text-base h-10 px-3 bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
           />
         </div>
@@ -49,7 +49,7 @@ const DeleteEmailTemplateModalForm = forwardRef<DeleteEmailTemplateFormRef, Dele
           <Input 
             type="text"  
             value={emailTemplate.envelopeSender}
-            disabled
+            readonly
             className="w-full text-sm sm:text-base h-10 px-3 bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
           />
         </div>
@@ -60,14 +60,14 @@ const DeleteEmailTemplateModalForm = forwardRef<DeleteEmailTemplateFormRef, Dele
           <Input 
             type="text"  
             value={emailTemplate.subject}
-            disabled
+            readonly
             className="w-full text-sm sm:text-base h-10 px-3 bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
           />
         </div>
       </div>
     );
   }
-); // ✅ penutup forwardRef
+);
 
 DeleteEmailTemplateModalForm.displayName = "DeleteEmailTemplateModalForm";
 

@@ -6,3 +6,5 @@ node_modules
 /be-awarenix/.env
 ./.vscode
 /.vscode
+.env
+/.env

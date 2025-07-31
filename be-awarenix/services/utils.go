@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -29,9 +30,9 @@ func HashPassword(password string) (string, error) {
 }
 
 // LogEventByRID mencatat event berbasis rid (string UUID)
-func LogEventByRID(c *gin.Context, rid string, eventType string, campaignLanguage string) {
+func LogEventByRID(c *gin.Context, rid string, eventType string, campaignLanguage string, campaignID uint) {
 	if campaignLanguage == "" {
-		campaignLanguage = "English"
+		campaignLanguage = "English" // Default fallback language
 	}
 
 	// 1. Cari Recipient
@@ -39,7 +40,7 @@ func LogEventByRID(c *gin.Context, rid string, eventType string, campaignLanguag
 	if err := config.DB.
 		Where("uid = ?", rid).
 		First(&rec).Error; err != nil {
-		c.Status(http.StatusBadRequest)
+		log.Printf("ERROR: Recipient not found for event logging (RID: %s, Type: %s): %v", rid, eventType, err)
 		return
 	}
 
@@ -67,14 +68,18 @@ func LogEventByRID(c *gin.Context, rid string, eventType string, campaignLanguag
 	}
 
 	// 5. Marshal ke JSON untuk kolom Metadata
-	metaJSON, _ := json.Marshal(metaMap)
+	metaJSON, err := json.Marshal(metaMap)
+	if err != nil {
+		log.Printf("ERROR: Failed to marshal metadata to JSON for event (RID: %s, Type: %s): %v", rid, eventType, err)
+		metaJSON = []byte("{}")
+	}
 
 	// 6. Buat object Event
 	evType := models.EventType(eventType)
 	e := models.Event{
 		RecipientID:  rec.ID,
 		RecipientRID: rid,
-		CampaignID:   rec.CampaignID,
+		CampaignID:   campaignID,
 		Type:         evType,
 		Timestamp:    time.Now(),
 		IP:           c.ClientIP(),
@@ -87,30 +92,24 @@ func LogEventByRID(c *gin.Context, rid string, eventType string, campaignLanguag
 	// 7. Duplicate check: cari count dengan recipient_id, campaign_id, type yang sama
 	var cnt int64
 	config.DB.Model(&models.Event{}).
-		Where("recipient_id = ? AND campaign_id = ? AND type = ?", rec.ID, rec.CampaignID, evType).
+		Where("recipient_id = ? AND campaign_id = ? AND type = ?", rec.ID, campaignID, evType).
 		Count(&cnt)
 
-	// 8. Simpan hanya jika belum ada
-	if cnt == 0 {
-		config.DB.Create(&e)
+	// 8. Simpan hanya jika belum ada (atau jika eventType adalah click/submit/attachment_clicked yang bisa berulang)
+	isDuplicate := false
+	if evType == models.Opened || evType == models.Reported {
+		if cnt > 0 {
+			isDuplicate = true
+			log.Printf("INFO: Skipping duplicate event: Recipient %s, Campaign %d, Type %s", rid, campaignID, eventType)
+		}
 	}
 
-	// 9. Response: serve pixel / redirect / text
-	switch eventType {
-	case string(models.Opened):
-		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
-		c.File("pixel.gif")
-	case string(models.Clicked):
-		target, _ := url.QueryUnescape(c.Query("url"))
-		c.Redirect(http.StatusFound, target) // Menggunakan http.StatusFound (302)
-	case string(models.Submitted):
-		c.Redirect(http.StatusFound, "http://localhost:5173/dashboard") // Menggunakan http.StatusFound (302)
-	case string(models.Reported):
-		frontendDomain := "localhost:5173"
-		// Meneruskan parameter bahasa yang diterima ke URL frontend
-		c.Redirect(http.StatusFound, fmt.Sprintf("http://%s/report-thanks?lang=%s", frontendDomain, campaignLanguage)) // Menggunakan http.StatusFound (302)
-	default:
-		c.Status(http.StatusNoContent) // Menggunakan http.StatusNoContent (204)
+	if !isDuplicate {
+		if err := config.DB.Create(&e).Error; err != nil {
+			log.Printf("ERROR: Failed to create event record (RID: %s, Type: %s): %v", rid, eventType, err)
+		} else {
+			log.Printf("INFO: Event logged: Recipient %s, Campaign %d, Type %s, ID: %d", rid, campaignID, eventType, e.ID)
+		}
 	}
 }
 
@@ -188,6 +187,25 @@ func GetRoleScope(c *gin.Context) (int, int, bool) {
 	return userID, role, true
 }
 
+func GetRoleScopeDashboard(c *gin.Context) (int, int, int, bool) {
+	userScope, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "error", "message": "User not authenticated"})
+		return 0, 0, 0, false
+	}
+
+	user, ok := userScope.(*models.User)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to parse user data: invalid user object in context"})
+		return 0, 0, 0, false
+	}
+
+	userID := int(user.ID)
+	role := user.Role
+
+	return userID, role, user.CreatedBy, true
+}
+
 func EncodeID(id int) string {
 	hd := hashids.NewData()
 	hd.Salt = os.Getenv("SALT_SECRET")
@@ -210,4 +228,25 @@ func DecodeID(encoded string) (int, error) {
 	}
 
 	return ids[0], nil
+}
+
+func LogSubmitEvent(rid string, campaignID uint, formData models.SubmitCampaign) error {
+	// Tambahkan data dari parameter ke struct
+	formData.RecipientUID = rid
+	formData.CampaignID = campaignID
+	formData.CreatedAt = time.Now()
+
+	// Simpan data submit ke database
+	if err := config.DB.Create(&formData).Error; err != nil {
+		return fmt.Errorf("failed to save submitted form data: %w", err)
+	}
+
+	// Perbarui status recipient menjadi "submitted"
+	if err := config.DB.Model(&models.Recipient{}).
+		Where("uid = ? AND campaign_id = ?", rid, campaignID).
+		Update("status", "submitted").Error; err != nil {
+		return fmt.Errorf("failed to update recipient status: %w", err)
+	}
+
+	return nil
 }

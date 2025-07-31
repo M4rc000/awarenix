@@ -435,7 +435,7 @@ export default function TableRoles({ reloadTrigger, onReload }: { reloadTrigger?
                     ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
                     : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
                   }
-                  transition-colors duration-200 ml-1 // Tambah margin kiri sedikit
+                  transition-colors duration-200 
                 `}
                 title="Previous page"
             >
@@ -443,7 +443,7 @@ export default function TableRoles({ reloadTrigger, onReload }: { reloadTrigger?
             </button>
 
             {/* Page Numbers */}
-            <div className="flex items-center space-x-1 mx-2"> {/* Tambah margin horizontal */}
+            <div className="flex items-center space-x-1"> {/* Tambah margin horizontal */}
                 {(() => {
                     const currentPage = table.getState().pagination.pageIndex;
                     const totalPages = table.getPageCount();

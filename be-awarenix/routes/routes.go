@@ -12,6 +12,7 @@ func SetupRoutes(router *gin.Engine) {
 	router.Use(gin.Logger(), gin.Recovery())
 
 	// Public routes
+	router.GET("/health", controllers.HealthCheck)
 	router.POST("/api/v1/auth/login", controllers.AuthLogin)
 	router.POST("/api/v1/auth/logout", middlewares.JWTAuth(), controllers.AuthLogout)
 
@@ -56,6 +57,7 @@ func SetupRoutes(router *gin.Engine) {
 			emailTemplate.POST("/create", controllers.RegisterEmailTemplate)    // CREATE
 			emailTemplate.GET("/all", controllers.GetEmailTemplates)            // READ
 			emailTemplate.GET("/default", controllers.GetDefaultEmailTemplates) // GET DEFAULT EMAIL TEMPLATES
+			emailTemplate.GET("/:id", controllers.GetEmailTemplateByID)         // GET CERTAIN
 			emailTemplate.PUT("/:id", controllers.UpdateEmailTemplate)          // UPDATE
 			emailTemplate.DELETE("/:id", controllers.DeleteEmailTemplate)       // DELETE
 		}
@@ -104,9 +106,17 @@ func SetupRoutes(router *gin.Engine) {
 		{
 			campaigns.POST("/create", controllers.RegisterCampaign)
 			campaigns.GET("/all", controllers.GetCampaigns)
+			campaigns.GET("/role-scope-parent/all", controllers.GetCampaignsRoleScopeParent)
 			campaigns.GET("/:id", controllers.GetCampaignDetail)
 			campaigns.PUT("/:id", controllers.UpdateCampaign)
 			campaigns.DELETE("/:id", controllers.DeleteCampaign)
+		}
+
+		attachmentRoutes := api.Group("/attachments")
+		{
+			attachmentRoutes.POST("/upload", controllers.UploadAttachment)        // New upload endpoint
+			attachmentRoutes.GET("/download/:id", controllers.DownloadAttachment) // New download endpoint
+			attachmentRoutes.DELETE("/:id", controllers.DeleteAttachment)         // New delete endpoint
 		}
 
 	}
@@ -118,6 +128,8 @@ func SetupRoutes(router *gin.Engine) {
 		track.GET("/click", controllers.HandleClickTracker)
 		track.POST("/submit", controllers.HandleSubmitTracker)
 		track.GET("/report", controllers.HandleReportTracker)
+		track.GET("/attachment/click/:id", controllers.TrackAttachment)
+		track.GET("/attachment/open/:id", controllers.HandleAttachmentOpenTracker)
 	}
 
 	// SHOW LANDING PAGE REDIRECT FROM EMAIL

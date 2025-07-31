@@ -24,6 +24,7 @@
     "apexcharts": "^4.1.0",
     "clsx": "^2.1.1",
     "dompurify": "^3.2.6",
+    "file-saver": "^2.0.5",
     "flatpickr": "^4.6.13",
     "fs": "^0.0.1-security",
     "jwt-decode": "^4.0.0",
@@ -45,11 +46,13 @@
     "sweetalert2": "^11.22.0",
     "swiper": "^11.2.3",
     "tailwind-merge": "^3.0.1",
-    "tailwind-scrollbar": "^4.0.2"
+    "tailwind-scrollbar": "^4.0.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
     "@tailwindcss/postcss": "^4.0.8",
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^24.0.14",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",

@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/smtp"
+	"os"
 	"strconv"
 	"strings"
 	"text/template"
@@ -149,23 +150,28 @@ func SendTestEmail(profile *models.SendingProfiles, recipientEmail, body, subjec
 // SendEmail
 func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 	// Domains
-	backendBase := "localhost:3000"
-	frontendDomain := "localhost:5173"
+	backendBase := os.Getenv("BACKEND_URL")
+	if backendBase == "" {
+		backendBase = "localhost:3000"
+	}
 
-	// --- AMBIL NAMA RECIPIENT DARI GROUP MEMBER ---
+	frontendDomain := os.Getenv("FRONTEND_URL")
+	if frontendDomain == "" {
+		frontendDomain = "localhost:5173"
+	}
+
+	// Ambil nama recipient
 	var recipientName string
 	var gm models.Member
-	err := config.DB.
+	if err := config.DB.
 		Where("group_id = ? AND email = ?", camp.GroupID, rec.Email).
-		First(&gm).Error
-	if err != nil {
-		// fallback ke email jika nama tidak ditemukan
+		First(&gm).Error; err != nil {
 		recipientName = rec.Email
 	} else {
 		recipientName = gm.Name
 	}
 
-	// Data untuk template (body dan subject)
+	// Template data
 	templateData := map[string]interface{}{
 		"Name":  recipientName,
 		"Email": rec.Email,
@@ -175,61 +181,72 @@ func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 		),
 	}
 
-	// 1. Render email body
-	tplBody, _ := template.New("emailBody").Parse(camp.EmailTemplate.Body)
+	// 1. Render body
+	if camp.EmailTemplate.Body == "" {
+		config.DB.Model(&rec).
+			Updates(models.Recipient{Status: "failed", Error: "Email body is empty"})
+		return
+	}
+	tplBody, err := template.New("emailBody").Parse(camp.EmailTemplate.Body)
+	if err != nil {
+		config.DB.Model(&rec).
+			Updates(models.Recipient{Status: "failed", Error: err.Error()})
+		return
+	}
 	var bufBody bytes.Buffer
-	tplBody.Execute(&bufBody, templateData)
+	if err := tplBody.Execute(&bufBody, templateData); err != nil {
+		config.DB.Model(&rec).
+			Updates(models.Recipient{Status: "failed", Error: err.Error()})
+		return
+	}
 	body := bufBody.String()
 
-	// 2. Render email subject
-	tplSubject, _ := template.New("emailSubject").Parse(camp.EmailTemplate.Subject)
+	// 2. Render subject
+	if camp.EmailTemplate.Subject == "" {
+		config.DB.Model(&rec).
+			Updates(models.Recipient{Status: "failed", Error: "Email subject is empty"})
+		return
+	}
+	tplSubject, err := template.New("emailSubject").Parse(camp.EmailTemplate.Subject)
+	if err != nil {
+		config.DB.Model(&rec).
+			Updates(models.Recipient{Status: "failed", Error: err.Error()})
+		return
+	}
 	var bufSubject bytes.Buffer
-	tplSubject.Execute(&bufSubject, templateData)
+	if err := tplSubject.Execute(&bufSubject, templateData); err != nil {
+		config.DB.Model(&rec).
+			Updates(models.Recipient{Status: "failed", Error: err.Error()})
+		return
+	}
 	subject := bufSubject.String()
 
-	// 3. Sisipkan tracking pixel (opened)
-	pixel := fmt.Sprintf(
+	// 3. Tracking pixel untuk “opened”
+	body += fmt.Sprintf(
 		`<img src="http://%s/track/open?rid=%s&campaign=%d" style="display:none"/>`,
 		backendBase, rec.UID, camp.ID,
 	)
-	body += pixel
 
-	// Ambil bahasa dari template email
-	emailLanguage := camp.EmailTemplate.Language
-	var reportButtonText string
-	var reportIntroText string
-	switch emailLanguage {
+	// 4. Report button
+	var intro, btnText string
+	switch camp.EmailTemplate.Language {
 	case "Indonesia":
-		reportButtonText = "Laporkan Email Ini"
-		reportIntroText = "Jika Anda yakin email ini adalah phishing, silakan"
-	case "English":
-		reportButtonText = "Report This Email"
-		reportIntroText = "If you believe this email is phishing, please"
+		intro, btnText = "Jika Anda yakin email ini adalah phishing, silakan", "Laporkan Email Ini"
 	default:
-		reportButtonText = "Report This Email"
-		reportIntroText = "If you believe this email is phishing, please"
+		intro, btnText = "If you believe this email is phishing, please", "Report This Email"
 	}
-
-	// 4. Tambahkan tombol “Laporkan Email Ini” dengan styling mirip Gmail
-	// Menggunakan gaya yang lebih subtle dan teks yang disesuaikan bahasa
-	reportLink := fmt.Sprintf(`
-      <div style="text-align:center; margin-top:20px; font-family:Arial, sans-serif; font-size:12px; color:#999;">
-        %s <a href="http://%s/track/report?rid=%s&campaign=%d"
-           style="
-             color:#1a73e8; /* Warna biru mirip Gmail */
-             text-decoration:none;
-           ">
-          %s
-        </a>.
-      </div>`,
-		reportIntroText, // Menggunakan variabel teks pengantar
-		backendBase, rec.UID, camp.ID,
-		reportButtonText,
+	body += fmt.Sprintf(`
+        <div style="text-align:center; margin-top:20px; font-family:Arial, sans-serif; font-size:12px; color:#999;">
+          %s <a href="http://%s/track/report?rid=%s&campaign=%d"
+             style="color:#1a73e8; text-decoration:none;">
+            %s
+          </a>.
+        </div>`,
+		intro, backendBase, rec.UID, camp.ID, btnText,
 	)
-	body += reportLink
 
-	// 5. Rewrite click links (termasuk placeholder {{.Name}} & {{.Email}})
-	body = RewriteLinks( // Asumsi RewriteLinks sudah didefinisikan
+	// 5. Rewrite existing links
+	body = RewriteLinks(
 		body,
 		rec.UID,
 		camp.ID,
@@ -239,11 +256,88 @@ func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 		rec.Email,
 	)
 
-	// 6. SMTP send
+	// 6. Sisipkan **attachment download links** ber-tracking klik
+	if len(camp.EmailTemplate.Attachments) > 0 {
+		var sb strings.Builder
+		sb.WriteString(`
+		<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px 0; max-width: 600px;">
+			<div style="font-size: 14px; color: #202124; margin-bottom: 12px; font-weight: 500;">
+				` + fmt.Sprintf("%d lampiran", len(camp.EmailTemplate.Attachments)) + `
+			</div>
+		`)
+
+		for _, att := range camp.EmailTemplate.Attachments {
+			previewURL := fmt.Sprintf(
+				"http://%s/track/attachment/click/%d?rid=%s&campaign=%d",
+				backendBase, att.ID, rec.UID, camp.ID,
+			)
+
+			// Calculate file size display (assuming you have size info, otherwise use static)
+			fileSizeDisplay := "32 KB" // You can replace this with actual file size if available
+
+			sb.WriteString(fmt.Sprintf(`
+			<div style="margin-bottom: 8px;">
+				<div style="
+					border: 1px solid #e0e0e0;
+					border-radius: 8px;
+					background: #ffffff;
+					padding: 16px;
+					max-width: 300px;
+					display: inline-block;
+					position: relative;
+				">
+					<div style="display: flex; align-items: center; margin-bottom: 8px;">
+						<img src="https://ssl.gstatic.com/docs/doclist/images/mediatype/icon_3_pdf_x16.png" 
+							alt="PDF" width="15" height="15" 
+							style="margin-right: 15px;"/>
+						<div>
+							<div style="
+								font-size: 14px;
+								color: #3c4043;
+								line-height: 20px;
+								font-weight: 400;
+								margin-bottom: 2px;
+							">%s</div>
+							<div style="
+								font-size: 12px;
+								color: #5f6368;
+								line-height: 16px;
+							">%s</div>
+						</div>
+					</div>
+					<div style="display: flex; gap: 8px; margin-top: 12px;">
+						<a href="%s" style="
+							display: inline-flex;
+							align-items: center;
+							justify-content: center;
+							width: 32px;
+							height: 32px;
+							border-radius: 50%%;
+							background: #f8f9fa;
+							border: 1px solid #dadce0;
+							text-decoration: none;
+							transition: all 0.2s ease; color: grey; padding-left: 20px
+						" title="Download">
+							
+						</a>
+					</div>
+				</div>
+			</div>
+		`, att.OriginalFilename, fileSizeDisplay, previewURL))
+		}
+
+		sb.WriteString(`
+		</div>
+	`)
+
+		body += sb.String()
+	}
+
+	// 7. SMTP send
 	m := gomail.NewMessage()
 	m.SetHeader("From", camp.SendingProfile.SmtpFrom)
 	m.SetHeader("To", rec.Email)
-	m.SetHeader("Subject", subject) // Gunakan subject yang sudah di-render
+	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
 
 	d := gomail.NewDialer(
@@ -252,11 +346,13 @@ func SendEmailToRecipient(rec models.Recipient, camp models.Campaign) {
 		camp.SendingProfile.Username,
 		camp.SendingProfile.Password,
 	)
-
 	if err := d.DialAndSend(m); err != nil {
-		config.DB.Model(&rec).Updates(models.Recipient{Status: "failed", Error: err.Error()})
+		config.DB.Model(&rec).
+			Updates(models.Recipient{Status: "failed", Error: err.Error()})
 		return
 	}
+
+	// 8. Update status sent
 	config.DB.Model(&rec).Update("status", "sent")
 }
 

@@ -102,10 +102,10 @@ export default function DuplicateEmailTemplateModal({
                       if (success) {
                         onClose();
                         Swal.fire({
-                          text: 'Email template updated successfully',
+                          text: "Email Template successfully duplicated!", 
                           icon: "success",
-                          duration: 2000
-                        })
+                          duration: 3000,
+                        });
                         
                         // Panggil callback untuk refresh data
                         if (onUserUpdated) {
@@ -113,7 +113,7 @@ export default function DuplicateEmailTemplateModal({
                         }
                       } else {
                         Swal.fire({
-                          text: 'Failed to update email template. Please try again!',
+                          text: 'Failed to added email template. Please try again!',
                           icon: "error",
                           duration: 2000
                         })
@@ -121,7 +121,7 @@ export default function DuplicateEmailTemplateModal({
                     } catch (error) {
                       console.log('Error: ', error);
                       Swal.fire({
-                        text: 'An error occurred while updating user!',
+                        text: 'An error occurred while updating email template!',
                         icon: "error",
                         duration: 2000
                       })

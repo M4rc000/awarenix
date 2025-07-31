@@ -13,7 +13,7 @@ export const routeTitles: { [key: string]: string } = {
   "/training-modules": "Trainning Modules",
   "/account-settings": "Account Settings",
   "/logging-activity": "Logging Activity",
-  "/environtment-check": "Environment Check",
+  "/environment-check": "Environment Check",
   "/report-thanks": "Report Phishing",
   "/": "Login",
   "/login": "Login",

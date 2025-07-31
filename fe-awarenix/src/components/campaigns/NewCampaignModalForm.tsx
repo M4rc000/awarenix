@@ -240,10 +240,6 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
       newErrors.launchDate = "Launch Date is required";
     }
     
-    if (!campaign.url.trim()) {
-      newErrors.url = "URL is required";
-    }
-    
     if (!campaign.emailTemplate.trim()) {
       newErrors.emailTemplate = "Email Template is required";
     }
@@ -301,6 +297,20 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
           created_by: createdBy 
         }),
       });
+      
+      console.log('body: ',{
+        name: campaign.name,
+        launch_date: formattedLaunchDate, 
+        send_email_by: formattedSendEmailBy, 
+        url: campaign.url,
+        group_id: parseInt(campaign.group), 
+        email_template_id: parseInt(campaign.emailTemplate), 
+        landing_page_id: parseInt(campaign.landingPage), 
+        sending_profile_id: parseInt(campaign.sendingProfile),
+        created_by: createdBy 
+
+      });
+      
 
       if (!response.ok) {
         let errorMessage = 'Failed to create campaign';
@@ -364,10 +374,6 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
         } else if (error.message.toLowerCase().includes('group')) {
           setErrors({
             group: error.message,
-          });
-        } else if (error.message.toLowerCase().includes('url')) {
-          setErrors({
-            url: error.message,
           });
         } else if (error.message.toLowerCase().includes('emailtemplate')) {
           setErrors({
@@ -506,8 +512,7 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
         position: "Tester",
       },
       emailBody: testEmailBody, 
-    };
-
+    };    
     try {
       const response = await fetch(`${API_URL}/sending-profile/send-test-email`, {
         method: "POST",
@@ -647,7 +652,6 @@ const NewCampaignModalForm = forwardRef<NewCampaignModalFormRef, NewCampaignModa
                 onChange={(e) => handleInputChange('url', e.target.value)}
                 disabled={isSubmitting}
                 className={errors.url ? 'border-red-500' : ''}
-                required
               />
               {errors.url && (
                 <p className="text-red-500 text-sm mt-1">{errors.url}</p>

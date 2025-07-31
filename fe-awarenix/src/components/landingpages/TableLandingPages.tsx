@@ -220,19 +220,31 @@ export default function TableLandingPages({ reloadTrigger, onReload }: { reloadT
         accessorKey: 'actions',
         header: 'Action',
         cell: (row) => (
-          <div className="flex items-center justify-center space-x-2">
-            <Button size="xs" variant="success" onClick={() => onDuplicate(row.row.original)}>
-              <IoIosCopy />
-            </Button>
-            <Button size="xs" variant="info" onClick={() => onShowDetail(row.row.original)}>
-              <FaCircleInfo />
-            </Button>
-            <Button size="xs" variant="warning" onClick={() => onEdit(row.row.original)}>
-              <BiSolidEditAlt />
-            </Button>
-            <Button size="xs" variant="danger" onClick={() => onDelete(row.row.original)}>
-              <FaRegTrashAlt />
-            </Button>
+          <div className='pr-8 lg:px-3'>
+            <div className="grid grid-cols-2 gap-10 lg:gap-0 p-1">
+              <div>
+                <Button size="xs" variant="success" onClick={() => onDuplicate(row.row.original)}>
+                  <IoIosCopy />
+                </Button>
+              </div>
+              <div>
+                <Button size="xs" variant="info" onClick={() => onShowDetail(row.row.original)}>
+                  <FaCircleInfo />
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-10 lg:gap-0 p-1">
+              <div>
+                <Button size="xs" variant="warning" onClick={() => onEdit(row.row.original)}>
+                  <BiSolidEditAlt />
+                </Button>
+              </div>
+              <div>
+                <Button size="xs" variant="danger" onClick={() => onDelete(row.row.original)}>
+                  <FaRegTrashAlt />
+                </Button>
+              </div>
+            </div>
           </div>
         ),
       },
@@ -421,7 +433,6 @@ export default function TableLandingPages({ reloadTrigger, onReload }: { reloadT
       </div>
 
       {/* PAGINATION */}
-      {/* PAGINATION */}
       <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-white dark:bg-white/[0.03] border-t border-gray-200 dark:border-gray-700">
         {/* Entries Info */}
         <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-0">
@@ -471,7 +482,7 @@ export default function TableLandingPages({ reloadTrigger, onReload }: { reloadT
                     ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
                     : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
                   }
-                  transition-colors duration-200 ml-1 // Tambah margin kiri sedikit
+                  transition-colors duration-200 
                 `}
                 title="Previous page"
             >
@@ -479,7 +490,7 @@ export default function TableLandingPages({ reloadTrigger, onReload }: { reloadT
             </button>
 
             {/* Page Numbers */}
-            <div className="flex items-center space-x-1 mx-2"> {/* Tambah margin horizontal */}
+            <div className="flex items-center space-x-1">
                 {(() => {
                     const currentPage = table.getState().pagination.pageIndex;
                     const totalPages = table.getPageCount();

@@ -10,6 +10,16 @@ import EditEmailTemplateModalForm, {EditEmailTemplateModalFormRef} from './EditE
 import { useRef, useState } from 'react'
 import Swal from '../utils/AlertContainer'
 
+// Assuming AttachmentMetadata is defined in a shared models file or similar
+type AttachmentMetadata = {
+  id: number;
+  originalFilename: string;
+  fileSize: number;
+  mimeType: string;
+  filePath?: string;
+};
+
+// Update EmailTemplate type to include attachments
 type EmailTemplate = {
   id: number;
   name: string;
@@ -18,6 +28,7 @@ type EmailTemplate = {
   subject: string;
   language: string; 
   bodyEmail: string;
+  attachments?: AttachmentMetadata[]; // Added attachments field
 };
 
 export type EditEmailTemplateModalProps = {
@@ -66,7 +77,7 @@ export default function EditEmailTemplateModal({
             <DialogPanel className="w-full box-border rounded-lg bg-white dark:bg-gray-900 shadow-xl overflow-hidden dark:border dark:border-gray-700 flex flex-col max-h-[90vh] xl:mt-5 z-[9999999999999]">
               
               {/* HEADER */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-b-gray-300 dark:border-b-gray-600 flex-shrink-0">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Edit Email Template
                 </DialogTitle>
@@ -81,6 +92,7 @@ export default function EditEmailTemplateModal({
 
               {/* BODY */}
               <div className="px-6 py-4 overflow-y-auto flex-1">
+                {/* Pass emailTemplate (which now includes attachments) to the form */}
                 <EditEmailTemplateModalForm ref={formRef} emailTemplate={emailTemplate!}/>
               </div>
 
@@ -104,26 +116,23 @@ export default function EditEmailTemplateModal({
                         Swal.fire({
                           text: 'Email template updated successfully',
                           icon: "success",
-                          duration: 2000
+                          duration: 3000,
                         })
                         
-                        // Panggil callback untuk refresh data
+                        // Call callback to refresh data in the table
                         if (onEmailTemplateUpdated) {
                           onEmailTemplateUpdated();
                         }
                       } else {
-                        Swal.fire({
-                          text: 'Failed to update email template. Please try again!',
-                          icon: "error",
-                          duration: 2000
-                        })
+                        // Error message is handled by EditEmailTemplateModalForm's Swal.fire
+                        // No need for a generic error here, unless specific to this modal logic
                       }
                     } catch (error) {
                       console.log('Error: ', error);
                       Swal.fire({
                         text: 'An error occurred while updating email template!',
                         icon: "error",
-                        duration: 2000
+                        duration: 3000
                       })
                     } finally {
                       setIsLoading(false);

@@ -1,82 +1,57 @@
-version: '3.8'
-
 services:
-  frontend:
-    build:
-      context: ./fe-awarenix
-      dockerfile: Dockerfile
-    ports:
-      - "80:80" # Memetakan port 80 host ke port 80 container (Nginx)
-    depends_on:
-      - backend # Memastikan backend siap sebelum frontend dimulai
+  db:
+    image: mysql:8.0
+    env_file:
+      - .env
     environment:
-      # Menggunakan nama layanan 'backend' dan port internal 3000
-      VITE_API_URL: http://backend:3000/api/v1
+      MYSQL_ROOT_PASSWORD: "${DB_PASS}"
+      MYSQL_DATABASE: "${DB_NAME}"
+      MYSQL_USER: "${DB_USER}"
+      MYSQL_PASSWORD: "${DB_PASS}"
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - awarenix-network
-    restart: always # Selalu restart container jika berhenti
 
   backend:
     build:
       context: ./be-awarenix
       dockerfile: Dockerfile
-    # Memetakan port 8080 host ke port 3000 container (tempat backend Node.js berjalan)
+    env_file:
+      - .env
     ports:
       - "8080:3000"
     depends_on:
       db:
-        condition: service_healthy # Memastikan database sehat sebelum backend dimulai
-    environment:
-      # Pastikan variabel lingkungan ini sesuai dengan yang dibutuhkan aplikasi backend Anda
-      DB_HOST: db # Menggunakan nama layanan 'db' untuk koneksi internal Docker
-      DB_PORT: 3306
-      DB_USER: root
-      DB_PASS: "" # Sangat disarankan untuk menggunakan password yang kuat di produksi
-      DB_NAME: warenix-app
-      TIMEZONE: Asia/Jakarta
-      JWT_SECRET: azsxdcfv # Pertimbangkan menggunakan Docker secrets untuk nilai sensitif
-      JWT_PRIVATE_KEY_PATH: /secrets/jwt.key # Jika file ini ada di dalam container
-      JWT_PUBLIC_KEY_PATH: /secrets/jwt.pub   # Jika file ini ada di dalam container
-      ARGON2_TIME: 1
-      ARGON2_MEMORY: 65536
-      ARGON2_THREADS: 4
-      AES_GCM_KEY: 32bytesbase64string== # Pertimbangkan menggunakan Docker secrets
-      SMTP_HOST: smtp.yourdomain.com
-      SMTP_PORT: 587
-      SMTP_USER: smtpuser
-      SMTP_PASS: smtppass
-    networks:
-      - awarenix-network
-    restart: always # Selalu restart container jika berhenti
-    healthcheck: # Menambahkan healthcheck untuk backend
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"] # Sesuaikan dengan endpoint healthcheck Anda
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 5
-
-  db:
-    image: mysql:8.0 # Menggunakan MySQL 8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: "" # Sangat disarankan untuk menggunakan password yang kuat di produksi
-      MYSQL_DATABASE: warenix-app
-      MYSQL_USER: root
-      MYSQL_PASSWORD: "" # Sangat disarankan untuk menggunakan password yang kuat di produksi
-    volumes:
-      - db-data:/var/lib/mysql # Persistensi data database
-    ports:
-      - "3306:3306" # Hanya diperlukan jika Anda ingin mengakses DB dari host
     networks:
       - awarenix-network
-    restart: always # Selalu restart container jika berhenti
-    healthcheck: # Menambahkan healthcheck untuk database
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+
+  frontend:
+    build:
+      context: ./fe-awarenix
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
+    networks:
+      - awarenix-network
 
 networks:
   awarenix-network:
-    driver: bridge # Menggunakan bridge network default
 
 volumes:
-  db-data: # Definisi volume untuk persistensi data database
+  db-data:

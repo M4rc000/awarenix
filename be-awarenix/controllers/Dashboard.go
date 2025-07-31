@@ -3,11 +3,11 @@ package controllers
 import (
 	"be-awarenix/config"
 	"be-awarenix/models"
+	"be-awarenix/services"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // Struktur data untuk respons Dashboard (tetap sama)
@@ -56,175 +56,204 @@ type BrowserStats struct {
 	Color string `json:"color"`
 }
 
-// GetDashboardMetrics mengembalikan semua data yang dibutuhkan untuk dashboard
 func GetDashboardMetrics(c *gin.Context) {
+	// 1. Ambil currentUser dari Context
+	userIDScope, roleScope, userCreatedBy, errorStatus := services.GetRoleScopeDashboard(c)
+	if !errorStatus {
+		return
+	}
+
 	db := config.DB
 
-	// 0
+	// 2. Build subquery campaignSub: pilih hanya kolom id
+	campaignSub := db.
+		Model(&models.Campaign{}).
+		Select("id")
+
+	//    Jika bukan admin (role != 1), batasi ke self dan parent
+	if roleScope != 1 {
+		scopeIDs := []int{userIDScope}
+		if userCreatedBy > 0 {
+			scopeIDs = append(scopeIDs, int(userCreatedBy))
+		}
+
+		campaignSub = campaignSub.
+			Where("created_by IN (?)", scopeIDs)
+	}
+
+	// 3. Hitung total campaign
 	var totalCampaign int64
-	errCount := db.Model(&models.Campaign{}).Count(&totalCampaign).Error
-	if errCount != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "failed to count total campaign"})
+	if err := db.
+		Model(&models.Campaign{}).
+		Where("id IN (?)", campaignSub). // campaignSub digunakan di sini
+		Count(&totalCampaign).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "failed to count campaigns"})
 		return
 	}
 
-	// --- 1. Total Email Sent ---
+	// 4. Total emails sent
 	var totalSent int64
-	err := db.Model(&models.Recipient{}).Where("status = ?", "sent").Count(&totalSent).Error
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "failed to count total send email"})
+	if err := db.
+		Model(&models.Recipient{}).
+		Where("campaign_id IN (?)", campaignSub). // campaignSub digunakan di sini
+		Where("status = ?", "sent").
+		Count(&totalSent).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "failed to count sent emails"})
 		return
 	}
 
-	// --- 2. Campaign Overview Metrics (Sent, Opened, Clicked, Submitted, Reported) ---
+	// 5. Hitung event opened, clicked, submitted, reported
 	var openedCount, clickedCount, submittedCount, reportedCount int64
 
-	db.Model(&models.Event{}).Where("type = ?", models.Opened).Count(&openedCount)
-	db.Model(&models.Event{}).Where("type = ?", models.Clicked).Count(&clickedCount)
-	db.Model(&models.Event{}).Where("type = ?", models.Submitted).Count(&submittedCount)
-	db.Model(&models.Event{}).Where("type = ?", models.Reported).Count(&reportedCount)
+	// PERBAIKAN: Buat instance kueri baru dari db.Model untuk setiap penghitungan event
+	// Ini mencegah kondisi WHERE saling menumpuk dan menyebabkan error SQL.
+	db.Model(&models.Event{}).Where("campaign_id IN (?)", campaignSub).Where("type = ?", models.Opened).Count(&openedCount)
+	db.Model(&models.Event{}).Where("campaign_id IN (?)", campaignSub).Where("type = ?", models.Clicked).Count(&clickedCount)
+	db.Model(&models.Event{}).Where("campaign_id IN (?)", campaignSub).Where("type = ?", models.Submitted).Count(&submittedCount)
+	db.Model(&models.Event{}).Where("campaign_id IN (?)", campaignSub).Where("type = ?", models.Reported).Count(&reportedCount)
 
-	calculatePercentage := func(value int64, total int64) int {
-		if total == 0 {
+	// helper percentage
+	pct := func(val, tot int64) int {
+		if tot == 0 {
 			return 0
 		}
-		return int(float64(value) / float64(total) * 100)
+		return int(float64(val) / float64(tot) * 100)
 	}
 
 	campaignResults := []CampaignResult{
-		{Label: "Campaign", Value: int(totalCampaign), Color: "#009ac9ff", Percentage: calculatePercentage(totalCampaign, totalCampaign)},
-		{Label: "Sent", Value: int(totalSent), Color: "#10B981", Percentage: calculatePercentage(totalSent, totalSent)},
-		{Label: "Opened", Value: int(openedCount), Color: "#F59E0B", Percentage: calculatePercentage(openedCount, totalSent)},
-		{Label: "Clicked", Value: int(clickedCount), Color: "#9b29ff", Percentage: calculatePercentage(clickedCount, totalSent)},
-		{Label: "Submitted", Value: int(submittedCount), Color: "#DC2626", Percentage: calculatePercentage(submittedCount, totalSent)},
-		{Label: "Reported", Value: int(reportedCount), Color: "#2934ff", Percentage: calculatePercentage(reportedCount, totalSent)},
+		{"Campaign", int(totalCampaign), "#009ac9ff", pct(totalCampaign, totalCampaign)},
+		{"Sent", int(totalSent), "#10B981", pct(totalSent, totalSent)},
+		{"Opened", int(openedCount), "#F59E0B", pct(openedCount, totalSent)},
+		{"Clicked", int(clickedCount), "#9b29ff", pct(clickedCount, totalSent)},
+		{"Submitted", int(submittedCount), "#DC2626", pct(submittedCount, totalSent)},
+		{"Reported", int(reportedCount), "#2934ff", pct(reportedCount, totalSent)},
 	}
 
-	// --- 3. Funnel Data ---
+	// 6. Funnel steps
 	funnelData := []FunnelStep{
-		{Name: "Email Sent", Value: int(totalSent), Fill: "#10B981"},
-		{Name: "Email Opened", Value: int(openedCount), Fill: "#F59E0B"},
-		{Name: "Clicked Link", Value: int(clickedCount), Fill: "#EF4444"},
-		{Name: "Submitted Data", Value: int(submittedCount), Fill: "#DC2626"},
+		{"Email Sent", int(totalSent), "#10B981"},
+		{"Email Opened", int(openedCount), "#F59E0B"},
+		{"Clicked Link", int(clickedCount), "#EF4444"},
+		{"Submitted", int(submittedCount), "#DC2626"},
 	}
 
-	// --- 4. CTR Over Time (misalnya per jam dalam 24 jam terakhir) ---
-	var ctrOverTimeData []CTROverTime
+	// 7. CTR over last 5 hours
+	var ctrOverTime []CTROverTime
 	now := time.Now()
 	for i := 4; i >= 0; i-- {
-		hourStart := now.Add(time.Duration(-i) * time.Hour).Truncate(time.Hour)
-		hourEnd := hourStart.Add(1 * time.Hour)
+		start := now.Add(-time.Duration(i) * time.Hour).Truncate(time.Hour)
+		end := start.Add(time.Hour)
 
-		var hourlySent, hourlyOpened, hourlyClicked int64
-		db.Model(&models.Recipient{}).Where("created_at >= ? AND created_at < ?", hourStart, hourEnd).Count(&hourlySent)
-		db.Model(&models.Event{}).Where("timestamp >= ? AND timestamp < ? AND type = ?", hourStart, hourEnd, models.Opened).Count(&hourlyOpened)
-		db.Model(&models.Event{}).Where("timestamp >= ? AND timestamp < ? AND type = ?", hourStart, hourEnd, models.Clicked).Count(&hourlyClicked)
+		var hSent, hOpened, hClicked int64
+		db.Model(&models.Recipient{}).
+			Where("campaign_id IN (?)", campaignSub). // campaignSub digunakan di sini
+			Where("created_at >= ? AND created_at < ?", start, end).
+			Count(&hSent)
+		db.Model(&models.Event{}).
+			Where("campaign_id IN (?)", campaignSub). // campaignSub digunakan di sini
+			Where("timestamp >= ? AND timestamp < ? AND type = ?", start, end, models.Opened).
+			Count(&hOpened)
+		db.Model(&models.Event{}).
+			Where("campaign_id IN (?)", campaignSub). // campaignSub digunakan di sini
+			Where("timestamp >= ? AND timestamp < ? AND type = ?", start, end, models.Clicked).
+			Count(&hClicked)
 
-		ctrOverTimeData = append(ctrOverTimeData, CTROverTime{
-			Hour:    hourStart.Format("15:00"), // Format jam saja
-			Sent:    int(hourlySent),
-			Opened:  int(hourlyOpened),
-			Clicked: int(hourlyClicked),
+		ctrOverTime = append(ctrOverTime, CTROverTime{
+			Hour:    start.Format("15:00"),
+			Sent:    int(hSent),
+			Opened:  int(hOpened),
+			Clicked: int(hClicked),
 		})
 	}
 
-	// --- 5. Top Performer ---
-	var topPerformers []TopPerformer
-	type RecipientStats struct {
-		RecipientID    uint   `gorm:"column:recipient_id"`
-		Email          string `gorm:"column:email"`
-		TotalClicks    int64  `gorm:"column:total_clicks"`
-		TotalOpened    int64  `gorm:"column:total_opened"`
-		TotalSubmits   int64  `gorm:"column:total_submits"`
-		TotalReported  int64  `gorm:"column:total_reported"`
-		TotalCampaigns int64  `gorm:"column:total_campaigns"`
+	// 8. Top performers (5 teratas)
+	type recStats struct {
+		Email          string
+		TotalCampaigns int64
+		TotalClicks    int64
+		TotalOpened    int64
+		TotalSubmits   int64
+		TotalReported  int64
 	}
-
-	var stats []RecipientStats
-	err = db.Raw(`
+	var stats []recStats
+	rawSQL := `
 		SELECT
-			r.id as recipient_id, -- Ambil satu recipient_id saja, bisa sembarang
 			r.email,
-			COUNT(DISTINCT r.campaign_id) as total_campaigns, -- Hitung jumlah kampanye unik
-			COALESCE(SUM(CASE WHEN e.type = ? THEN 1 ELSE 0 END), 0) as total_clicks,
-			COALESCE(SUM(CASE WHEN e.type = ? THEN 1 ELSE 0 END), 0) as total_opened,
-			COALESCE(SUM(CASE WHEN e.type = ? THEN 1 ELSE 0 END), 0) as total_submits,
-			COALESCE(SUM(CASE WHEN e.type = ? THEN 1 ELSE 0 END), 0) as total_reported
-		FROM
-			recipients r
-		LEFT JOIN
-			events e ON r.id = e.recipient_id
-		GROUP BY
-			r.email
-		ORDER BY
-			total_clicks DESC
+			COUNT(DISTINCT r.campaign_id) AS total_campaigns,
+			SUM(CASE WHEN e.type = ? THEN 1 ELSE 0 END) AS total_clicks,
+			SUM(CASE WHEN e.type = ? THEN 1 ELSE 0 END) AS total_opened,
+			SUM(CASE WHEN e.type = ? THEN 1 ELSE 0 END) AS total_submits,
+			SUM(CASE WHEN e.type = ? THEN 1 ELSE 0 END) AS total_reported
+		FROM recipients r
+		JOIN campaigns c ON c.id = r.campaign_id
+		LEFT JOIN events e ON e.recipient_id = r.id
+		WHERE c.id IN (?) -- campaignSub akan dieksekusi di sini
+		GROUP BY r.email
+		ORDER BY total_clicks DESC
 		LIMIT 5
-	`, models.Clicked, models.Opened, models.Submitted, models.Reported).Scan(&stats).Error
-
-	if err != nil && err != gorm.ErrRecordNotFound {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": "failed to get top performers",
-			"data":    nil,
-		})
+	`
+	if err := db.Raw(
+		rawSQL,
+		models.Clicked, models.Opened, models.Submitted, models.Reported,
+		campaignSub, // campaignSub digunakan di sini
+	).Scan(&stats).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "failed to get top performers"})
 		return
 	}
 
-	for _, s := range stats {
-		topPerformers = append(topPerformers, TopPerformer{
+	topPerformers := make([]TopPerformer, len(stats))
+	for i, s := range stats {
+		topPerformers[i] = TopPerformer{
 			Email:        s.Email,
 			CampaignName: int(s.TotalCampaigns),
 			Opened:       int(s.TotalOpened),
 			Clicks:       int(s.TotalClicks),
 			Submits:      int(s.TotalSubmits),
 			ReportLink:   int(s.TotalReported),
-		})
+		}
 	}
 
-	// --- 6. Browser/OS Breakdown ---
-	var browserData []BrowserStats
-
-	var browserCounts []struct {
+	// 9. Browser breakdown (5 teratas)
+	var bcounts []struct {
 		Browser string
 		Count   int64
 	}
 	db.Model(&models.Event{}).
-		Select("browser, count(id) as count").
-		Where("browser IS NOT NULL AND browser != ''").
+		Select("browser, count(id) AS count").
+		Where("campaign_id IN (?)", campaignSub). // campaignSub digunakan di sini
+		Where("browser != ''").
 		Group("browser").
-		Order("count desc").
+		Order("count DESC").
 		Limit(5).
-		Scan(&browserCounts)
+		Scan(&bcounts)
 
-	for _, bc := range browserCounts {
-		color := "#9CA3AF"
+	browserData := make([]BrowserStats, len(bcounts))
+	for i, bc := range bcounts {
+		col := "#6B7280"
 		switch bc.Browser {
 		case "Chrome":
-			color = "#3B82F6"
+			col = "#3B82F6"
 		case "Firefox":
-			color = "#F97316"
+			col = "#F97316"
 		case "Edge":
-			color = "#0EA5E9"
-		default:
-			color = "#6B7280"
+			col = "#0EA5E9"
 		}
-		browserData = append(browserData, BrowserStats{Name: bc.Browser, Value: int(bc.Count), Color: color})
+		browserData[i] = BrowserStats{Name: bc.Browser, Value: int(bc.Count), Color: col}
 	}
 
-	// Final Response
-	data := DashboardData{
+	// 10. Return JSON
+	dashboard := DashboardData{
 		TotalCampaign:   int(totalCampaign),
 		TotalSent:       int(totalSent),
 		CampaignResults: campaignResults,
 		FunnelData:      funnelData,
-		CTROverTimeData: ctrOverTimeData,
+		CTROverTimeData: ctrOverTime,
 		TopPerformers:   topPerformers,
 		BrowserData:     browserData,
 	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "success",
-		"message": "Dashboard metrics fetched successfully",
-		"data":    data,
+		"message": "dashboard metrics fetched successfully",
+		"data":    dashboard,
 	})
 }

@@ -51,12 +51,24 @@ export default function DeleteGroupModal({
 
       const data = await res.json();
       
-      if (!res.ok || !data.Success) {
+      if (!res.ok || data.status !== "success") {
         setError(data.error || 'Failed to delete group');
+        Swal.fire({
+          text: data.message || 'Failed to delete Group',
+          icon: "error",
+          duration: 3000
+        });
         return;
+      } else if (data.status == "success"){
+        Swal.fire({
+          text: 'Group deleted successfully',
+          icon: "success",
+          duration: 3000
+        });
       }
-      onGroupDeleted?.(); // 🔁 trigger fetch
-      onClose();         // ❎ close modal
+
+      onGroupDeleted?.();
+      onClose();         
 
     } catch (err) {
       setError('Unexpected error occurred');
@@ -132,23 +144,12 @@ export default function DeleteGroupModal({
                       
                       if (success) {
                         onClose();
-                        Swal.fire({
-                          text: 'Group deleted successfully',
-                          icon: "success",
-                          duration: 2000
-                        });
                         
                         // Panggil callback untuk refresh data
                         if (onGroupDeleted) {
                           onGroupDeleted();
                         }
-                      } else {
-                        Swal.fire({
-                          text: 'Failed to delete group. Please try again!',
-                          icon: "error",
-                          duration: 2000
-                        })
-                      }
+                      } 
                     } catch (error) {
                       console.log('Error: ', error);
                       Swal.fire({

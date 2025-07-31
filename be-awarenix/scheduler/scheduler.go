@@ -32,7 +32,7 @@ func StartCampaignDispatcher() {
 
 				// launch sending + monitor status
 				go func(c models.Campaign) {
-					controllers.SendCampaign(c)
+					controllers.SendCampaign(c.ID)
 					services.MonitorCampaignStatus(c.ID)
 				}(camp)
 			}

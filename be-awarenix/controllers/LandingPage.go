@@ -4,6 +4,7 @@ import (
 	"be-awarenix/config"
 	"be-awarenix/models"
 	"be-awarenix/services"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -340,6 +341,32 @@ func DeleteLandingPage(c *gin.Context) {
 			"status":  "error",
 			"message": "Database error",
 			"data":    err.Error(),
+		})
+		return
+	}
+
+	// Periksa apakah halaman arahan terkait dengan kampanye apa pun
+	var campaignCount int64
+	// Diasumsikan `models.Campaign` ada dan memiliki field `LandingPageID`
+	if err := config.DB.Model(&models.Campaign{}).Where("landing_page_id = ?", id).Count(&campaignCount).Error; err != nil {
+		// Log aktivitas untuk error database selama pemeriksaan kampanye
+		services.LogActivity(config.DB, c, "Delete", moduleNameLandingPage, landingPageIDParam, nil, nil, "failed", "Database error when checking for associated campaigns: "+err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Database error",
+			"data":    "Failed to check for associated campaigns: " + err.Error(),
+		})
+		return
+	}
+
+	// Jika kampanye ditemukan, cegah penghapusan dan kembalikan error konflik
+	if campaignCount > 0 {
+		// Log aktivitas untuk halaman arahan yang sedang digunakan
+		services.LogActivity(config.DB, c, "Delete", moduleNameLandingPage, landingPageIDParam, nil, nil, "failed", fmt.Sprintf("Landing page is associated with %d campaign(s) and cannot be deleted.", campaignCount))
+		c.JSON(http.StatusConflict, gin.H{ // Menggunakan 409 Conflict untuk konflik sumber daya
+			"status":  "error",
+			"message": "This landing page is used in a campaign",
+			"data":    fmt.Sprintf("Landing page is currently associated with %d campaign(s) and cannot be deleted. Please disassociate or delete the campaigns first.", campaignCount),
 		})
 		return
 	}

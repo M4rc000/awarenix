@@ -215,16 +215,24 @@ export default function TableGroups({ reloadTrigger, onReload }: { reloadTrigger
         accessorKey: 'actions',
         header: 'Action',
         cell: (row: CellContext<Group, unknown>) => (
-          <div className="flex items-center space-x-2">
-            <Button size="xs" variant="info" onClick={() => onShowDetail(row.row.original)}>
-              <FaCircleInfo />
-            </Button>
-            <Button size="xs" variant="warning" onClick={() => onEditUser(row.row.original)}>
-              <BiSolidEditAlt />
-            </Button>
-            <Button size="xs" variant="danger" onClick={() => onDeleteUser(row.row.original)}>
-              <FaRegTrashAlt />
-            </Button>
+          <div className='pr-8 lg:px-3'>
+            <div className="grid grid-cols-3 gap-10 lg:gap-0 p-1">
+              <div>
+                <Button size="xs" variant="info" onClick={() => onShowDetail(row.row.original)}>
+                  <FaCircleInfo />
+                </Button>
+              </div>
+              <div>
+                <Button size="xs" variant="warning" onClick={() => onEditUser(row.row.original)}>
+                  <BiSolidEditAlt />
+                </Button>
+              </div>
+              <div>
+                <Button size="xs" variant="danger" onClick={() => onDeleteUser(row.row.original)}>
+                  <FaRegTrashAlt />
+                </Button>
+              </div>
+            </div>
           </div>
         )
       },
@@ -470,7 +478,7 @@ export default function TableGroups({ reloadTrigger, onReload }: { reloadTrigger
             </button>
 
             {/* Page Numbers */}
-            <div className="flex items-center space-x-1 mx-2"> {/* Tambah margin horizontal */}
+            <div className="flex items-center space-x-1"> {/* Tambah margin horizontal */}
                 {(() => {
                     const currentPage = table.getState().pagination.pageIndex;
                     const totalPages = table.getPageCount();

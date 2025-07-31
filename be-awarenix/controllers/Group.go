@@ -4,6 +4,7 @@ import (
 	"be-awarenix/config"
 	"be-awarenix/models"
 	"be-awarenix/services"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -609,6 +610,34 @@ func DeleteGroup(c *gin.Context) {
 			"status":  "error",
 			"message": "Failed to retrieve group",
 			"data":    err.Error(),
+		})
+		return
+	}
+
+	// Periksa apakah grup terkait dengan kampanye apa pun
+	var campaignCount int64
+	// Diasumsikan `models.Campaign` ada dan memiliki field `GroupID`
+	if err := config.DB.Model(&models.Campaign{}).Where("group_id = ?", groupID).Count(&campaignCount).Error; err != nil {
+		tx.Rollback() // Rollback jika terjadi error saat memeriksa kampanye
+		// Log aktivitas untuk error database selama pemeriksaan kampanye
+		services.LogActivity(config.DB, c, "Delete", moduleName, idParam, nil, nil, "failed", "Database error when checking for associated campaigns: "+err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Database error",
+			"data":    "Failed to check for associated campaigns: " + err.Error(),
+		})
+		return
+	}
+
+	// Jika kampanye ditemukan, cegah penghapusan dan kembalikan error konflik
+	if campaignCount > 0 {
+		tx.Rollback() // Rollback karena penghapusan tidak diizinkan
+		// Log aktivitas untuk grup yang sedang digunakan
+		services.LogActivity(config.DB, c, "Delete", moduleName, idParam, nil, nil, "failed", fmt.Sprintf("Group is associated with %d campaign(s) and cannot be deleted.", campaignCount))
+		c.JSON(http.StatusConflict, gin.H{ // Menggunakan 409 Conflict untuk konflik sumber daya
+			"status":  "error",
+			"message": "This group is used in a campaign",
+			"data":    fmt.Sprintf("Group is currently associated with %d campaign(s) and cannot be deleted. Please disassociate or delete the campaigns first.", campaignCount),
 		})
 		return
 	}

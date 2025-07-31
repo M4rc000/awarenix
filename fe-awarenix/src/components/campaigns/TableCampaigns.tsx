@@ -42,6 +42,7 @@ import DeleteCampaignModal from "../../components/campaigns/DeleteCampaignModal"
 
 export interface Campaign {
   id: number;
+  uid: string;
   name: string;
   launch_date: Date;
   send_email_by: Date;
@@ -143,6 +144,7 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
       }
 
       const result: FetchCampaignsResult<Campaign> = await res.json();
+      
       setCampaignsData(result.data);
     } catch (err: unknown) {
       console.error(err);
@@ -198,24 +200,27 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
 
   // Handler untuk campaign yang berhasil dihapus
   const handleCampaignDeleted = useCallback(() => {
-    // Hitung data baru setelah filter diterapkan
-    const filteredData = campaignsData.filter(campaign => {
-      if (!deferredSearch) return true;
-      return campaign.name.toLowerCase().includes(deferredSearch.toLowerCase()) ||
-             campaign.status.toLowerCase().includes(deferredSearch.toLowerCase());
-    });
-    
-    const newDataLength = filteredData.length - 1; // Kurangi 1 karena data akan terhapus
-    
-    // Tangani pagination
-    handlePaginationAfterDelete(newDataLength);
-    
-    // Fetch data terbaru
-    fetchCampaigns();
-    
-    // Trigger reload callback jika ada
-    if (onReload) onReload();
-  }, [campaignsData, deferredSearch, handlePaginationAfterDelete, fetchCampaigns, onReload]);
+  // Hapus dari state campaignsData secara langsung dulu
+  if (selectedCampaign) {
+    setCampaignsData(prev => prev.filter(c => c.id !== selectedCampaign.id));
+  }
+
+  // Tangani pagination
+  const filteredData = campaignsData.filter(campaign => {
+    if (!deferredSearch) return true;
+    return campaign.name.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+           campaign.status.toLowerCase().includes(deferredSearch.toLowerCase());
+  });
+  
+  const newDataLength = filteredData.length - 1;
+  handlePaginationAfterDelete(newDataLength);
+
+  // Fetch ulang untuk pastikan sinkron dengan server
+  fetchCampaigns();
+
+  if (onReload) onReload();
+  }, [campaignsData, deferredSearch, selectedCampaign, fetchCampaigns, handlePaginationAfterDelete, onReload]);
+
 
   // Definisi kolom tabel menggunakan useMemo untuk optimasi
   const columns = useMemo<ColumnDef<Campaign>[]>(
@@ -572,7 +577,7 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
                           ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
                           : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
                         }
-                        transition-colors duration-200 ml-1 // Tambah margin kiri sedikit
+                        transition-colors duration-200
                       `}
                       title="Previous page"
                   >
@@ -580,7 +585,7 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
                   </button>
       
                   {/* Page Numbers */}
-                  <div className="flex items-center space-x-1 mx-2"> {/* Tambah margin horizontal */}
+                  <div className="flex items-center space-x-1"> {/* Tambah margin horizontal */}
                       {(() => {
                           const currentPage = table.getState().pagination.pageIndex;
                           const totalPages = table.getPageCount();
@@ -683,7 +688,7 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
                           ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
                           : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
                         }
-                        transition-colors duration-200 mr-1 // Tambah margin kanan sedikit
+                        transition-colors duration-200
                       `}
                       title="Next page"
                   >

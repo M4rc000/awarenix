@@ -41,7 +41,7 @@ const DeleteLandingPageModalForm = forwardRef<DeleteLandingPageFormRef, DeleteLa
           <Input 
             type="text"  
             value={landingPage.name}
-            disabled
+            readonly
             className="w-full text-sm sm:text-base h-10 px-3 bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
           />
         </div>

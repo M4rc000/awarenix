@@ -1,19 +1,26 @@
-import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Tabs from "../common/Tabs";
-import EmailBodyEditorTemplate from "./EmailBodyEditorTemplate";
 import Swal from "../utils/AlertContainer";
 import { LuLayoutTemplate } from "react-icons/lu";
 import LabelWithTooltip from "../ui/tooltip/Tooltip";
 import Select from "../form/Select"; 
+import CreateEmailBodyEditorTemplate from "./CreateEmailBodyEditorTemplate";
+
+type AttachmentMetadata = {
+  id: number; 
+  originalFilename: string;
+  fileSize: number;
+  mimeType: string;
+};
 
 interface EmailTemplate {
   id: number;
   templateName: string;
   envelopeSender: string;
   subject: string;
-  language: string; // Added language field
+  language: string;
   createdAt: string;
   createdBy: string;
   updatedAt: string;
@@ -35,7 +42,8 @@ type EmailTemplateData = {
   subject: string;
   isSystemTemplate: number;
   bodyEmail: string;
-  language: string; // Added language field
+  language: string;
+  attachments: File[]; // New field to hold File objects from Dropzone
 };
 
 const NewEmailTemplateModalForm = forwardRef<
@@ -49,25 +57,23 @@ const NewEmailTemplateModalForm = forwardRef<
     isSystemTemplate: 0, // Default to 0 (No)
     bodyEmail: "",
     language: "Indonesia", // Default language
+    attachments: [], // Initialize attachments array
   });
 
   const [errors, setErrors] = useState<Partial<EmailTemplateData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userRoleId, setUserRoleId] = useState<number | null>(null); // State untuk menyimpan role_id
+  const [userRoleId, setUserRoleId] = useState<number | null>(null);
 
-  // Ambil role_id pengguna dari localStorage saat komponen dimuat
   useEffect(() => {
     try {
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       const roleId = userData?.role; 
       if (typeof roleId === "number") {
         setUserRoleId(roleId);
-        // Jika role_id bukan 1, set isSystemTemplate ke 0
         if (roleId !== 1) {
           setEmailTemplate((prev) => ({ ...prev, isSystemTemplate: 0 }));
         }
       } else {
-        // Fallback jika role_id tidak ditemukan atau bukan angka
         setUserRoleId(null);
         setEmailTemplate((prev) => ({ ...prev, isSystemTemplate: 0 }));
       }
@@ -76,21 +82,18 @@ const NewEmailTemplateModalForm = forwardRef<
       setUserRoleId(null);
       setEmailTemplate((prev) => ({ ...prev, isSystemTemplate: 0 }));
     }
-  }, []); // [] agar hanya berjalan sekali saat mount
+  }, []);
 
-  // Opsi untuk komponen Select
   const templateStatusOptions = [
     { value: "0", label: "No" },
     { value: "1", label: "Yes" },
   ];
 
-  // Opsi untuk language type
   const languageOptions = [
     { value: "indonesia", label: "Indonesia" },
     { value: "english", label: "English" },
   ];
 
-  // VALIDATION FUNCTION
   const validateForm = (): boolean => {
     const newErrors: Partial<EmailTemplateData> = {};
 
@@ -105,7 +108,7 @@ const NewEmailTemplateModalForm = forwardRef<
     if (!emailtemplate.subject.trim()) {
       newErrors.subject = "Subject Email is required";
     }
-    if (!emailtemplate.language.trim()) { // Added validation for language
+    if (!emailtemplate.language.trim()) {
       newErrors.language = "Language is required";
     }
 
@@ -114,7 +117,6 @@ const NewEmailTemplateModalForm = forwardRef<
   };
 
   const submitEmailTemplate = async (): Promise<EmailTemplate | null> => {
-    // CEK VALIDASI
     if (!validateForm()) {
       let errorMessage = '';
       for (const key in errors) {
@@ -139,6 +141,51 @@ const NewEmailTemplateModalForm = forwardRef<
       const token = localStorage.getItem("token");
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       const createdBy = userData?.id || 0;
+
+      const uploadedAttachmentMetadata: AttachmentMetadata[] = [];
+
+      // --- Attachment Upload Logic ---
+      if (emailtemplate.attachments.length > 0) {
+        // Swal.fire({
+        //   text: `Uploading ${emailtemplate.attachments.length} file`,
+        //   icon: 'info',
+        //   duration: 3000,
+        // });
+
+        for (const file of emailtemplate.attachments) {
+          const formData = new FormData();
+          formData.append("attachment", file); 
+
+          try {
+            const uploadResponse = await fetch(`${API_URL}/attachments/upload`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            });
+
+            if (!uploadResponse.ok) {
+              const errorData = await uploadResponse.json().catch(() => ({}));
+              throw new Error(errorData.message || `Failed to upload attachment: ${file.name}`);
+            }
+
+            const result: { data: AttachmentMetadata } = await uploadResponse.json();
+            uploadedAttachmentMetadata.push(result.data);
+          } catch (uploadError) {
+            console.error(`Error uploading file ${file.name}:`, uploadError);
+            Swal.fire({
+              icon: 'error',
+              text: `Failed to upload file ${file.name}: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`,
+              duration: 3000,
+            });
+            setIsSubmitting(false);
+            return null; 
+          }
+        }
+      }
+      // --- End Attachment Upload Logic ---
+
       const payload = {
         templateName: emailtemplate.templateName,
         envelopeSender: emailtemplate.envelopeSender,
@@ -147,7 +194,9 @@ const NewEmailTemplateModalForm = forwardRef<
         isSystemTemplate: emailtemplate.isSystemTemplate,
         language: emailtemplate.language, 
         createdBy: createdBy,
+        attachments: uploadedAttachmentMetadata, // Include the IDs of uploaded attachments
       };
+
       const response = await fetch(`${API_URL}/email-template/create`, {
         method: "POST",
         headers: {
@@ -159,9 +208,7 @@ const NewEmailTemplateModalForm = forwardRef<
 
       if (!response.ok) {
         let errorMessage = "Failed to create email template";
-
         const contentType = response.headers.get("content-type");
-
         if (contentType && contentType.includes("application/json")) {
           try {
             const errorData = await response.json();
@@ -173,7 +220,6 @@ const NewEmailTemplateModalForm = forwardRef<
         } else {
           errorMessage = `Server error: ${response.status} ${response.statusText}`;
         }
-
         throw new Error(errorMessage);
       }
 
@@ -194,6 +240,7 @@ const NewEmailTemplateModalForm = forwardRef<
         isSystemTemplate: userRoleId !== 1 ? 0 : 0, 
         bodyEmail: "",
         language: "Indonesia", 
+        attachments: [], // Clear attachments after successful submission
       });
       setErrors({});
 
@@ -202,31 +249,28 @@ const NewEmailTemplateModalForm = forwardRef<
       console.error("Error creating email template:", error);
 
       if (error instanceof Error) {
+        let displayError = error.message;
         if (error.message.includes("fetch")) {
-          setErrors({
-            templateName: "Connection error. Please check if server is running.",
-          });
+          displayError = "Connection error. Please check if server is running.";
         } else if (error.message.toLowerCase().includes("sender")) {
-          setErrors({
-            envelopeSender: error.message,
-          });
+          setErrors({ envelopeSender: error.message });
         } else if (error.message.toLowerCase().includes("subject")) {
-          setErrors({
-            subject: error.message,
-          });
+          setErrors({ subject: error.message });
         } else if (error.message.toLowerCase().includes("template name already exists")) { 
-          setErrors({
-            templateName: error.message,
-          });
-        } else if (error.message.toLowerCase().includes("language")) { // Added error handling for language
-          setErrors({
-            language: error.message,
-          });
+          setErrors({ templateName: error.message });
+        } else if (error.message.toLowerCase().includes("language")) {
+          setErrors({ language: error.message });
+        } else {
+          setErrors({ templateName: error.message });
         }
-        else {
-          setErrors({
-            templateName: error.message,
-          });
+        
+        // Show a general error if specific field error is not set
+        if (!Object.keys(errors).some(key => errors[key as keyof EmailTemplateData])) {
+            Swal.fire({
+                icon: 'error',
+                text: displayError,
+                duration: 3000,
+            });
         }
       }
 
@@ -237,10 +281,9 @@ const NewEmailTemplateModalForm = forwardRef<
   };
   useImperativeHandle(ref, () => ({ submitEmailTemplate, emailtemplate: null }));
 
-  // Handle input changes - dengan safety check
-  const handleInputChange = (
+  const handleInputChange = useCallback((
     field: keyof EmailTemplateData,
-    value: string | number
+    value: string | number | File[] // Allow File[] for attachments
   ) => {
     if (isSubmitting) {
       return;
@@ -248,7 +291,7 @@ const NewEmailTemplateModalForm = forwardRef<
 
     setEmailTemplate((prev) => ({
       ...prev,
-      [field]: field === "isSystemTemplate" ? Number(value) : value, 
+      [field]: value, // Assign value directly, type checking handles conversion if needed
     }));
 
     if (errors[field]) {
@@ -257,7 +300,7 @@ const NewEmailTemplateModalForm = forwardRef<
         [field]: undefined,
       }));
     }
-  };
+  }, [isSubmitting, errors]);
 
   const emailTabs = [
     {
@@ -268,12 +311,16 @@ const NewEmailTemplateModalForm = forwardRef<
         </div>
       ),
       content: (
-        <EmailBodyEditorTemplate
+        <CreateEmailBodyEditorTemplate
           templateName={emailtemplate.templateName} 
           envelopeSender={emailtemplate.envelopeSender} 
           subject={emailtemplate.subject} 
+          initialContent={emailtemplate.bodyEmail} // Pass initial content
           onBodyChange={(html) => {
             handleInputChange("bodyEmail", html);
+          }}
+          onAttachmentsChange={(files) => { // Pass callback for attachments
+            handleInputChange("attachments", files);
           }}
         />
       ),
@@ -316,6 +363,7 @@ const NewEmailTemplateModalForm = forwardRef<
                 handleInputChange("envelopeSender", e.target.value);
               }}
               required
+              disabled={isSubmitting}
               className={`w-full text-sm sm:text-base h-10 px-3 ${
                 errors.envelopeSender ? "border-red-500" : ""
               }`}
@@ -345,7 +393,7 @@ const NewEmailTemplateModalForm = forwardRef<
             )}
           </div>
           {/* Conditional rendering untuk Template Status */}
-          {userRoleId === 1 && ( // Hanya render jika userRoleId adalah 1
+          {userRoleId === 1 && (
             <div>
               <LabelWithTooltip
                 position="left"
@@ -355,10 +403,10 @@ const NewEmailTemplateModalForm = forwardRef<
               </LabelWithTooltip>
               <Select
                 placeholder="Choose Template Type"
-                options={templateStatusOptions} // Tidak perlu filter lagi di sini karena sudah di dalam kondisi userRoleId === 1
+                options={templateStatusOptions}
                 value={String(emailtemplate.isSystemTemplate)}
                 onChange={(val: string) => {
-                  handleInputChange("isSystemTemplate", val);
+                  handleInputChange("isSystemTemplate", Number(val)); // Ensure it's a number
                 }}
                 className={`w-full text-sm sm:text-base h-11 px-3 ${
                   errors.isSystemTemplate ? "border-red-500" : ""

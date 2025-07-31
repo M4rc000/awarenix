@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   MdOutlineArrowBack,
   MdOutlineRefresh,
-  MdDownload,
   MdCheckCircleOutline,
   MdGroup,
   MdSchedule,
@@ -16,6 +15,9 @@ import { IoIosSave } from 'react-icons/io';
 import { BiError } from 'react-icons/bi';
 import PageMeta from '../../components/common/PageMeta';
 import { formatUserDate } from '../../components/utils/DateFormatter';
+import * as XLSX from 'xlsx'; 
+import { saveAs } from 'file-saver'; 
+import { FaDownload } from 'react-icons/fa';
 
 
 interface Participant {
@@ -25,6 +27,8 @@ interface Participant {
   position: string;
   status: 'sent' | 'Opened' | 'Clicked' | 'Submitted' | 'Reported' | 'Error' | 'Pending';
   reported: number;
+  browser: string;
+  os: string;
 }
 
 interface CampaignTimelineEvent {
@@ -56,6 +60,7 @@ interface CampaignDetails {
   total_participants: number;
   participants: Participant[];
   timeline: CampaignTimelineEvent[];
+  completed_date: Date;
 }
 
 
@@ -105,34 +110,24 @@ const ErrorAlert: React.FC<{ message: string; onRetry?: () => void }> = ({ messa
 
 // Enhanced Timeline Component
 const CampaignTimeline: React.FC<{ campaign: CampaignDetails }> = ({ campaign }) => {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const timelineEvents = [
     {
       title: "Campaign Created",
-      date: formatDate(campaign.createdAt),
+      date: formatUserDate(campaign.createdAt),
       description: ``,
       icon: <FiUser className="text-blue-600" />,
       color: "blue"
     },
     {
       title: "Campaign Launched",
-      date: formatDate(campaign.launch_date),
+      date: formatUserDate(campaign.launch_date),
       description: ``,
       icon: <MdSend className="text-green-600" />,
       color: "green"
     },
     {
       title: "Current Status",
-      date: "-",
+      date: formatUserDate(campaign.completed_date),
       description: `Status: ${campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}`,
       icon: <MdCheckCircleOutline className="text-purple-600" />,
       color: "purple"
@@ -172,57 +167,73 @@ const ParticipantsTable: React.FC<{ participants: Participant[] }> = ({ particip
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-900/50">
           <tr>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-3 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
               #
             </th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
               Participant
             </th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-4 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
               Email Address
             </th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-3 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
               Position
             </th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+            <th className="px-2 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
               Status
+            </th>
+            <th className="px-3 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+              Browser
+            </th>
+            <th className="px-3 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+              OS
             </th>
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           {participants.map((participant, index) => (
             <tr key={participant.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-3 py-4 whitespace-nowrap">
                 <div className="flex items-center">
                   <div className="text-sm font-semibold text-gray-900 dark:text-white">
                     {index + 1}
                   </div>
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-4 py-4 whitespace-nowrap">
                 <div className="flex items-center">
                   <div className="text-sm font-semibold text-gray-900 dark:text-white">
                     {participant.name}
                   </div>
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-4 py-4 whitespace-nowrap">
                 <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">
                   {participant.email}
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-3 py-4 whitespace-nowrap">
                 <div className="text-sm text-gray-600 dark:text-gray-300">
                   {participant.position}
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-2 py-4 whitespace-nowrap">
                 <span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${
                   participant.status === 'sent' ? 'bg-green-300 text-green-700 dark:bg-green-900/100 dark:text-green-100' :
                   'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                 }`}>
                   {participant.status}
                 </span>
+              </td>
+              <td className="px-2 py-4 whitespace-nowrap">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  {participant.browser}
+                </div>
+              </td>
+              <td className="px-3 py-4 whitespace-nowrap">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  {participant.os}
+                </div>
               </td>
             </tr>
           ))}
@@ -332,9 +343,49 @@ const CampaignDetail: React.FC = () => {
   }, [campaignId, fetchCampaignData]);
 
   const handleBack = () => navigate('/dashboard');
+  
   const handleExport = () => {
-    console.log('Exporting data...');
+    if (!campaign) {
+      console.warn("No campaign data to export.");
+      return;
+    }
+
+    const headers = [
+      "#",
+      "Campaign Name",
+      "Campaign Launch Date",
+      "Campaign Complete Date",
+      "Name",
+      "Email",
+      "Position",
+      "Status",
+      "Browser", 
+      "OS",      
+    ];
+
+    const dataToExport = campaign.participants.map((p, index) => ({
+      "#": index + 1,
+      "Campaign Name": campaign.name,
+      "Campaign Launch Date": formatUserDate(campaign.launch_date),
+      "Campaign Complete Date": campaign.completed_date ? formatUserDate(campaign.completed_date) : 'N/A',
+      "Name": p.name,
+      "Email": p.email,
+      "Position": p.position,
+      "Status": p.status,
+      "Browser": p.browser,
+      "OS": p.os,      
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport, { header: headers });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Campaign Participants");
+
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(data, `${campaign.name} campaign report.xlsx`);
+
   };
+
   const handleRefresh = () => fetchCampaignData();
 
   if (isLoading) {
@@ -381,7 +432,7 @@ const CampaignDetail: React.FC = () => {
     <>
       <PageMeta title="Campaign Detail" description=""></PageMeta>
       <div className="min-h-screen bg-white dark:bg-gray-800/50 rounded-lg">
-        <div className="container mx-auto px-6 py-8">
+        <div className="container mx-auto px-3 py-8">
           
           {/* Header Section */}
           <div className="mb-8">
@@ -420,20 +471,20 @@ const CampaignDetail: React.FC = () => {
                 </div>
               </div>
               
-              <div className="flex space-x-3">
+              <div className="flex space-x-3 px-5">
                 <button
                   onClick={handleRefresh}
-                  className="flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   <MdOutlineRefresh className="mr-2 text-lg" />
                   Refresh
                 </button>
                 <button
                   onClick={handleExport}
-                  className="flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
-                  <MdDownload className="mr-2 text-lg" />
-                  Export Report
+                  <FaDownload className="mr-2 text-lg" />
+                  Export
                 </button>
               </div>
             </div>

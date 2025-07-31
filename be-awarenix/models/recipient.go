@@ -11,4 +11,6 @@ type Recipient struct {
 	Status     string    `gorm:"type:varchar(30);not null;default:'pending'" json:"status"`
 	Error      string    `gorm:"type:text"                      json:"error,omitempty"`
 	CreatedAt  time.Time `gorm:"autoCreateTime"                 json:"createdAt"`
+	UpdatedAt  time.Time `gorm:"type:datetime;null"            json:"updatedAt"`
+	Events     []Event   `gorm:"foreignKey:RecipientID"`
 }

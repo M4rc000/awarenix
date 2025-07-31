@@ -16,6 +16,14 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    cors: true,
+    host: true,
+    port: 5173,
+    fs: {
+      strict: false
+    }
+  },
   base: '/',
   build: {
     // Pastikan output directory adalah 'dist'

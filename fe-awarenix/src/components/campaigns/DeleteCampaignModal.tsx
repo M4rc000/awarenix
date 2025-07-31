@@ -52,11 +52,17 @@ export default function DeleteCampaignModal({
       if (!res.ok || data.status !== "success") {
         setError(data.error || 'Failed to delete campaign');
         Swal.fire({
-          text: 'Failed to delete campaign',
+          text: data.message || 'Failed to delete campaign',
           icon: 'error',
           duration: 2000
         });
         return;
+      } else if (data.status == "success"){
+        Swal.fire({
+          text: 'Campaign deleted successfully',
+          icon: "success",
+          duration: 3000
+        });
       }
       onCampaignDeleted?.(); 
       onClose();         
@@ -137,11 +143,6 @@ export default function DeleteCampaignModal({
                       
                       if (success) {
                         onClose();
-                        Swal.fire({
-                          text: 'Campaign deleted successfully',
-                          icon: "success",
-                          duration: 3000
-                        });
                         
                         // Panggil callback untuk refresh data
                         if (onCampaignDeleted) {

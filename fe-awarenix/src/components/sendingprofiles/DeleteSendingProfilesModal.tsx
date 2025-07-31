@@ -69,11 +69,17 @@ export default function DeleteSendingProfileModal({
       if (!res.ok || data.status == 'error') {
         setError(data.message || 'Failed to delete sending profile');
         Swal.fire({
-          text: 'Failed to delete sending profile',
+          text: data.message || 'Failed to delete sending profile',
           icon: 'error',
           duration: 2000
         });
         return;
+      } else if (data.status == "success"){
+        Swal.fire({
+          text: 'Sending Profile deleted successfully',
+          icon: "success",
+          duration: 3000
+        });
       }
       onSendingProfileDeleted?.(); 
       onClose();         
@@ -154,11 +160,6 @@ export default function DeleteSendingProfileModal({
                       
                       if (success) {
                         onClose();
-                        Swal.fire({
-                          text: 'Sending Profile deleted successfully',
-                          icon: "success",
-                          duration: 2000
-                        });
                         
                         // Panggil callback untuk refresh data
                         if (onSendingProfileDeleted) {

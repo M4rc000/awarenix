@@ -1,35 +1,27 @@
-# Use a Go base image
+# syntax=docker/dockerfile:1.5
 FROM golang:1.24-alpine AS build
+ENV GOPROXY=https://proxy.golang.org,direct \
+    GOSUMDB=off
 
-# Set the working directory inside the container
 WORKDIR /app
-
-# Copy go.mod and go.sum to leverage Docker cache
 COPY go.mod go.sum ./
 
-# Download Go module dependencies
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go mod download
 
-# Copy the rest of the backend application code
 COPY . .
-
-# Build the Go application
-# CGO_ENABLED=0 disables CGO, making the binary static and easier to run in Alpine
-# -o main specifies the output executable name
-# ./... builds all packages in the current directory and its subdirectories
 RUN CGO_ENABLED=0 GOOS=linux go build -o main ./main.go
 
-# Use a minimal base image for the final executable
-FROM alpine:latest
+FROM scratch
+LABEL org.opencontainers.image.source="https://github.com/awarenix/backend" \
+      org.opencontainers.image.version="v1.0.0"
 
-# Set the working directory
-WORKDIR /root/
+COPY --from=build /app/main /main
+USER 65532:65532
 
-# Copy the built executable from the build stage
-COPY --from=build /app/main .
-
-# Expose the port your Go API listens on (e.g., 8080 or 3000 as per your FE_API_URL)
 EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s \
+  CMD ["./main", "health"]  
 
-# Command to run the Go application
-CMD ["./main"]
+ENTRYPOINT ["/main"]

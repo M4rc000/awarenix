@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Search, Filter, Download, AlertCircle, CheckCircle, XCircle, Mails ,Clock, User, Settings, Eye, RefreshCw, Database, Edit, Plus, Trash2, Globe, EyeOff, Activity } from 'lucide-react';
+import { Search, Filter, Download, AlertCircle, CheckCircle, XCircle, Mails ,Clock, User, Settings, Eye, RefreshCw, Database, Edit, Plus, Trash2, Globe, EyeOff, Activity, FileText } from 'lucide-react';
 import { formatUserDate } from '../../components/utils/DateFormatter';
-import Select from '../../components/form/Select'; // Import komponen Select kustom Anda
+import Select from '../../components/form/Select';
 
 type Activity = {
   id: number;
@@ -180,6 +180,8 @@ const LoggingActivity = () => {
       'Refresh': RefreshCw,
       'Send Email': Mails,
       'Send Test Email': Mails,
+      'Delete Attachment': FileText,
+      'Upload Attachment': FileText,
     };
     
     const IconComponent = iconMap[action as keyof typeof iconMap] || Database;
@@ -215,6 +217,8 @@ const LoggingActivity = () => {
       'Login': 'border-l-green-400 dark:border-l-green-400',
       'Send Email': 'border-l-amber-400 dark:border-l-amber-400',
       'Send Test Email': 'border-l-amber-400 dark:border-l-amber-400',
+      'Upload Attachment': 'border-l-teal-400 dark:border-l-teal-400',
+      'Delete Attachment': 'border-l-teal-400 dark:border-l-teal-400',
     };
     return colors[action as keyof typeof colors] || 'border-l-gray-400';
   }, []);
@@ -231,6 +235,8 @@ const LoggingActivity = () => {
       'Refresh': 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
       'Send Email': 'bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
       'Send Test Email': 'bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
+      'Upload Attachment': 'bg-teal-100 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400',
+      'Delete Attachment': 'bg-teal-100 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400',
     };
     return colors[action as keyof typeof colors] || 'bg-gray-100 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400';
   }, []);
@@ -600,7 +606,7 @@ const LoggingActivity = () => {
                                 <div className={`p-2 border-b rounded-tr-lg rounded-tl-lg ${activity.status === "success"
                                   ? "border-green-200 dark:border-green-700 dark:bg-gray-900 bg-green-100"
                                   : "border-red-200 dark:border-red-700 dark:bg-gray-900 bg-red-100"}`}>
-                                  <h4 className="text-xs font-semibold text-red-900 dark:text-red-700">Deleted Data</h4>
+                                  <h4 className={`text-xs font-semibold ${activity.status == "success" ? "text-green-900 dark:text-green-700" : "text-red-900 dark:text-red-700"}`}>Deleted Data</h4>
                                 </div>
                                 <div className="p-2 bg-white dark:bg-gray-900 rounded-bl-lg rounded-br-lg">
                                   <pre className={`text-xs whitespace-pre-wrap break-words max-h-32 overflow-y-auto ${activity.status === "success"

@@ -32,6 +32,16 @@ import ShowEmailTemplateDetailModal from './ShowEmailTemplateDetailModal';
 import EditEmailTemplateModal from './EditEmailTemplateModal';
 import DeleteEmailTemplateModal from './DeleteEmailTemplateModal';
 
+// Assuming AttachmentMetadata is defined in a shared models file or similar
+type AttachmentMetadata = {
+  id: number;
+  originalFilename: string;
+  fileSize: number;
+  mimeType: string;
+  filePath?: string;
+};
+
+// Update EmailTemplate interface to include attachments
 interface EmailTemplate{
   id: number;
   name: string;
@@ -46,9 +56,10 @@ interface EmailTemplate{
   updatedAt: string;
   updatedBy: number;
   updatedByName: string;
+  attachments?: AttachmentMetadata[]; // Added attachments field
 }
 
-export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?: number, onReload?: () => void }){
+export default function TableEmailTemplates({ reloadTrigger, onReload }: { reloadTrigger?: number, onReload?: () => void }){
   const [search, setSearch] = useState('');
   const { isExpanded } = useSidebar();
   const [pagination, setPagination] = useState({
@@ -83,44 +94,47 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
   const API_URL = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("token");
   const fetchData = useCallback(async (showLoader = true) => {
-    // Hanya set isLoading jika showLoader adalah true
     if (showLoader) {
       setIsLoading(true);
     }
-     try {
+      try {
+      // For fetching all templates, the backend's GetEmailTemplates controller
+      // needs to be updated to preload attachments.
+      // Assuming your backend's /email-template/all endpoint now returns attachments.
       const res = await fetch(`${API_URL}/email-template/all`, {
-      credentials: 'include',
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-     },
-   });
+        credentials: 'include',
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-     if (!res.ok) throw new Error('Failed to fetch data');
+      if (!res.ok) throw new Error('Failed to fetch data');
 
-     const result = await res.json();
-     setData(result.Data || result.data || result);
-     } catch (err) {
+      const result = await res.json();
+      // Ensure result.Data (or result.data) contains the attachments field
+      setData(result.Data || result.data || result);
+      } catch (err) {
         console.log('Error: ', err);
         Swal.fire({
           text: 'Failed to load email template data',
-          duration: 2000,
+          duration: 3000,
           icon: "error"
         });
-     } finally {
+      } finally {
         setIsLoading(false);
-     }
-   }, [API_URL, token]); 
+      }
+    }, [API_URL, token]); 
 
-   useEffect(() => {
-     fetchData(true);
+    useEffect(() => {
+      fetchData(true);
 
-     const intervalId = setInterval(() => {
+      const intervalId = setInterval(() => {
         fetchData(false);
-     }, 5000);
+      }, 5000);
 
-     return () => clearInterval(intervalId);
-   }, [reloadTrigger, fetchData]);
+      return () => clearInterval(intervalId);
+    }, [reloadTrigger, fetchData]);
 
   // ACTIVATE FUNCTION MODAL
   const onDuplicate = (emailTemplate: EmailTemplate) => {
@@ -133,9 +147,33 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
     setActiveModal('detail');
   }
   
-  const onEdit = (emailTemplate: EmailTemplate) => {
-    setSelectedEmailTemplate(emailTemplate);
-    setActiveModal('edit');
+  const onEdit = async (emailTemplate: EmailTemplate) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/email-template/${emailTemplate.id}`, {
+        credentials: 'include',
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch detailed email template data');
+
+      const result = await res.json();
+      
+      setSelectedEmailTemplate(result.Data || result.data || result); 
+      setActiveModal('edit');
+    } catch (err) {
+      console.error('Error fetching detailed email template for edit:', err);
+      Swal.fire({
+        text: 'Failed to load email template details for editing.',
+        duration: 3000,
+        icon: "error"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
   
   const onDelete = (emailTemplate: EmailTemplate) => {
@@ -173,7 +211,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         cell: ({ getValue }) =>{
           const raw = getValue();
           if(raw == 1){
-            return <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-400 text-green-800 dark:bg-green-700 dark:text-green-100 rounded-full">Yes</span>
+            return <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-400 text-green-100 dark:bg-green-700 dark:text-green-100 rounded-full">Yes</span>
           } else {
             return <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-200 text-gray-800 rounded-full">No</span>
           }
@@ -229,8 +267,8 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         header: 'Action',
         size: 120,
         cell: (row) => (
-          <div className='pr-4 lg:pr-3'>
-            <div className="grid grid-cols-2 gap-8 lg:gap-6 p-1 space-x-2">
+          <div className='pr-5 lg:px-3'>
+            <div className="grid grid-cols-2 gap-8 lg:gap-3 p-1 space-x-2">
               <div>
                 <Button size="xs" variant="success" onClick={() => onDuplicate(row.row.original)}>
                   <IoIosCopy />
@@ -242,7 +280,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                 </Button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-8 lg:gap-6 p-1 space-x-2">
+            <div className="grid grid-cols-2 gap-8 lg:gap-3 p-1 space-x-2">
               <div>
                 <Button size="xs" variant="warning" onClick={() => onEdit(row.row.original)}>
                   <BiSolidEditAlt />
@@ -258,7 +296,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         ),
       },
     ],
-    []
+    [API_URL, token] // Add API_URL and token to dependencies for onEdit's useCallback
   );
 
   const table = useReactTable({
@@ -279,14 +317,15 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
   });
 
   useEffect(() => {
-    fetchData();
-  }, [reloadTrigger]);
+    fetchData(true); // Initial fetch with loader
+  }, [fetchData]); // Depend on fetchData
 
   useEffect(() => {
   if (reloadTrigger && reloadTrigger > 0) {
-    fetchData();
+    fetchData(true); // Force fetch with loader on reload trigger
   }
-  }, [reloadTrigger]);
+  }, [reloadTrigger, fetchData]);
+
 
   return (
     <div className="overflow-hidden rounded-xl bg-white dark:bg-white/[0.03] dark:border-gray-800 border mx-4 shadow-xl">
@@ -386,7 +425,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                                     ${isSorted === "asc"
                                       ? "text-gray-800 dark:text-gray-200"
                                       : "text-gray-300 dark:text-gray-600"}
-                                `}
+                                  `}
                                 >
                                   ▲
                                 </span>
@@ -458,19 +497,19 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         {/* Entries Info */}
         <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-0">
             <span>
-                Showing{' '}
-                <span className="font-semibold text-gray-700 dark:text-gray-300">
-                    {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
-                </span>{' '}
-                to{' '}
-                <span className="font-semibold text-gray-700 dark:text-gray-300">
-                    {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)}
-                </span>{' '}
-                of{' '}
-                <span className="font-semibold text-gray-700 dark:text-gray-300">
-                    {table.getFilteredRowModel().rows.length}
-                </span>{' '}
-                entries
+              Showing{' '}
+              <span className="font-semibold text-gray-700 dark:text-gray-300">
+                  {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
+              </span>{' '}
+              to{' '}
+              <span className="font-semibold text-gray-700 dark:text-gray-300">
+                  {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)}
+              </span>{' '}
+              of{' '}
+              <span className="font-semibold text-gray-700 dark:text-gray-300">
+                  {table.getFilteredRowModel().rows.length}
+              </span>{' '}
+              entries
             </span>
         </div>
 
@@ -503,7 +542,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                     ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
                     : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
                   }
-                  transition-colors duration-200 ml-1 // Tambah margin kiri sedikit
+                  transition-colors duration-200 
                 `}
                 title="Previous page"
             >
@@ -511,7 +550,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
             </button>
 
             {/* Page Numbers */}
-            <div className="flex items-center space-x-1 mx-2"> {/* Tambah margin horizontal */}
+            <div className="flex items-center space-x-1">
                 {(() => {
                     const currentPage = table.getState().pagination.pageIndex;
                     const totalPages = table.getPageCount();
@@ -618,7 +657,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                 `}
                 title="Next page"
             >
-              <LuArrowBigRight size={20}/>
+                <LuArrowBigRight size={20}/>
             </button>
 
             {/* Last Page Button */}
@@ -635,7 +674,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                 `}
                 title="Last page"
             >
-              <LuArrowBigRightDash size={20}/>
+                <LuArrowBigRightDash size={20}/>
             </button>
         </div>
       </div>
@@ -670,7 +709,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         emailTemplate={selectedEmailTemplate}
         onEmailTemplateUpdated={() => {
           fetchData()
-        }}     
+        }}    
       />
 
       {/* DELETE MODAL */}
@@ -687,7 +726,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
           fetchData();
           if (onReload) onReload();
         }}
-      />   
+      />    
     </div>
   );
 }

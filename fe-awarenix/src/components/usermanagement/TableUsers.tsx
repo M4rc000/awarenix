@@ -454,21 +454,21 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
       <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-white dark:bg-white/[0.03] border-t border-gray-200 dark:border-gray-700">
         {/* Entries Info */}
         <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-0">
-            <span>
-                Showing{' '}
-                <span className="font-semibold text-gray-700 dark:text-gray-300">
-                    {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
-                </span>{' '}
-                to{' '}
-                <span className="font-semibold text-gray-700 dark:text-gray-300">
-                    {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)}
-                </span>{' '}
-                of{' '}
-                <span className="font-semibold text-gray-700 dark:text-gray-300">
-                    {table.getFilteredRowModel().rows.length}
-                </span>{' '}
-                entries
-            </span>
+          <span>
+            Showing{' '}
+            <span className="font-semibold text-gray-700 dark:text-gray-300">
+                {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
+            </span>{' '}
+            to{' '}
+            <span className="font-semibold text-gray-700 dark:text-gray-300">
+                {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)}
+            </span>{' '}
+            of{' '}
+            <span className="font-semibold text-gray-700 dark:text-gray-300">
+                {table.getFilteredRowModel().rows.length}
+            </span>{' '}
+            entries
+          </span>
         </div>
 
         {/* Pagination Controls */}
@@ -500,7 +500,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
                     ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
                     : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
                   }
-                  transition-colors duration-200 ml-1 // Tambah margin kiri sedikit
+                  transition-colors duration-200
                 `}
                 title="Previous page"
             >
@@ -508,7 +508,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
             </button>
 
             {/* Page Numbers */}
-            <div className="flex items-center space-x-1 mx-2"> {/* Tambah margin horizontal */}
+            <div className="flex items-center space-x-1">
                 {(() => {
                     const currentPage = table.getState().pagination.pageIndex;
                     const totalPages = table.getPageCount();

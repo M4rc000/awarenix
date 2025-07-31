@@ -26,6 +26,7 @@ type Campaign struct {
 	EmailTemplate  EmailTemplate   `gorm:"foreignKey:EmailTemplateID" json:"emailTemplate"`
 	LandingPage    LandingPage     `gorm:"foreignKey:LandingPageID" json:"landingPage"`
 	SendingProfile SendingProfiles `gorm:"foreignKey:SendingProfileID" json:"sendingProfile"`
+	Recipients     []Recipient     `gorm:"foreignKey:CampaignID"`
 }
 
 type CampaignRequest struct {
@@ -82,6 +83,8 @@ type ParticipantDetail struct {
 	Email    string `json:"email"`
 	Status   string `json:"status"`
 	Position string `json:"position"`
+	Browser  string `json:"browser"`
+	OS       string `json:"os"`
 }
 
 type TimelineEvent struct {

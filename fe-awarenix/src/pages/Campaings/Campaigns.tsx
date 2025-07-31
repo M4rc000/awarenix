@@ -5,15 +5,15 @@ import NewCampaignModal from "../../components/campaigns/NewCampaignModal";
 import TableCampaigns from "../../components/campaigns/TableCampaigns";
 
 export default function Campaigns() {
-  const [newModalOpen, setNewModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [reloadTrigger, setReloadTrigger] = useState(0);
-  
-    const fetchData = () => {
-      setReloadTrigger(prev => prev + 1); 
-    };
-  
-    useEffect(() => {
-    }, [reloadTrigger]);
+
+  const fetchData = () => {
+    setReloadTrigger(prev => prev + 1); 
+  };
+
+  useEffect(() => {
+  }, [reloadTrigger]);
   return (
     <>
       <div className="grid grid-cols-12 gap-4 md:gap-6 mt-10 mb-5 px-4">
@@ -21,17 +21,17 @@ export default function Campaigns() {
           <CardHeader reloadTrigger={reloadTrigger}/>
         </div>
       </div>
-      <Button className="text-md mt-3 mb-3 mx-4" onClick={()=> setNewModalOpen(true)}>New Campaign</Button>
+      <Button className="text-md mt-3 mb-3 mx-4" onClick={()=> setModalOpen(true)}>New Campaign</Button>
 
       <TableCampaigns reloadTrigger={reloadTrigger} onReload={fetchData}/>
 
       <NewCampaignModal
-        isOpen={newModalOpen}
+        isOpen={modalOpen}
         onUserAdded={() => {
-          setNewModalOpen(false);
+          setModalOpen(false);
           fetchData();
         }}
-        onClose={() => setNewModalOpen(false)}
+        onClose={() => setModalOpen(false)}
       />
     </>
   );

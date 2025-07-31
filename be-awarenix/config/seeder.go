@@ -338,7 +338,7 @@ func SeedSubmenus(db *gorm.DB) {
 			MenuID:    4,
 			Name:      "Environtment Check",
 			Icon:      "DiEnvato",
-			Url:       "/environtment-check",
+			Url:       "/environment-check",
 			IsActive:  1,
 			CreatedAt: time.Now(),
 			CreatedBy: 0,

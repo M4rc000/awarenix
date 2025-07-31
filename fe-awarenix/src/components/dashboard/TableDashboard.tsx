@@ -120,7 +120,7 @@ export default function TableDashboard({ reloadTrigger }: { reloadTrigger?: numb
       const token = localStorage.getItem('token');
       const API_URL = import.meta.env.VITE_API_URL;
 
-      const res = await fetch(`${API_URL}/campaigns/all`, {
+      const res = await fetch(`${API_URL}/campaigns/role-scope-parent/all`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -444,189 +444,189 @@ export default function TableDashboard({ reloadTrigger }: { reloadTrigger?: numb
 
       {/* PAGINATION */}
       <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-white dark:bg-white/[0.03] border-t border-gray-200 dark:border-gray-700">
-              {/* Entries Info */}
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-0">
-                  <span>
-                      Showing{' '}
-                      <span className="font-semibold text-gray-700 dark:text-gray-300">
-                          {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
-                      </span>{' '}
-                      to{' '}
-                      <span className="font-semibold text-gray-700 dark:text-gray-300">
-                          {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)}
-                      </span>{' '}
-                      of{' '}
-                      <span className="font-semibold text-gray-700 dark:text-gray-300">
-                          {table.getFilteredRowModel().rows.length}
-                      </span>{' '}
-                      entries
-                  </span>
-              </div>
-      
-              {/* Pagination Controls */}
-              <div className="flex items-center space-x-1">
-                  {/* First Page Button */}
-                  <button
-                      onClick={() => table.setPageIndex(0)}
-                      disabled={!table.getCanPreviousPage()}
-                      className={`
-                        inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600
-                        ${!table.getCanPreviousPage()
-                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
-                          : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
+        {/* Entries Info */}
+        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-0">
+            <span>
+                Showing{' '}
+                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
+                </span>{' '}
+                to{' '}
+                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)}
+                </span>{' '}
+                of{' '}
+                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                    {table.getFilteredRowModel().rows.length}
+                </span>{' '}
+                entries
+            </span>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center space-x-1">
+            {/* First Page Button */}
+            <button
+                onClick={() => table.setPageIndex(0)}
+                disabled={!table.getCanPreviousPage()}
+                className={`
+                  inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600
+                  ${!table.getCanPreviousPage()
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
+                  }
+                  transition-colors duration-200
+                `}
+                title="First page"
+            >
+                <LuArrowBigLeftDash size={20}/>
+            </button>
+
+            {/* Previous Page Button */}
+            <button
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+                className={`
+                  inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600
+                  ${!table.getCanPreviousPage()
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
+                  }
+                  transition-colors duration-200
+                `}
+                title="Previous page"
+            >
+                <LuArrowBigLeft size={20}/>
+            </button>
+
+            {/* Page Numbers */}
+            <div className={`flex items-center space-x-1`}> {/* Tambah margin horizontal */}
+                {(() => {
+                    const currentPage = table.getState().pagination.pageIndex;
+                    const totalPages = table.getPageCount();
+                    const pages = [];
+
+                    // Always show first page
+                    if (totalPages > 0) {
+                        pages.push(
+                            <button
+                                key={0}
+                                onClick={() => table.setPageIndex(0)}
+                                className={`
+                                  inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg
+                                  ${currentPage === 0
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-sm'
+                                  }
+                                  transition-colors duration-200
+                                `}
+                            >
+                                1
+                            </button>
+                        );
+                    }
+
+                    // Show ellipsis if there's a gap
+                    if (currentPage > 3) {
+                        pages.push(
+                            <span key="ellipsis-start" className="inline-flex items-center justify-center w-9 h-9 text-sm text-gray-400 dark:text-gray-500">
+                                ...
+                            </span>
+                        );
+                    }
+
+                    // Show pages around current page
+                    const start = Math.max(1, currentPage - 1);
+                    const end = Math.min(totalPages - 1, currentPage + 1);
+
+                    for (let i = start; i <= end; i++) {
+                        if (i !== 0 && i !== totalPages - 1) {
+                            pages.push(
+                                <button
+                                    key={i}
+                                    onClick={() => table.setPageIndex(i)}
+                                    className={`
+                                      inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg
+                                      ${currentPage === i
+                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-sm'
+                                      }
+                                      transition-colors duration-200
+                                    `}
+                                >
+                                    {i + 1}
+                                </button>
+                            );
                         }
-                        transition-colors duration-200
-                      `}
-                      title="First page"
-                  >
-                      <LuArrowBigLeftDash size={20}/>
-                  </button>
-      
-                  {/* Previous Page Button */}
-                  <button
-                      onClick={() => table.previousPage()}
-                      disabled={!table.getCanPreviousPage()}
-                      className={`
-                        inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600
-                        ${!table.getCanPreviousPage()
-                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
-                          : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
-                        }
-                        transition-colors duration-200 ml-1 // Tambah margin kiri sedikit
-                      `}
-                      title="Previous page"
-                  >
-                      <LuArrowBigLeft size={20}/>
-                  </button>
-      
-                  {/* Page Numbers */}
-                  <div className="flex items-center space-x-1 mx-2"> {/* Tambah margin horizontal */}
-                      {(() => {
-                          const currentPage = table.getState().pagination.pageIndex;
-                          const totalPages = table.getPageCount();
-                          const pages = [];
-      
-                          // Always show first page
-                          if (totalPages > 0) {
-                              pages.push(
-                                  <button
-                                      key={0}
-                                      onClick={() => table.setPageIndex(0)}
-                                      className={`
-                                        inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg
-                                        ${currentPage === 0
-                                          ? 'bg-blue-600 text-white shadow-sm'
-                                          : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-sm'
-                                        }
-                                        transition-colors duration-200
-                                      `}
-                                  >
-                                      1
-                                  </button>
-                              );
-                          }
-      
-                          // Show ellipsis if there's a gap
-                          if (currentPage > 3) {
-                              pages.push(
-                                  <span key="ellipsis-start" className="inline-flex items-center justify-center w-9 h-9 text-sm text-gray-400 dark:text-gray-500">
-                                      ...
-                                  </span>
-                              );
-                          }
-      
-                          // Show pages around current page
-                          const start = Math.max(1, currentPage - 1);
-                          const end = Math.min(totalPages - 1, currentPage + 1);
-      
-                          for (let i = start; i <= end; i++) {
-                              if (i !== 0 && i !== totalPages - 1) {
-                                  pages.push(
-                                      <button
-                                          key={i}
-                                          onClick={() => table.setPageIndex(i)}
-                                          className={`
-                                            inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg
-                                            ${currentPage === i
-                                              ? 'bg-blue-600 text-white shadow-sm'
-                                              : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-sm'
-                                            }
-                                            transition-colors duration-200
-                                          `}
-                                      >
-                                          {i + 1}
-                                      </button>
-                                  );
-                              }
-                          }
-      
-                          // Show ellipsis if there's a gap
-                          if (currentPage < totalPages - 4) {
-                              pages.push(
-                                  <span key="ellipsis-end" className="inline-flex items-center justify-center w-9 h-9 text-sm text-gray-400 dark:text-gray-500">
-                                      ...
-                                  </span>
-                              );
-                          }
-      
-                          // Always show last page (if more than 1 page)
-                          if (totalPages > 1) {
-                              pages.push(
-                                  <button
-                                      key={totalPages - 1}
-                                      onClick={() => table.setPageIndex(totalPages - 1)}
-                                      className={`
-                                        inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg
-                                        ${currentPage === totalPages - 1
-                                          ? 'bg-blue-600 text-white shadow-sm'
-                                          : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-sm'
-                                        }
-                                        transition-colors duration-200
-                                      `}
-                                  >
-                                      {totalPages}
-                                  </button>
-                              );
-                          }
-      
-                          return pages;
-                      })()}
-                  </div>
-      
-                  {/* Next Page Button */}
-                  <button
-                      onClick={() => table.nextPage()}
-                      disabled={!table.getCanNextPage()}
-                      className={`
-                        inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600
-                        ${!table.getCanNextPage()
-                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
-                          : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
-                        }
-                        transition-colors duration-200 mr-1 // Tambah margin kanan sedikit
-                      `}
-                      title="Next page"
-                  >
-                    <LuArrowBigRight size={20}/>
-                  </button>
-      
-                  {/* Last Page Button */}
-                  <button
-                      onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                      disabled={!table.getCanNextPage()}
-                      className={`
-                        inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600
-                        ${!table.getCanNextPage()
-                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
-                          : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
-                        }
-                        transition-colors duration-200
-                      `}
-                      title="Last page"
-                  >
-                    <LuArrowBigRightDash size={20}/>
-                      </button>
-              </div>
+                    }
+
+                    // Show ellipsis if there's a gap
+                    if (currentPage < totalPages - 4) {
+                        pages.push(
+                            <span key="ellipsis-end" className="inline-flex items-center justify-center w-9 h-9 text-sm text-gray-400 dark:text-gray-500">
+                                ...
+                            </span>
+                        );
+                    }
+
+                    // Always show last page (if more than 1 page)
+                    if (totalPages > 1) {
+                        pages.push(
+                            <button
+                                key={totalPages - 1}
+                                onClick={() => table.setPageIndex(totalPages - 1)}
+                                className={`
+                                  inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg
+                                  ${currentPage === totalPages - 1
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 shadow-sm'
+                                  }
+                                  transition-colors duration-200
+                                `}
+                            >
+                                {totalPages}
+                            </button>
+                        );
+                    }
+
+                    return pages;
+                })()}
+            </div>
+
+            {/* Next Page Button */}
+            <button
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+                className={`
+                  inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600
+                  ${!table.getCanNextPage()
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
+                  }
+                  transition-colors duration-200 mr-1 // Tambah margin kanan sedikit
+                `}
+                title="Next page"
+            >
+              <LuArrowBigRight size={20}/>
+            </button>
+
+            {/* Last Page Button */}
+            <button
+                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                disabled={!table.getCanNextPage()}
+                className={`
+                  inline-flex items-center justify-center w-9 h-9 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600
+                  ${!table.getCanNextPage()
+                    ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm'
+                  }
+                  transition-colors duration-200
+                `}
+                title="Last page"
+            >
+              <LuArrowBigRightDash size={20}/>
+                </button>
+        </div>
       </div>
     </div>
   );

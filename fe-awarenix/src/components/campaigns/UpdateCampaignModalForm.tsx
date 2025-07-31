@@ -74,11 +74,12 @@ const UpdateCampaignModalForm = forwardRef<
     new Date(campaign.launch_date).toISOString()
   );
   const [url, setUrl] = useState<string>(
-    String(campaign.launch_date)
+    String(campaign.url)
   );
-  const [sendEmailBy, setSendEmailBy] = useState<string | null>(
-    new Date(campaign.send_email_by).toISOString()
-  );
+  const [sendEmailBy, setSendEmailBy] = useState<string | null>(() => {
+    const date = new Date(campaign.send_email_by);
+    return isNaN(date.getTime()) ? null : date.toISOString();
+  });
   const [saving, setSaving] = useState<boolean>(false);
 
 
@@ -118,7 +119,7 @@ const UpdateCampaignModalForm = forwardRef<
     setSelectedLandingPageId(String(campaign.landing_page_id));
     setSelectedSendingProfileId(String(campaign.sending_profile_id));
     setScheduleAt(new Date(campaign.launch_date).toISOString());
-    setSendEmailBy(new Date(campaign.send_email_by).toISOString());
+    setSendEmailBy(null);
     setUrl(String(campaign.url));
   }, [campaign]);
 
@@ -133,9 +134,7 @@ const UpdateCampaignModalForm = forwardRef<
       !selectedTemplateId ||
       !selectedLandingPageId ||
       !selectedSendingProfileId ||
-      !scheduleAt ||
-      !sendEmailBy ||
-      !url
+      !scheduleAt
     ) {
       Swal.fire({
         text: 'All field is required',
@@ -149,13 +148,15 @@ const UpdateCampaignModalForm = forwardRef<
     const currentUserData = JSON.parse(localStorage.getItem("user") || "{}");
     const updatedBy = currentUserData?.id || 0;
 
+    
+
     const payload = {
       name,
       group_id: Number(selectedGroupId),
       email_template_id: Number(selectedTemplateId),
       landing_page_id: Number(selectedLandingPageId),
       sending_profile_id: Number(selectedSendingProfileId),
-      launch_date: scheduleAt,
+      launch_date: new Date(scheduleAt).toISOString(),
       send_email_by: sendEmailBy,
       url: url,
       updated_by: updatedBy,
@@ -174,7 +175,7 @@ const UpdateCampaignModalForm = forwardRef<
         throw new Error(json.message || "Failed to update campaign");
       }
 
-      Swal.fire({ text: json.message || "Campaign berhasil diperbarui!", icon: "success", duration: 3000 });
+      Swal.fire({ text: json.message || "Campaign successfully updated!", icon: "success", duration: 3000 });
       onUpdateSuccess();
       return true;
     } catch (err: unknown) {
@@ -245,7 +246,6 @@ const UpdateCampaignModalForm = forwardRef<
             value={url}
             onChange={(e) => setName(e.target.value)}
             className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-800 dark:text-gray-100"
-            required
           />
         </div>
       </div>

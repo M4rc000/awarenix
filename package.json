@@ -12,10 +12,18 @@
     "dev": "concurrently \"npm run start:fe\" \"npm run start:be\"",
     "build:all": "npm run build:fe && npm run build:be"
   },
-  "keywords": ["react", "go", "monorepo", "awarenix"],
+  "keywords": [
+    "react",
+    "go",
+    "monorepo",
+    "awarenix"
+  ],
   "author": "M4rc000",
   "license": "ISC",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "multer": "^2.0.2"
   }
 }

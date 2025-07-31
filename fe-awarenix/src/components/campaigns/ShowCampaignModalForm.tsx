@@ -12,6 +12,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export type Campaign = {
   id: number;
+  uid: string;
   name: string;
   launch_date: Date;
   sendEmailsBy?: Date;
@@ -37,10 +38,12 @@ const ShowCampaignModalForm = ({ campaign }: ShowCampaignModalFormProps) => {
   const [campaignData, setCampaignData] = useState<Campaign | undefined>(undefined);
 
   // Fetch detail campaign dari API
+  console.log('Campaign ID: ', campaign?.id);
+  
   const fetchDetail = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/campaigns/${campaign?.id}`, { // Gunakan optional chaining di sini
+      const res = await fetch(`${API_URL}/campaigns/${campaign?.uid}`, { 
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,

@@ -4,6 +4,7 @@ import (
 	"be-awarenix/config"
 	"be-awarenix/models"
 	"be-awarenix/services"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -347,6 +348,32 @@ func DeleteSendingProfile(c *gin.Context) {
 			"status":  "error",
 			"message": "Failed to retrieve sending profile for deletion.",
 			"data":    nil,
+		})
+		return
+	}
+
+	// Periksa apakah profil pengiriman terkait dengan kampanye apa pun
+	var campaignCount int64
+	// Diasumsikan `models.Campaign` ada dan memiliki field `SendingProfileID`
+	if err := config.DB.Model(&models.Campaign{}).Where("sending_profile_id = ?", sendingProfileID).Count(&campaignCount).Error; err != nil {
+		// Log aktivitas untuk error database selama pemeriksaan kampanye
+		services.LogActivity(config.DB, c, "Delete", moduleNameSendingProfile, sendingProfileIDStr, nil, nil, "failed", "Database error when checking for associated campaigns: "+err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Database error",
+			"data":    "Failed to check for associated campaigns: " + err.Error(),
+		})
+		return
+	}
+
+	// Jika kampanye ditemukan, cegah penghapusan dan kembalikan error konflik
+	if campaignCount > 0 {
+		// Log aktivitas untuk profil pengiriman yang sedang digunakan
+		services.LogActivity(config.DB, c, "Delete", moduleNameSendingProfile, sendingProfileIDStr, nil, nil, "failed", fmt.Sprintf("Sending profile is associated with %d campaign(s) and cannot be deleted.", campaignCount))
+		c.JSON(http.StatusConflict, gin.H{ // Menggunakan 409 Conflict untuk konflik sumber daya
+			"status":  "error",
+			"message": "This sending profile is used in a campaign",
+			"data":    fmt.Sprintf("Sending profile is currently associated with %d campaign(s) and cannot be deleted. Please disassociate or delete the campaigns first.", campaignCount),
 		})
 		return
 	}

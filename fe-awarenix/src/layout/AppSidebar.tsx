@@ -81,7 +81,7 @@ const allNavGroups: NavGroup[] = [ // Rename to allNavGroups
     key: "logging-monitoring",
     items: [
       { icon: <IoFootstepsOutline />, name: "Logging Activity", path: "/logging-activity" },
-      { icon: <DiEnvato />, name: "Environtment Check", path: "/environtment-check" },
+      { icon: <DiEnvato />, name: "Environment Check", path: "/environment-check" },
     ],
   },
 ];
