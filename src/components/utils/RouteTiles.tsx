@@ -1,0 +1,15 @@
+export const routeTitles: { [key: string]: string } = {
+  "/profile": "Profile",
+  "/campaigns": "Campaigns",
+  "/role-management": "Role Management",
+  "/user-management": "User Management",
+  "/groups-members": "Groups & Members",
+  "/email-templates": "Email Templates",
+  "/sending-profiles": "Sending Profiles",
+  "/landing-pages": "Landing Pages",
+  "/account-settings": "Account Settings",
+  "/": "Login",
+  "/login": "Login",
+  "/unauthorized": "Not Found",
+  "*": "Not Found",
+};
