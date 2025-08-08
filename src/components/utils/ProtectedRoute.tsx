@@ -75,7 +75,7 @@ const ProtectedRoute = () => {
 
 
     // Jika path tidak diizinkan oleh role DAN tidak termasuk dalam path yang selalu diizinkan    
-    if (!isPathAllowedByRole && !isAlwaysAllowed && location.pathname !== "/dashboard/campaign-detail/EL1log") {
+    if (!isPathAllowedByRole && !isAlwaysAllowed) {
       return <Navigate to="/unauthorized" replace />;
     }
   } else {

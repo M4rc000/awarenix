@@ -16,7 +16,7 @@ export type Campaign = {
   name: string;
   launch_date: Date;
   sendEmailsBy?: Date;
-  groupName: string;
+  group_name: string;
   emailTemplateName: string;
   landingPageName: string;
   sendingProfileName: string;
@@ -29,17 +29,12 @@ export type Campaign = {
 
 type ShowCampaignModalFormProps = {
   campaign: Campaign | null;
-  // isOpen: boolean;
-  // onClose: () => void;
-  // onSuccess?: () => void;
 };
 
 const ShowCampaignModalForm = ({ campaign }: ShowCampaignModalFormProps) => {
   const [campaignData, setCampaignData] = useState<Campaign | undefined>(undefined);
-
+   
   // Fetch detail campaign dari API
-  console.log('Campaign ID: ', campaign?.id);
-  
   const fetchDetail = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -79,11 +74,11 @@ const ShowCampaignModalForm = ({ campaign }: ShowCampaignModalFormProps) => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             <div>
-              <Label required>Name</Label>
+              <Label >Name</Label>
               <Input value={campaignData?.name} readonly />
             </div>
             <div>
-              <Label required>Launch Date</Label>
+              <Label >Launch Date</Label>
               <Input value={campaignData?.launch_date ? formatUserDate(campaignData.launch_date) : ''} readonly />
             </div>
             <div>
@@ -99,11 +94,11 @@ const ShowCampaignModalForm = ({ campaign }: ShowCampaignModalFormProps) => {
               <LabelWithTooltip
                 position="right"
                 tooltip="Grup target untuk campaign ini"
-                required
+                
               >
                 Groups
               </LabelWithTooltip>
-              <Input value={campaignData?.groupName} readonly />
+              <Input value={campaignData?.group_name} readonly />
             </div>
           </div>
 
@@ -111,7 +106,7 @@ const ShowCampaignModalForm = ({ campaign }: ShowCampaignModalFormProps) => {
             <div>
               <LabelWithTooltip
                 tooltip="Template email phishing yang akan dikirim"
-                required
+                
               >
                 Email Template
               </LabelWithTooltip>
@@ -121,21 +116,21 @@ const ShowCampaignModalForm = ({ campaign }: ShowCampaignModalFormProps) => {
               <LabelWithTooltip
                 position="right"
                 tooltip="Landing page phishing untuk target"
-                required
+                
               >
                 Landing Page
               </LabelWithTooltip>
               <Input value={campaignData?.landingPageName} readonly />
             </div>
             <div>
-              <Label required>URL</Label>
+              <Label >URL</Label>
               <Input value={campaignData?.url} readonly />
             </div>
             <div>
               <LabelWithTooltip
                 position="left"
                 tooltip="SMTP profile yang digunakan untuk mengirim email"
-                required
+                
               >
                 Sending Profile
               </LabelWithTooltip>
@@ -163,7 +158,7 @@ const ShowCampaignModalForm = ({ campaign }: ShowCampaignModalFormProps) => {
               <Input
                 id="created-by"
                 type="text"
-                value={campaignData?.createdByName}
+                value={campaign?.createdByName}
                 className="w-full mt-1"
                 readonly
               />
@@ -187,7 +182,7 @@ const ShowCampaignModalForm = ({ campaign }: ShowCampaignModalFormProps) => {
               <Input
                 id="updated-by"
                 type="text"
-                value={campaignData?.updatedByName}
+                value={campaign?.updatedByName}
                 className="w-full mt-1"
                 readonly
               />

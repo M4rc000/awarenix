@@ -45,7 +45,6 @@ const DuplicateSendingProfilesModal = (props: DuplicateSendingProfilesModalFormP
     try {
       setIsSubmitting(true);
       const success = await formRef.current.submitSendingProfile();
-      console.log('Success: ', success);
       
       if (success) {
         props.onSendingProfileUpdated(); 

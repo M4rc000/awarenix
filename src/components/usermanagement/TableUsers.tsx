@@ -172,7 +172,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         header: 'Status',
         cell:({getValue})=>{
           const raw = getValue();
-          return raw == true ? <IoIosCheckmarkCircle className='ml-2 w-5 h-4 ' color='green'/> : <IoCloseCircle className='ml-2 w-5 h-4 rounded-2xl' color='red'/>;
+          return raw == true ? <IoIosCheckmarkCircle className='ml-2 w-5 h-4 text-green-500'/> : <IoCloseCircle className='ml-2 w-5 h-4 rounded-2xl' color='red'/>;
         }
       },
       {

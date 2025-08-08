@@ -123,7 +123,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
     
     setData(result.Data || result.data || result);
     } catch (err) {
-      console.log('Error: ', err);
+      console.error('Error: ', err);
       Swal.fire({
         text: 'Failed to load sending profile data',
         duration: 2000,

@@ -17,14 +17,12 @@ import Select from "../form/Select";
 import { EyeCloseIcon, EyeIcon } from "../../icons";
 import SendTestEmailModal from "./SendTestEmailModal";
 
-// Definisi interface untuk TestRecipient (sesuai dengan yang sudah ada)
 export interface TestRecipient {
   name: string;
   email: string;
   position: string;
 }
 
-// Definisi interface SendingProfile yang lengkap dan konsisten dengan TableUsers
 type SendingProfile = {
   id: number;
   name: string;
@@ -40,87 +38,88 @@ type SendingProfile = {
   updatedAt: string;
   updatedBy: number;
   updatedByName: string;
-  EmailHeaders: string;
 };
 
-// Interface untuk setiap Email Header dalam array
 type EmailHeader = { header: string; value: string };
 
-// Interface untuk ref yang diekspos ke parent
 export type UpdateSendingProfileModalFormRef = {
-  submitSendingProfile: () => Promise<boolean>; 
-  sendingProfile: SendingProfile | null; 
+  submitSendingProfile: () => Promise<boolean>;
+  sendingProfile: SendingProfile | null;
 };
 
-// Interface props untuk komponen ini
 type UpdateSendingProfilesModalFormProps = {
   onSuccess?: () => void;
-  sendingProfile: SendingProfile; 
+  sendingProfile: SendingProfile;
 };
 
 const UpdateSendingProfileModalForm = forwardRef<
   UpdateSendingProfileModalFormRef,
   UpdateSendingProfilesModalFormProps
 >(({ onSuccess, sendingProfile: initialSendingProfile }, ref) => {
-  // State untuk input form, diinisialisasi dengan data dari initialSendingProfile
-  // Tambahkan fallback string kosong untuk mencegah 'undefined.trim()'
-  // Menggunakan optional chaining (?.) untuk mengakses properti initialSendingProfile
   const [profileName, setProfileName] = useState(initialSendingProfile?.name || "");
   const [interfaceType, setInterfaceType] = useState(initialSendingProfile?.interfaceType || "");
   const [smtpFrom, setSmtpFrom] = useState(initialSendingProfile?.smtpFrom || "");
   const [host, setHost] = useState(initialSendingProfile?.host || "");
   const [username, setUsername] = useState(initialSendingProfile?.username || "");
   const [port, setPort] = useState(initialSendingProfile?.port || "");
-  // Password diinisialisasi sebagai string kosong agar backend bisa mendeteksi "tidak ada perubahan"
   const [password, setPassword] = useState("");
-  // const [senderAddress, setSenderAddress] = useState(initialSendingProfile?.senderAddress || ""); // Dihapus
 
-  // State untuk email headers, parsing dari JSON string
-  const [emailHeaders, setEmailHeaders] = useState<EmailHeader[]>(() => {
-    try {
-      return initialSendingProfile?.EmailHeaders ? JSON.parse(initialSendingProfile.EmailHeaders) : [];
-    } catch (e) {
-      console.error("Failed to parse EmailHeaders:", e);
-      return [];
-    }
-  });
-
+  const [emailHeaders, setEmailHeaders] = useState<EmailHeader[]>([]); // Default kosong
   const [newHeader, setNewHeader] = useState("");
   const [newValue, setNewValue] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [errors, setErrors] = useState<Partial<SendingProfile>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
 
-  // State untuk modal email tes
   const [showTestEmailModal, setShowTestEmailModal] = useState(false);
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
+  const [isLoadingHeaders, setIsLoadingHeaders] = useState(false);
 
-  // Update state ketika initialSendingProfile berubah (misal ketika modal dibuka dengan data baru)
+  // --- LOGIKA BARU: Fetch headers saat komponen dimuat atau ID profil berubah ---
   useEffect(() => {
-    // Tambahkan fallback string kosong untuk mencegah 'undefined.trim()'
-    // Menggunakan optional chaining (?.) untuk mengakses properti initialSendingProfile
+    // Reset form state saat initialSendingProfile berubah
     setProfileName(initialSendingProfile?.name || "");
     setInterfaceType(initialSendingProfile?.interfaceType || "");
     setSmtpFrom(initialSendingProfile?.smtpFrom || "");
     setHost(initialSendingProfile?.host || "");
     setUsername(initialSendingProfile?.username || "");
     setPort(initialSendingProfile?.port || "");
-    // Password tidak di-set di sini agar field tetap kosong untuk "tidak ada perubahan"
     setPassword("");
-    // setSenderAddress(initialSendingProfile?.senderAddress || ""); // Dihapus
-    try {
-      setEmailHeaders(initialSendingProfile?.EmailHeaders ? JSON.parse(initialSendingProfile.EmailHeaders) : []);
-    } catch (e) {
-      console.error("Failed to parse EmailHeaders on update:", e);
-      setEmailHeaders([]);
+    setErrors({});
+    
+    // Ambil headers jika ID profil tersedia
+    if (initialSendingProfile?.id) {
+        setIsLoadingHeaders(true);
+        const API_URL = import.meta.env.VITE_API_URL;
+        const token = localStorage.getItem('token');
+        fetch(`${API_URL}/sending-profile/email-header/${initialSendingProfile.id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                setEmailHeaders(data.data || []);
+            } else {
+                console.error("Failed to fetch headers:", data.message);
+                setEmailHeaders([]);
+            }
+        })
+        .catch(error => {
+            console.error("Network error fetching headers:", error);
+            setEmailHeaders([]);
+        })
+        .finally(() => {
+            setIsLoadingHeaders(false);
+        });
+    } else {
+        setEmailHeaders([]);
     }
-    setErrors({}); // Clear errors on new data load
   }, [initialSendingProfile]);
 
-  // Opsi untuk Interface Type
   const interfaceTypeOptions = [
     { value: 'SMTP', label: 'SMTP' },
     { value: 'API', label: 'API' },
@@ -138,18 +137,15 @@ const UpdateSendingProfileModalForm = forwardRef<
   };
 
   const removeEmailHeader = (indexToRemove: number) => {
-    // Filter out the header at the original index, not just the displayed index
     setEmailHeaders((prev) => prev.filter((_, i) => i !== indexToRemove));
   };
 
-  // Filter headers based on search term
   const filteredHeaders = emailHeaders.filter(
     (header) =>
       header.header.toLowerCase().includes(searchTerm.toLowerCase()) ||
       header.value.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Calculate pagination
   const totalPages = Math.ceil(filteredHeaders.length / entriesPerPage);
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -158,11 +154,8 @@ const UpdateSendingProfileModalForm = forwardRef<
     (currentPage + 1) * entriesPerPage
   );
 
-  // VALIDATION FUNCTION
   const validateForm = (): boolean => {
     const newErrors: Partial<SendingProfile> = {};
-
-    // Pastikan nilai tidak undefined/null sebelum memanggil .trim()
     if (!profileName.trim()) {
       newErrors.name = "Name is required";
     }
@@ -183,23 +176,13 @@ const UpdateSendingProfileModalForm = forwardRef<
     if (!port) {
       newErrors.port = "Port is required";
     }
-    // Password tidak lagi wajib diisi untuk update, backend akan mengambil yang lama jika kosong
-    // if (!password.trim()) {
-    //   newErrors.password = "Password is required";
-    // }
-    // if (!senderAddress.trim()) { // Dihapus
-    //   newErrors.senderAddress = "Sender Address is required";
-    // }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // SEND TEST EMAIL HANDLE
   const handleOpenTestEmailModal = () => {
     if (!validateForm()) {
       let errorMessage = '';
-      // Collect all error messages for display in Swal
       for (const key in errors) {
         if (errors[key as keyof SendingProfile]) {
           errorMessage += `${errors[key as keyof SendingProfile]}\n`;
@@ -221,27 +204,59 @@ const UpdateSendingProfileModalForm = forwardRef<
     setShowTestEmailModal(false);
   };
 
-  // --- Fungsi untuk mengirim email tes ---
+  const updateHeaders = async (profileId: number, headers: EmailHeader[], token: string): Promise<boolean> => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    try {
+      const response = await fetch(`${API_URL}/sending-profile/email-header/${profileId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(headers),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API Error updating headers:", errorData);
+        Swal.fire({
+          icon: 'error',
+          text: errorData.message || 'Failed to update email headers',
+          duration: 3000,
+        });
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("Network error updating headers:", error);
+      Swal.fire({
+        icon: 'error',
+        text: 'A network or server error occurred while updating headers.',
+        duration: 3000,
+      });
+      return false;
+    }
+  };
+
   const handleSendTestEmail = async (recipient: TestRecipient) => {
     setIsSendingTestEmail(true);
     const API_URL = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem('token');
-
-    // KIRIM EMAILHEADERS SEBAGAI ARRAY OBJEK, BUKAN STRING JSON
+    
+    // Perbaikan: Kirim `emailHeaders` yang ada di state sebagai array
     const dataToSend = {
       sendingProfile: {
-        id: initialSendingProfile?.id || 0, 
+        id: initialSendingProfile?.id || 0,
         name: profileName,
         interfaceType: interfaceType,
         smtpFrom: smtpFrom,
         host: host,
-        prt: port,
+        port: port,
         username: username,
-        password: password, 
-        EmailHeaders: emailHeaders, 
+        password: password,
+        EmailHeaders: emailHeaders,
       },
       recipient: recipient,
-      // Tambahkan EmailBody karena backend memerlukannya
       EmailBody: `<html><body>
         <h1>Halo ${recipient.name},</h1>
         <p>Ini adalah email tes dari sistem pengiriman kami.</p>
@@ -296,11 +311,10 @@ const UpdateSendingProfileModalForm = forwardRef<
     }
   };
 
-  // SUBMIT DATA UPDATE
   useImperativeHandle(ref, () => ({
     submitSendingProfile: async () => {
       if (!validateForm()) {
-        return false; // Mengembalikan false jika validasi gagal
+        return false;
       }
 
       setIsSubmitting(true);
@@ -308,43 +322,46 @@ const UpdateSendingProfileModalForm = forwardRef<
       const token = localStorage.getItem('token');
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       const updatedBy = userData?.id || 0;
+      const profileId = initialSendingProfile?.id || 0;
 
-      // Stringify emailHeaders array to be sent as EmailHeaders string
-      const emailHeadersString = JSON.stringify(emailHeaders);
-
-      const dataToSend = {
+      const profileDataToSend = {
         name: profileName,
         interfaceType: interfaceType,
         smtpFrom: smtpFrom,
         host: host,
         port: port,
         username: username,
-        password: password, 
-        EmailHeaders: emailHeadersString, 
+        password: password,
         updatedBy: updatedBy,
       };
 
       try {
-        const response = await fetch(`${API_URL}/sending-profile/${initialSendingProfile?.id || 0}`, { 
+        const profileResponse = await fetch(`${API_URL}/sending-profile/${profileId}`, {
           method: "PUT",
           credentials: 'include',
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(dataToSend),
+          body: JSON.stringify(profileDataToSend),
         });
 
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("API Error Response:", errorData); 
+        if (!profileResponse.ok) {
+          const errorData = await profileResponse.json();
+          console.error("API Error Response:", errorData);
           Swal.fire({
             icon: 'error',
             text: errorData.message || 'Failed to update sending profile',
             duration: 3000,
           });
-          return false; 
+          return false;
+        }
+
+        const headersUpdated = await updateHeaders(profileId, emailHeaders, token || "");
+
+        if (!headersUpdated) {
+          console.error("Header update failed, but profile update succeeded.");
+          return false;
         }
 
         Swal.fire({
@@ -353,7 +370,7 @@ const UpdateSendingProfileModalForm = forwardRef<
           duration: 3000,
         });
         if (onSuccess) onSuccess();
-        return true; 
+        return true;
       } catch (error: unknown) {
         console.error("An error occurred when updating sending profile: ", error);
         Swal.fire({
@@ -361,21 +378,21 @@ const UpdateSendingProfileModalForm = forwardRef<
           text: 'A network or server error occurred while updating the sending profile.',
           duration: 3000,
         });
-        return false; // Mengembalikan false jika ada error
+        return false;
       } finally {
         setIsSubmitting(false);
       }
     },
-    sendingProfile: { 
-      id: initialSendingProfile?.id || 0, // Menggunakan optional chaining dan fallback 0
+    sendingProfile: {
+      id: initialSendingProfile?.id || 0,
       name: profileName,
       interfaceType: interfaceType,
       smtpFrom: smtpFrom,
       username: username,
-      password: password, // Mengembalikan password yang ada di state (bisa kosong)
+      password: password,
       host: host,
       port: port,
-      EmailHeaders: JSON.stringify(emailHeaders), // Kembalikan sebagai string
+      EmailHeaders: JSON.stringify(emailHeaders),
       createdAt: initialSendingProfile?.createdAt || "",
       createdBy: initialSendingProfile?.createdBy || 0,
       createdByName: initialSendingProfile?.createdByName || "",
@@ -398,9 +415,9 @@ const UpdateSendingProfileModalForm = forwardRef<
             value={profileName}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setProfileName(e.target.value);
-              setErrors(prev => ({ ...prev, name: undefined })); // Clear error on change
+              setErrors(prev => ({ ...prev, name: undefined }));
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders}
           />
           {errors.name && (
             <p className="text-red-500 text-sm mt-1">{errors.name}</p>
@@ -417,7 +434,7 @@ const UpdateSendingProfileModalForm = forwardRef<
             value={interfaceType}
             onChange={(val: string) => {
               setInterfaceType(val);
-              setErrors(prev => ({ ...prev, interfaceType: undefined })); // Clear error on change
+              setErrors(prev => ({ ...prev, interfaceType: undefined }));
             }}
           />
           {errors.interfaceType && (
@@ -437,7 +454,7 @@ const UpdateSendingProfileModalForm = forwardRef<
               setPort(e.target.value);
               setErrors(prev => ({ ...prev, port: undefined }));
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders}
           />
           {errors.port && (
             <p className="text-red-500 text-sm mt-1">{errors.port}</p>
@@ -456,9 +473,9 @@ const UpdateSendingProfileModalForm = forwardRef<
             value={smtpFrom}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setSmtpFrom(e.target.value);
-              setErrors(prev => ({ ...prev, smtpFrom: undefined })); // Clear error on change
+              setErrors(prev => ({ ...prev, smtpFrom: undefined }));
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders}
           />
           {errors.smtpFrom && (
             <p className="text-red-500 text-sm mt-1">{errors.smtpFrom}</p>
@@ -475,9 +492,9 @@ const UpdateSendingProfileModalForm = forwardRef<
             value={host}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setHost(e.target.value);
-              setErrors(prev => ({ ...prev, host: undefined })); // Clear error on change
+              setErrors(prev => ({ ...prev, host: undefined }));
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders}
           />
           {errors.host && (
             <p className="text-red-500 text-sm mt-1">{errors.host}</p>
@@ -496,9 +513,9 @@ const UpdateSendingProfileModalForm = forwardRef<
             value={username}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setUsername(e.target.value);
-              setErrors(prev => ({ ...prev, username: undefined })); // Clear error on change
+              setErrors(prev => ({ ...prev, username: undefined }));
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders}
           />
           {errors.username && (
             <p className="text-red-500 text-sm mt-1">{errors.username}</p>
@@ -507,17 +524,17 @@ const UpdateSendingProfileModalForm = forwardRef<
 
         {/* Password */}
         <div className="relative">
-          <LabelWithTooltip>Password</LabelWithTooltip> 
+          <LabelWithTooltip>Password</LabelWithTooltip>
           <Input
-            placeholder="Leave blank for no changes" 
+            placeholder="Leave blank for no changes"
             type={showPassword ? 'text' : 'password'}
             className={`w-full text-sm sm:text-base h-10 px-3 ${errors.password ? 'border-red-500' : ''}`}
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setPassword(e.target.value);
-              setErrors(prev => ({ ...prev, password: undefined })); 
+              setErrors(prev => ({ ...prev, password: undefined }));
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders}
           />
           <span
             onClick={() => setShowPassword((s) => !s)}
@@ -550,7 +567,7 @@ const UpdateSendingProfileModalForm = forwardRef<
               setNewHeader(e.target.value)
             }
             className="flex-1 text-sm h-10 px-3"
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders}
           />
           <Input
             placeholder="{{.URL}}-awarenix"
@@ -559,13 +576,13 @@ const UpdateSendingProfileModalForm = forwardRef<
               setNewValue(e.target.value)
             }
             className="flex-1 text-sm h-10 px-3"
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders}
           />
           <Button
             onClick={addEmailHeader}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 text-sm whitespace-nowrap"
             type="button"
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders}
           >
             + Add Custom Header
           </Button>
@@ -584,9 +601,9 @@ const UpdateSendingProfileModalForm = forwardRef<
                 value={entriesPerPage}
                 onChange={(e) => {
                   setEntriesPerPage(Number(e.target.value));
-                  setCurrentPage(0); // Reset ke halaman pertama saat entries per page berubah
+                  setCurrentPage(0);
                 }}
-                disabled={isSubmitting} 
+                disabled={isSubmitting || isLoadingHeaders}
               >
                 <option value={10}>10</option>
                 <option value={25}>25</option>
@@ -607,7 +624,7 @@ const UpdateSendingProfileModalForm = forwardRef<
                   setSearchTerm(e.target.value)
                 }
                 className="w-48 text-sm h-8 px-2 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300"
-                disabled={isSubmitting} 
+                disabled={isSubmitting || isLoadingHeaders}
               />
             </div>
           </div>
@@ -658,7 +675,13 @@ const UpdateSendingProfileModalForm = forwardRef<
               </TableRow>
             </TableHeader>
             <TableBody>
-              {displayedHeaders.length === 0 ? (
+              {isLoadingHeaders ? (
+                <tr>
+                  <td className="text-center py-8 text-gray-500 dark:text-gray-400" colSpan={4}>
+                    Loading headers...
+                  </td>
+                </tr>
+              ) : displayedHeaders.length === 0 ? (
                 <tr>
                   <td className="text-center py-8 text-gray-500 dark:text-gray-400" colSpan={4}>
                     {searchTerm
@@ -711,7 +734,7 @@ const UpdateSendingProfileModalForm = forwardRef<
                           onClick={() => removeEmailHeader(originalIndex)}
                           className="text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 p-1 mx-2"
                           type="button"
-                          disabled={isSubmitting} 
+                          disabled={isSubmitting || isLoadingHeaders}
                         >
                           <FaRegTrashAlt />
                         </Button>
@@ -733,7 +756,7 @@ const UpdateSendingProfileModalForm = forwardRef<
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                disabled={currentPage === 0 || isSubmitting}
+                disabled={currentPage === 0 || isSubmitting || isLoadingHeaders}
                 className="disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:text-gray-400"
                 type="button"
               >
@@ -743,7 +766,7 @@ const UpdateSendingProfileModalForm = forwardRef<
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-                disabled={currentPage >= totalPages - 1 || totalPages === 0 || isSubmitting}
+                disabled={currentPage >= totalPages - 1 || totalPages === 0 || isSubmitting || isLoadingHeaders}
                 className="disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:text-gray-400"
                 type="button"
               >
@@ -759,7 +782,7 @@ const UpdateSendingProfileModalForm = forwardRef<
             className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 flex items-center gap-2"
             onClick={handleOpenTestEmailModal}
             type="button"
-            disabled={isSubmitting || isSendingTestEmail} 
+            disabled={isSubmitting || isSendingTestEmail || isLoadingHeaders}
           >
             <svg
               className="w-4 h-4"

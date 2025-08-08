@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { UserProfileForm } from './UserProfileForm';
 import { PhishSettingsForm } from './PhishSettingsForm';
+import { ChangePasswordForm } from './ChangePasswordForm';
 
 const AccountSettingsTabs = () => {
   const [activeTab, setActiveTab] = useState('user-profile');
@@ -15,6 +16,11 @@ const AccountSettingsTabs = () => {
       id: 'phish-settings',
       label: 'Phish Settings',
       content: <PhishSettingsForm />,
+    },
+    {
+      id: 'change-password',
+      label: 'Change Password',
+      content: <ChangePasswordForm />,
     }
   ];
 

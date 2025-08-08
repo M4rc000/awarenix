@@ -17,14 +17,12 @@ import LabelWithTooltip from "../ui/tooltip/Tooltip";
 import Select from "../form/Select";
 import SendTestEmailModal from "./SendTestEmailModal";
 
-// Definisi interface untuk TestRecipient (sesuai dengan yang sudah ada)
 export interface TestRecipient {
   name: string;
   email: string;
   position: string;
 }
 
-// Definisi interface SendingProfile yang lengkap dan konsisten dengan TableUsers
 type SendingProfile = {
   id: number;
   name: string;
@@ -62,24 +60,16 @@ const DuplicateSendingProfileModalForm = forwardRef<
   DuplicateSendingProfileModalFormRef,
   UpdateSendingProfilesModalFormProps
 >(({ onSuccess, sendingProfile: initialSendingProfile }, ref) => {
-  const [profileName, setProfileName] = useState(initialSendingProfile?.name || "");
-  const [interfaceType, setInterfaceType] = useState(initialSendingProfile?.interfaceType || "");
-  const [port, setPort] = useState(initialSendingProfile?.port || "");
-  const [smtpFrom, setSmtpFrom] = useState(initialSendingProfile?.smtpFrom || "");
-  const [host, setHost] = useState(initialSendingProfile?.host || "");
-  const [username, setUsername] = useState(initialSendingProfile?.username || "");
-  // Password diinisialisasi sebagai string kosong agar backend bisa mendeteksi "tidak ada perubahan"
+  const [profileName, setProfileName] = useState("");
+  const [interfaceType, setInterfaceType] = useState("");
+  const [port, setPort] = useState("");
+  const [smtpFrom, setSmtpFrom] = useState("");
+  const [host, setHost] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   // State untuk email headers, parsing dari JSON string
-  const [emailHeaders, setEmailHeaders] = useState<EmailHeader[]>(() => {
-    try {
-      return initialSendingProfile?.EmailHeaders ? JSON.parse(initialSendingProfile.EmailHeaders) : [];
-    } catch (e) {
-      console.error("Failed to parse EmailHeaders:", e);
-      return [];
-    }
-  });
+  const [emailHeaders, setEmailHeaders] = useState<EmailHeader[]>([]);
 
   const [newHeader, setNewHeader] = useState("");
   const [newValue, setNewValue] = useState("");
@@ -88,30 +78,54 @@ const DuplicateSendingProfileModalForm = forwardRef<
   const [errors, setErrors] = useState<Partial<SendingProfile>>({});
   const [isSubmitting, setIsSubmitting] = useState(false); 
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoadingHeaders, setIsLoadingHeaders] = useState(false);
 
 
   // State untuk modal email tes
   const [showTestEmailModal, setShowTestEmailModal] = useState(false);
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
 
-  // Update state ketika initialSendingProfile berubah (misal ketika modal dibuka dengan data baru)
+  
   useEffect(() => {
-    // Tambahkan "Copy of" di awal profileName
     setProfileName(`Copy of ${initialSendingProfile?.name || ""}`); 
     setInterfaceType(initialSendingProfile?.interfaceType || "");
     setSmtpFrom(initialSendingProfile?.smtpFrom || "");
     setHost(initialSendingProfile?.host || "");
     setUsername(initialSendingProfile?.username || "");
     setPort(initialSendingProfile?.port || "");
-    // Password tidak di-set di sini agar field tetap kosong untuk "tidak ada perubahan"
     setPassword("");
-    try {
-      setEmailHeaders(initialSendingProfile?.EmailHeaders ? JSON.parse(initialSendingProfile.EmailHeaders) : []);
-    } catch (e) {
-      console.error("Failed to parse EmailHeaders on update:", e);
-      setEmailHeaders([]);
+    setErrors({});
+
+    // Ambil headers jika ID profil tersedia
+    if (initialSendingProfile?.id) {
+        setIsLoadingHeaders(true);
+        const API_URL = import.meta.env.VITE_API_URL;
+        const token = localStorage.getItem('token');
+        fetch(`${API_URL}/sending-profile/email-header/${initialSendingProfile.id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                setEmailHeaders(data.data || []);
+            } else {
+                console.error("Failed to fetch headers:", data.message);
+                setEmailHeaders([]);
+            }
+        })
+        .catch(error => {
+            console.error("Network error fetching headers:", error);
+            setEmailHeaders([]);
+        })
+        .finally(() => {
+            setIsLoadingHeaders(false);
+        });
+    } else {
+        setEmailHeaders([]);
     }
-    setErrors({}); // Clear errors on new data load
+
   }, [initialSendingProfile]);
 
   // Opsi untuk Interface Type
@@ -154,51 +168,75 @@ const DuplicateSendingProfileModalForm = forwardRef<
 
   // VALIDATION FUNCTION
   const validateForm = (): boolean => {
-    const newErrors: Partial<SendingProfile> = {};
+    let isValid = true;
+    setErrors({}); 
 
-    // Pastikan nilai tidak undefined/null sebelum memanggil .trim()
     if (!profileName.trim()) {
-      newErrors.name = "Name is required";
+      setErrors(prev => ({ ...prev, name: "Name is required" }));
+      Swal.fire({ 
+        icon: 'error',
+        text: 'Profile Name is required',
+        duration: 3000,
+      });
+      isValid = false;
     }
     if (!interfaceType.trim()) {
-      newErrors.interfaceType = "Interface Type is required";
+      setErrors(prev => ({ ...prev, interfaceType: "Interface Type is required" }));
+      Swal.fire({
+        icon: 'error',
+        text: 'Interface Type is required',
+        duration: 3000,
+      });
+      isValid = false;
     }
     if (!smtpFrom.trim()) {
-      newErrors.smtpFrom = "SMTP From is required";
+      setErrors(prev => ({ ...prev, smtpFrom: "SMTP From is required" }));
+      Swal.fire({
+        icon: 'error',
+        text: 'SMTP From is required',
+        duration: 3000,
+      });
+      isValid = false;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(smtpFrom)) {
-      newErrors.smtpFrom = "Please enter a valid email";
+      setErrors(prev => ({ ...prev, smtpFrom: "Please enter a valid email" }));
+      Swal.fire({
+        icon: 'error',
+        text: 'Please enter a valid email for SMTP From',
+        duration: 3000,
+      });
+      isValid = false;
     }
     if (!host.trim()) {
-      newErrors.host = "Host is required";
+      setErrors(prev => ({ ...prev, host: "Host is required" }));
+      Swal.fire({
+        icon: 'error',
+        text: 'Host is required',
+        duration: 3000,
+      });
+      isValid = false;
     }
     if (!username.trim()) {
-      newErrors.username = "Username is required";
+      Swal.fire({
+        icon: 'error',
+        text: 'Username is required',
+        duration: 3000,
+      });
+      isValid = false;
     }
     if (!port) {
-      newErrors.port = "Port is required";
+      Swal.fire({
+        icon: 'error',
+        text: 'Port is required',
+        duration: 3000,
+      });
+      isValid = false;
     }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return isValid;
   };
 
   // SEND TEST EMAIL HANDLE
   const handleOpenTestEmailModal = () => {
     if (!validateForm()) {
-      let errorMessage = '';
-      // Collect all error messages for display in Swal
-      for (const key in errors) {
-        if (errors[key as keyof SendingProfile]) {
-          errorMessage += `${errors[key as keyof SendingProfile]}\n`;
-        }
-      }
-      if (errorMessage) {
-        Swal.fire({
-          icon: 'error',
-          text: errorMessage.replace(/\n/g, '<br/>'),
-          duration: 3000,
-        });
-      }
       return;
     }
     setShowTestEmailModal(true);
@@ -294,9 +332,9 @@ const DuplicateSendingProfileModalForm = forwardRef<
       const token = localStorage.getItem('token');
       const userData = JSON.parse(localStorage.getItem("user") || "{}");
       const createdBy = userData?.id || 0;
-      // const emailHeadersString = JSON.stringify(emailHeaders);
 
       const dataToSend = {
+        duplicate_id: initialSendingProfile?.id || 0,
         name: profileName,
         interfaceType: interfaceType,
         smtpFrom: smtpFrom,
@@ -333,7 +371,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
 
         Swal.fire({
           icon: 'success',
-          text: 'Sending Profile successfully add!',
+          text: 'Sending Profile successfully added!',
           duration: 3000,
         });
         if (onSuccess) onSuccess();
@@ -384,7 +422,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
               setProfileName(e.target.value);
               setErrors(prev => ({ ...prev, name: undefined }));
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders} 
           />
           {errors.name && (
             <p className="text-red-500 text-sm mt-1">{errors.name}</p>
@@ -421,7 +459,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
               setPort(e.target.value);
               setErrors(prev => ({ ...prev, port: undefined }));
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders} 
           />
           {errors.port && (
             <p className="text-red-500 text-sm mt-1">{errors.port}</p>
@@ -442,7 +480,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
               setSmtpFrom(e.target.value);
               setErrors(prev => ({ ...prev, smtpFrom: undefined }));
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders} 
           />
           {errors.smtpFrom && (
             <p className="text-red-500 text-sm mt-1">{errors.smtpFrom}</p>
@@ -461,7 +499,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
               setHost(e.target.value);
               setErrors(prev => ({ ...prev, host: undefined }));
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders} 
           />
           {errors.host && (
             <p className="text-red-500 text-sm mt-1">{errors.host}</p>
@@ -482,7 +520,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
               setUsername(e.target.value);
               setErrors(prev => ({ ...prev, username: undefined }));
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders} 
           />
           {errors.username && (
             <p className="text-red-500 text-sm mt-1">{errors.username}</p>
@@ -501,11 +539,11 @@ const DuplicateSendingProfileModalForm = forwardRef<
               setPassword(e.target.value);
               setErrors(prev => ({ ...prev, password: undefined }));
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders} 
           />
           <span
             onClick={() => setShowPassword((s) => !s)}
-            className="absolute z-30 right-4 top-1/2 -translate-y-1/2 cursor-pointer pt-[31px]"
+            className="absolute z-30 right-4 top-1/2 -translate-y-1/2 pt-[31px] cursor-pointer"
           >
             {showPassword ? (
               <EyeIcon className="size-5 fill-gray-500" />
@@ -534,7 +572,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
               setNewHeader(e.target.value)
             }
             className="flex-1 text-sm h-10 px-3"
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders} 
           />
           <Input
             placeholder="{{.URL}}-awarenix"
@@ -543,13 +581,13 @@ const DuplicateSendingProfileModalForm = forwardRef<
               setNewValue(e.target.value)
             }
             className="flex-1 text-sm h-10 px-3"
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders} 
           />
           <Button
             onClick={addEmailHeader}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 text-sm whitespace-nowrap"
             type="button"
-            disabled={isSubmitting} 
+            disabled={isSubmitting || isLoadingHeaders} 
           >
             + Add Custom Header
           </Button>
@@ -570,7 +608,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
                   setEntriesPerPage(Number(e.target.value));
                   setCurrentPage(0); // Reset ke halaman pertama saat entries per page berubah
                 }}
-                disabled={isSubmitting} 
+                disabled={isSubmitting || isLoadingHeaders} 
               >
                 <option value={10}>10</option>
                 <option value={25}>25</option>
@@ -591,7 +629,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
                   setSearchTerm(e.target.value)
                 }
                 className="w-48 text-sm h-8 px-2 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300"
-                disabled={isSubmitting} 
+                disabled={isSubmitting || isLoadingHeaders} 
               />
             </div>
           </div>
@@ -656,7 +694,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
                     (h) => h.header === header.header && h.value === header.value
                   );
                   return (
-                    <TableRow key={`${header.header}-${index}`} className="text-md">
+                    <TableRow key={index} className="text-md">
                       <TableCell className="text-gray-900 dark:text-gray-400 px-3 py-2">
                         {currentPage * entriesPerPage + index + 1}
                       </TableCell>
@@ -681,7 +719,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
                               __html: header.value.replace(
                                 new RegExp(`(${searchTerm})`, "gi"),
                                 '<mark class="bg-yellow-200 dark:bg-yellow-800">$1</mark>'
-                              ),
+                              )
                             }}
                           />
                         ) : (
@@ -695,7 +733,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
                           onClick={() => removeEmailHeader(originalIndex)}
                           className="text-red-600 hover:text-red-800 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 p-1 mx-2"
                           type="button"
-                          disabled={isSubmitting} 
+                          disabled={isSubmitting || isLoadingHeaders} 
                         >
                           <FaRegTrashAlt />
                         </Button>
@@ -717,7 +755,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                disabled={currentPage === 0 || isSubmitting}
+                disabled={currentPage === 0 || isSubmitting || isLoadingHeaders}
                 className="disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:text-gray-400"
                 type="button"
               >
@@ -727,7 +765,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-                disabled={currentPage >= totalPages - 1 || totalPages === 0 || isSubmitting}
+                disabled={currentPage >= totalPages - 1 || totalPages === 0 || isSubmitting || isLoadingHeaders}
                 className="disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:text-gray-400"
                 type="button"
               >
@@ -743,7 +781,7 @@ const DuplicateSendingProfileModalForm = forwardRef<
             className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 flex items-center gap-2"
             onClick={handleOpenTestEmailModal}
             type="button"
-            disabled={isSubmitting || isSendingTestEmail} 
+            disabled={isSubmitting || isSendingTestEmail || isLoadingHeaders} 
           >
             <svg
               className="w-4 h-4"
@@ -775,3 +813,4 @@ const DuplicateSendingProfileModalForm = forwardRef<
 });
 
 export default DuplicateSendingProfileModalForm;
+

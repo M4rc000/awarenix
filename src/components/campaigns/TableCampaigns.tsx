@@ -27,7 +27,7 @@ import { FaRegTrashAlt } from "react-icons/fa";
 import { BiSolidEditAlt } from "react-icons/bi";
 import { HiOutlineMailOpen } from "react-icons/hi";
 import { LuMousePointerClick } from "react-icons/lu";
-import { MdReportGmailerrorred } from "react-icons/md";
+import { MdOutlineFilePresent, MdReportGmailerrorred } from "react-icons/md";
 import { BiError } from "react-icons/bi";
 import { FaCircleInfo } from "react-icons/fa6";
 import Button from "../ui/button/Button";
@@ -61,7 +61,7 @@ export interface Campaign {
   clicks: number;
   submitted: number;
   reported: number;
-  groupName: string, 
+  group_name: string, 
   emailTemplateName: string, 
   landingPageName: string, 
   sendingProfileName: string
@@ -279,6 +279,11 @@ export default function TableCampaigns({ reloadTrigger, onReload }: { reloadTrig
       {
         accessorKey: 'email_submitted',
         header: () => <IoIosSave className="text-xl text-cyan-600" />,
+        cell: info => info.getValue() 
+      },
+      {
+        accessorKey: 'attachment_click',
+        header: () => <MdOutlineFilePresent className="text-xl text-teal-500" />,
         cell: info => info.getValue() 
       },
       {

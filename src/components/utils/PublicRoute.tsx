@@ -26,6 +26,6 @@ export default function PublicRoute({ children }: { children: React.ReactNode })
   }, []);
 
   if (checking) return <SessionChecker />;
-  if (shouldRedirect) return <Navigate to="/dashboard" replace />;
+  if (shouldRedirect) return <Navigate to="/campaigns" replace />;
   return <>{children}</>;
 }

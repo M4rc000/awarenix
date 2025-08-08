@@ -188,7 +188,7 @@ export default function TableRoles({ reloadTrigger, onReload }: { reloadTrigger?
         accessorKey: 'actions',
         header: 'Action',
         cell: (row: CellContext<Role, unknown>) => (          
-          <div className="flex items-center ml-10 space-x-2">
+          <div className="flex items-center ml-13 space-x-2">
             <Button size="xs" variant="info" onClick={() => onShowDetail(row.row.original)}>
               <FaCircleInfo />
             </Button>
