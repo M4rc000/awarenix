@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom"; 
-import { IoSettingsOutline } from "react-icons/io5";
+import { IoFootstepsOutline, IoSettingsOutline } from "react-icons/io5";
 import { FaUserCog } from "react-icons/fa";
 import {
   CalenderIcon,
@@ -16,6 +16,7 @@ import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
 import { User } from "lucide-react";
 import { useUserSession } from "../components/context/UserSessionContext";
+import { DiEnvato } from "react-icons/di";
 
 type SubItem = {
   name: string;
@@ -59,6 +60,14 @@ const allNavGroups: NavGroup[] = [ // Rename to allNavGroups
     items: [
       { icon: <IoSettingsOutline />, name: "Account Settings", path: "/account-settings" },
       // { icon: <FaMoneyCheckAlt />, name: "Subcription & Billing", path: "/subscription-billing" },
+    ],
+  },
+  {
+    title: "Logging & Monitoring",
+    key: "logging-monitoring",
+    items: [
+      { icon: <IoFootstepsOutline />, name: "Logging Activity", path: "/logging-activity" },
+      { icon: <DiEnvato />, name: "Environment Check", path: "/environment-check" },
     ],
   },
 ];

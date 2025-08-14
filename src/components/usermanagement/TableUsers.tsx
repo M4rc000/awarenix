@@ -148,15 +148,18 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
       {
         accessorKey: 'id',
         header: '#',
+        size: 5,
         cell: info => info.row.index + 1,
       },
       {
         accessorKey: 'name',
         header: 'Name',
+        size: 10, 
       },
       {
         accessorKey: 'email',
         header: 'Email',
+        size: 100,
       },
       {
         accessorKey: 'roleName',
@@ -170,14 +173,23 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
       {
         accessorKey: 'isActive',
         header: 'Status',
-        cell:({getValue})=>{
+        cell: ({ getValue }) => {
           const raw = getValue();
-          return raw == true ? <IoIosCheckmarkCircle className='ml-2 w-5 h-4 text-green-500'/> : <IoCloseCircle className='ml-2 w-5 h-4 rounded-2xl' color='red'/>;
+          return (
+            <div className='flex items-center justify-center h-full'>
+              {raw === true ? (
+                <IoIosCheckmarkCircle className='text-green-500 w-5 h-5' />
+              ) : (
+                <IoCloseCircle className='text-red-500 w-5 h-5' />
+              )}
+            </div>
+          );
         }
       },
       {
         accessorKey: 'createdAt',
         header: 'Created At',
+        size: 10,
         cell: ({ getValue }) => {
           const raw = getValue();
           if (!raw || (typeof raw !== 'string' && typeof raw !== 'number' && !(raw instanceof Date))) return '-';
@@ -200,10 +212,11 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
       {
         accessorKey: 'updatedAt',
         header: 'Last Modified',
+        size: 10,
         cell: ({ getValue }) => {
           const raw = getValue();
           if (!raw || (typeof raw !== 'string' && typeof raw !== 'number' && !(raw instanceof Date))) return '-';
-
+          
           const date = (typeof raw === 'string' || typeof raw === 'number' || raw instanceof Date) ? new Date(raw) : null;
           if (!date || isNaN(date.getTime())) return '-';
           
@@ -222,6 +235,7 @@ export default function TableUsers({ reloadTrigger, onReload }: { reloadTrigger?
         id: 'actions',
         accessorKey: 'actions',
         header: 'Action',
+        size: 10,
         cell: (row: CellContext<User, unknown>) => (          
           <div className="flex items-center space-x-2">
             <Button size="xs" variant="info" onClick={() => onShowDetail(row.row.original)}>

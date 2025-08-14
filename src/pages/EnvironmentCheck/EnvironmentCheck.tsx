@@ -41,13 +41,14 @@ export default function EnvironmentCheck() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [showAlerts, setShowAlerts] = useState(false);
 
+  const API_GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3000/health';
   // Enhanced service configuration
   const serviceConfig: Service[] = [
     { 
       id: 'api-gateway', 
       name: 'API Gateway', 
       icon: Server, 
-      endpoint: 'http://localhost:3000',
+      endpoint: API_GATEWAY_URL,
       category: 'Core Services',
       timeout: 5000,
       criticalService: true
